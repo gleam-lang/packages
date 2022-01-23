@@ -17,6 +17,7 @@ pub fn main() {
 fn print_help() {
   io.print("USAGE:
   gleam run serve
+  gleam run query-hex
 ")
   exit(1)
 }

@@ -2,9 +2,13 @@
 
 A Gleam project
 
-## Quick start
-
 ```sh
-gleam run   # Run the project
-gleam test  # Run the tests
+# Run the HTTP server
+gleam run server
+
+# Query the Hex API for Gleam packages
+gleam run query-hex
+
+# Run the tests
+gleam test
 ```

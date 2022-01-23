@@ -3,7 +3,7 @@ import gleam/json
 import gleam/http
 import gleam/result
 import gleam/hackney
-import gleam/dynamic.{Decoder}
+import gleam/dynamic.{Decoder} as d
 
 pub type Error {
   HackneyError(hackney.Error)
@@ -22,7 +22,7 @@ pub fn query() {
     |> result.map_error(HackneyError)
 
   try packages =
-    json.decode(response.body, dynamic.list(package_decoder()))
+    json.decode(response.body, d.list(package_decoder()))
     |> result.map_error(JsonError)
 
   io.debug(packages)
@@ -39,16 +39,16 @@ type Release {
 }
 
 fn package_decoder() -> Decoder(Package) {
-  dynamic.decode3(
+  d.decode3(
     Package,
-    dynamic.field("name", dynamic.string),
-    dynamic.field("updated_at", dynamic.string),
-    dynamic.field(
+    d.field("name", d.string),
+    d.field("updated_at", d.string),
+    d.field(
       "releases",
-      dynamic.list(dynamic.decode2(
+      d.list(d.decode2(
         Release,
-        dynamic.field("version", dynamic.string),
-        dynamic.field("url", dynamic.string),
+        d.field("version", d.string),
+        d.field("url", d.string),
       )),
     ),
   )
