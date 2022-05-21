@@ -6,6 +6,7 @@ import gleam/hackney
 import gleam/list
 import gleam/dynamic.{Decoder} as d
 import time/parse.{parse_iso8601_to_epoch_timestamp}
+import gleam/pgo
 import gleam/string
 import gleam/int
 
@@ -14,7 +15,7 @@ pub type Error {
   JsonError(json.DecodeError)
 }
 
-pub fn query() {
+pub fn query(_db: pgo.Connection) {
   query_all_packages(
     [],
     1,
