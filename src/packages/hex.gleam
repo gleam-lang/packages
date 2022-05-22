@@ -66,13 +66,11 @@ fn update_last_scanned(
 fn sort_packages(package: Package) -> Result(Package, Error) {
   // TODO Sort Gleam Packages
   // 1. Check if already in DB
-  // 2. Get list of releases to check
-  //    If in DB: only new releases
-  //    If not: all releases
-  // 3. Query list of releases and make a new list of valid ones
-  // 4. If any valid insert into DB with a corresponding package row
-  // 5. Update package in DB if out of date
-  // 6. Return the new list of DB Package Type
+  // 2. Check latest release
+  //    If is gleam: keep, else: remove
+  // 3. Save new release in DB
+  // 4. Update package in DB if out of date
+  // 5. Return the new list of DB Package Type
   try latest_release =
     package.releases
     |> list.at(0)
