@@ -13,17 +13,39 @@ import gleam/int
 pub type Error {
   HackneyError(hackney.Error)
   JsonError(json.DecodeError)
+  DatabaseError(pgo.QueryError)
+  MiscError(String)
 }
 
-pub fn query(_db: pgo.Connection) {
-  query_all_packages(
-    [],
-    1,
-    parse_iso8601_to_epoch_timestamp("2022-05-21T07:47:42.555499Z"),
-  )
-  |> io.debug
+pub fn query(db: pgo.Connection) {
+  try last_scanned =
+    get_last_scanned(db)
+    |> io.debug
 
+  //query_all_packages([], 1, last_scanned)
+  //|> io.debug
   Ok(1)
+}
+
+const last_scanned_query = "SELECT id, scanned_at FROM previous_hex_api_scan LIMIT 1;"
+
+fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
+  try response =
+    pgo.execute(
+      last_scanned_query,
+      db,
+      [],
+      d.tuple2(
+        d.bool,
+        d.tuple2(d.tuple3(d.int, d.int, d.int), d.tuple3(d.int, d.int, d.int)),
+      ),
+    )
+    |> result.map_error(DatabaseError)
+
+  case response.rows {
+    [first, ..] -> Ok(parse.to_epoch_timetsamp(first.1))
+    _ -> Ok(0)
+  }
 }
 
 fn query_all_packages(
