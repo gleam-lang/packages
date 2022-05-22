@@ -6,7 +6,6 @@ import gleam/io
 import gleam/pgo
 
 pub fn main() {
-  // TODO Handle errors better
   assert Ok(pg_url) = os.get_env("DATABASE_URL")
   assert Ok(pgo_config) = pgo.url_config(pg_url)
 
