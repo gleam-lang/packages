@@ -5,7 +5,7 @@ import gleam/result
 import gleam/hackney
 import gleam/list
 import gleam/dynamic.{Decoder} as d
-import time/parse.{parse_iso8601_to_epoch_timestamp}
+import time/parse.{parse_iso8601_to_gregorian_seconds}
 import gleam/pgo
 import gleam/string
 import gleam/int
@@ -49,7 +49,7 @@ fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
     |> result.map_error(DatabaseError)
 
   case response.rows {
-    [first, ..] -> Ok(parse.to_epoch_timetsamp(first.1))
+    [first, ..] -> Ok(parse.to_gregorian_seconds(first.1))
     _ -> Ok(0)
   }
 }
@@ -122,26 +122,30 @@ fn query_all_packages(
     hackney.send(req)
     |> result.map_error(HackneyError)
 
+  // The packages just fetched from the page
   try packages =
     json.decode(response.body, d.list(package_decoder()))
     |> result.map_error(JsonError)
 
+  // The packages that have been updated since we last scanned and indexed the
+  // hex api.
   let new_packages =
     packages
     |> list.filter(fn(x) {
-      parse_iso8601_to_epoch_timestamp(x.updated_at) > last_ran
+      parse_iso8601_to_gregorian_seconds(x.updated_at) > last_ran
     })
 
+  let all_packages = list.append(last_page, new_packages)
+
+  // Checks if the new_packages are the same length (or greater - even though 
+  // imposible in theory) than the packages fetched from hex. If it is that
+  // means that more packages need to be fetched as the entire page is new
+  // from the last scan, if not then we know we have got all the new packages
+  // and anything elase can be ignored as it should in theory have already been
+  // indexed.
   case list.length(new_packages) >= list.length(packages) {
-    True -> query_all_packages(new_packages, next_page + 1, last_ran)
-    False ->
-      Ok(list.append(
-        last_page,
-        packages
-        |> list.filter(fn(x) {
-          parse_iso8601_to_epoch_timestamp(x.updated_at) > last_ran
-        }),
-      ))
+    True -> query_all_packages(all_packages, next_page + 1, last_ran)
+    False -> Ok(all_packages)
   }
 }
 
