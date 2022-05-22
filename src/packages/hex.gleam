@@ -9,12 +9,14 @@ import time/parse.{parse_iso8601_to_epoch_timestamp}
 import gleam/pgo
 import gleam/string
 import gleam/int
+import gleam/option.{Option}
 
 pub type Error {
   HackneyError(hackney.Error)
   JsonError(json.DecodeError)
   DatabaseError(pgo.QueryError)
   MiscError(String)
+  NilError(Nil)
 }
 
 pub fn query(db: pgo.Connection) {
@@ -71,7 +73,39 @@ fn sort_packages(package: Package) -> Result(Package, Error) {
   // 4. If any valid insert into DB with a corresponding package row
   // 5. Update package in DB if out of date
   // 6. Return the new list of DB Package Type
-  Ok(package)
+  try latest_release =
+    package.releases
+    |> list.at(0)
+    |> result.map_error(NilError)
+
+  let req =
+    http.default_req()
+    |> http.set_method(http.Get)
+    |> http.prepend_req_header(
+      "User-Agent",
+      "GleamPackages/0.0.1 (Gleam/0.21.0)",
+    )
+    |> http.set_host("hex.pm")
+    |> http.set_path(
+      "/api/packages/"
+      |> string.append(package.name)
+      |> string.append("/releases/")
+      |> string.append(latest_release.version),
+    )
+
+  try response =
+    hackney.send(req)
+    |> result.map_error(HackneyError)
+
+  try release =
+    json.decode(response.body, full_release_decoder())
+    |> result.map_error(JsonError)
+
+  // Keep this package because the current version is made with gleam! ✨
+  case list.contains(release.meta.build_tools, "gleam") {
+    True -> Ok(package)
+    False -> Error(NilError(Nil))
+  }
 }
 
 fn query_all_packages(
@@ -125,6 +159,30 @@ pub type Package {
 
 pub type Release {
   Release(version: String, url: String)
+}
+
+pub type ReleaseMeta {
+  ReleaseMeta(app: Option(String), build_tools: List(String))
+}
+
+pub type FullRelease {
+  FullRelease(version: String, url: String, meta: ReleaseMeta)
+}
+
+fn full_release_decoder() -> Decoder(FullRelease) {
+  d.decode3(
+    FullRelease,
+    d.field("version", d.string),
+    d.field("url", d.string),
+    d.field(
+      "meta",
+      d.decode2(
+        ReleaseMeta,
+        d.field("app", d.optional(d.string)),
+        d.field("build_tools", d.list(d.string)),
+      ),
+    ),
+  )
 }
 
 fn package_decoder() -> Decoder(Package) {
