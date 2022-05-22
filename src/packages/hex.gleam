@@ -20,12 +20,12 @@ pub type Error {
 pub fn query(db: pgo.Connection) {
   try last_scanned = get_last_scanned(db)
 
-  query_all_packages([], 1, last_scanned)
-  |> io.debug
+  try packages = query_all_packages([], 1, last_scanned)
 
   assert Ok(_) = update_last_scanned(db)
 
-  Ok(1)
+  sort_packages(packages)
+  |> io.debug
 }
 
 const last_scanned_query = "SELECT id, date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
@@ -56,6 +56,19 @@ fn update_last_scanned(
 ) -> Result(pgo.Returned(d.Dynamic), Error) {
   pgo.execute(update_last_scanned_query, db, [], d.dynamic)
   |> result.map_error(DatabaseError)
+}
+
+fn sort_packages(packages: List(Package)) -> Result(List(Package), Error) {
+  // TODO Sort Gleam Packages
+  // 1. Check if already in DB
+  // 2. Get list of releases to check
+  //    If in DB: only new releases
+  //    If not: all releases
+  // 3. Query list of releases and make a new list of valid ones
+  // 4. If any valid insert into DB with a corresponding package row
+  // 5. Update package in DB if out of date
+  // 6. Return the new list of DB Package Type
+  Ok(packages)
 }
 
 fn query_all_packages(
@@ -103,11 +116,11 @@ fn query_all_packages(
   }
 }
 
-type Package {
+pub type Package {
   Package(name: String, updated_at: String, releases: List(Release))
 }
 
-type Release {
+pub type Release {
   Release(version: String, url: String)
 }
 
