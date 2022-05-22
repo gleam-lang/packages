@@ -24,8 +24,11 @@ pub fn query(db: pgo.Connection) {
 
   assert Ok(_) = update_last_scanned(db)
 
-  sort_packages(packages)
-  |> io.debug
+  Ok(
+    packages
+    |> list.filter_map(sort_packages)
+    |> io.debug,
+  )
 }
 
 const last_scanned_query = "SELECT id, date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
@@ -58,7 +61,7 @@ fn update_last_scanned(
   |> result.map_error(DatabaseError)
 }
 
-fn sort_packages(packages: List(Package)) -> Result(List(Package), Error) {
+fn sort_packages(package: Package) -> Result(Package, Error) {
   // TODO Sort Gleam Packages
   // 1. Check if already in DB
   // 2. Get list of releases to check
@@ -68,7 +71,7 @@ fn sort_packages(packages: List(Package)) -> Result(List(Package), Error) {
   // 4. If any valid insert into DB with a corresponding package row
   // 5. Update package in DB if out of date
   // 6. Return the new list of DB Package Type
-  Ok(packages)
+  Ok(package)
 }
 
 fn query_all_packages(
