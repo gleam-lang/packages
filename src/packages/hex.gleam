@@ -15,8 +15,7 @@ pub type Error {
   HackneyError(hackney.Error)
   JsonError(json.DecodeError)
   DatabaseError(pgo.QueryError)
-  MiscError(String)
-  NilError(Nil)
+  ItemNotInListError(Nil)
 }
 
 pub fn query(db: pgo.Connection) {
@@ -24,7 +23,25 @@ pub fn query(db: pgo.Connection) {
 
   try packages = query_all_packages([], 1, last_scanned)
 
-  assert Ok(_) = update_last_scanned(db)
+  // Only update last scanned at if packages were actually
+  // found that way we only ever use the time from
+  // Hex's API 
+  case packages
+  |> list.length >= 1 {
+    True -> {
+      let len =
+        packages
+        |> list.length
+      assert Ok(last_package) =
+        packages
+        |> list.at(len - 1)
+        |> result.map_error(ItemNotInListError)
+      assert Ok(_) =
+        update_last_scanned(db, parse.parse_iso8601(last_package.updated_at))
+      Ok(Nil)
+    }
+    _ -> Ok(Nil)
+  }
 
   packages
   |> list.filter_map(sort_packages)
@@ -48,12 +65,21 @@ fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
   }
 }
 
-const update_last_scanned_query = "UPDATE previous_hex_api_scan SET scanned_at = now();"
-
 fn update_last_scanned(
   db: pgo.Connection,
+  date: parse.LocalDateTime,
 ) -> Result(pgo.Returned(d.Dynamic), Error) {
-  pgo.execute(update_last_scanned_query, db, [], d.dynamic)
+  // It is done this way as I could not figure out how to
+  // inject a time as a string with the built in $1 system but
+  // this is safe as the value is constructed from a known datatype
+  pgo.execute(
+    "UPDATE previous_hex_api_scan SET scanned_at = '"
+    |> string.append(parse.to_pg_time(date))
+    |> string.append("';"),
+    db,
+    [],
+    d.dynamic,
+  )
   |> result.map_error(DatabaseError)
 }
 
@@ -68,7 +94,7 @@ fn sort_packages(package: Package) -> Result(Package, Error) {
   try latest_release =
     package.releases
     |> list.at(0)
-    |> result.map_error(NilError)
+    |> result.map_error(ItemNotInListError)
 
   let req =
     http.default_req()
@@ -93,7 +119,7 @@ fn sort_packages(package: Package) -> Result(Package, Error) {
   // Keep this package because the current version is made with gleam! ✨
   case list.contains(release.meta.build_tools, "gleam") {
     True -> Ok(package)
-    False -> Error(NilError(Nil))
+    False -> Error(ItemNotInListError(Nil))
   }
 }
 
