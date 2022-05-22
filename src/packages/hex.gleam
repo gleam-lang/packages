@@ -18,12 +18,11 @@ pub type Error {
 }
 
 pub fn query(db: pgo.Connection) {
-  try last_scanned =
-    get_last_scanned(db)
-    |> io.debug
+  try last_scanned = get_last_scanned(db)
 
-  //query_all_packages([], 1, last_scanned)
-  //|> io.debug
+  query_all_packages([], 1, last_scanned)
+  |> io.debug
+
   Ok(1)
 }
 
