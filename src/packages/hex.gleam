@@ -26,11 +26,10 @@ pub fn query(db: pgo.Connection) {
 
   assert Ok(_) = update_last_scanned(db)
 
-  Ok(
-    packages
-    |> list.filter_map(sort_packages)
-    |> io.debug,
-  )
+  packages
+  |> list.filter_map(sort_packages)
+  |> io.debug
+  |> Ok
 }
 
 const last_scanned_query = "SELECT id, date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
