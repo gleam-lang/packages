@@ -1,19 +1,16 @@
 import packages/web
 import packages/hex
 import gleam/erlang
+import gleam/erlang/os
 import gleam/io
 import gleam/pgo
 
 pub fn main() {
-  let db =
-    pgo.connect(
-      pgo.Config(
-        ..pgo.default_config(),
-        host: "localhost",
-        database: "my_database",
-        pool_size: 15,
-      ),
-    )
+  // TODO Handle errors better
+  assert Ok(pg_url) = os.get_env("DATABASE_URL")
+  assert Ok(pgo_config) = pgo.url_config(pg_url)
+
+  let db = pgo.connect(pgo.Config(..pgo_config, pool_size: 15))
 
   case erlang.start_arguments() {
     ["serve"] -> web.start()
