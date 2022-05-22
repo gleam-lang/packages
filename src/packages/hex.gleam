@@ -28,7 +28,7 @@ pub fn query(db: pgo.Connection) {
   Ok(1)
 }
 
-const last_scanned_query = "SELECT id, scanned_at FROM previous_hex_api_scan LIMIT 1;"
+const last_scanned_query = "SELECT id, date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
 
 fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
   try response =
