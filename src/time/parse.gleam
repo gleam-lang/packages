@@ -4,11 +4,11 @@ pub type LocalDateTime =
 pub external fn parse_iso8601(datestring: String) -> LocalDateTime =
   "iso8601" "parse"
 
-pub external fn to_epoch_timetsamp(time: LocalDateTime) -> Int =
-  "packages_ffi" "to_unix_timestamp"
+pub external fn to_gregorian_seconds(time: LocalDateTime) -> Int =
+  "packages_ffi" "to_gregorian_seconds"
 
-pub fn parse_iso8601_to_epoch_timestamp(datestring: String) -> Int {
+pub fn parse_iso8601_to_gregorian_seconds(datestring: String) -> Int {
   datestring
   |> parse_iso8601
-  |> to_epoch_timetsamp
+  |> to_gregorian_seconds
 }
