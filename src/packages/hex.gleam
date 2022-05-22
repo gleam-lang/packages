@@ -32,23 +32,18 @@ pub fn query(db: pgo.Connection) {
   |> Ok
 }
 
-const last_scanned_query = "SELECT id, date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
+const last_scanned_query = "SELECT date_trunc('second', scanned_at) FROM previous_hex_api_scan LIMIT 1;"
 
 fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
+  let ints = d.tuple3(d.int, d.int, d.int)
+  let datetime_decoder = d.tuple2(ints, ints)
+
   try response =
-    pgo.execute(
-      last_scanned_query,
-      db,
-      [],
-      d.tuple2(
-        d.bool,
-        d.tuple2(d.tuple3(d.int, d.int, d.int), d.tuple3(d.int, d.int, d.int)),
-      ),
-    )
+    pgo.execute(last_scanned_query, db, [], d.element(0, datetime_decoder))
     |> result.map_error(DatabaseError)
 
   case response.rows {
-    [first, ..] -> Ok(parse.to_gregorian_seconds(first.1))
+    [first, ..] -> Ok(parse.to_gregorian_seconds(first))
     _ -> Ok(0)
   }
 }
