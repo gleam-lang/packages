@@ -23,6 +23,8 @@ pub fn query(db: pgo.Connection) {
   query_all_packages([], 1, last_scanned)
   |> io.debug
 
+  assert Ok(_) = update_last_scanned(db)
+
   Ok(1)
 }
 
@@ -45,6 +47,15 @@ fn get_last_scanned(db: pgo.Connection) -> Result(Int, Error) {
     [first, ..] -> Ok(parse.to_epoch_timetsamp(first.1))
     _ -> Ok(0)
   }
+}
+
+const update_last_scanned_query = "UPDATE previous_hex_api_scan SET scanned_at = now();"
+
+fn update_last_scanned(
+  db: pgo.Connection,
+) -> Result(pgo.Returned(d.Dynamic), Error) {
+  pgo.execute(update_last_scanned_query, db, [], d.dynamic)
+  |> result.map_error(DatabaseError)
 }
 
 fn query_all_packages(
