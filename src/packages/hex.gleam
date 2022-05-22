@@ -79,10 +79,7 @@ fn sort_packages(package: Package) -> Result(Package, Error) {
   let req =
     http.default_req()
     |> http.set_method(http.Get)
-    |> http.prepend_req_header(
-      "User-Agent",
-      "GleamPackages/0.0.1 (Gleam/0.21.0)",
-    )
+    |> http.prepend_req_header("User-Agent", "GleamPackages")
     |> http.set_host("hex.pm")
     |> http.set_path(
       "/api/packages/"
@@ -114,10 +111,7 @@ fn query_all_packages(
   let req =
     http.default_req()
     |> http.set_method(http.Get)
-    |> http.prepend_req_header(
-      "User-Agent",
-      "GleamPackages/0.0.1 (Gleam/0.21.0)",
-    )
+    |> http.prepend_req_header("User-Agent", "GleamPackages")
     |> http.set_host("hex.pm")
     |> http.set_path(
       "/api/packages?sort=updated_at&page="
