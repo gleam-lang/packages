@@ -1,10 +1,12 @@
 import gleam/dynamic.{Decoder} as d
 import gleam/option.{Option}
 
+/// Meta for a hex release
 pub type HexReleaseMeta {
   HexReleaseMeta(app: Option(String), build_tools: List(String))
 }
 
+/// Release from /api/packages/:package/releases/:release
 pub type HexRelease {
   HexRelease(version: String, url: String, meta: HexReleaseMeta)
 }
