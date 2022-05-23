@@ -4,12 +4,13 @@ import gleam/http
 import gleam/result
 import gleam/hackney
 import gleam/list
-import gleam/dynamic.{Decoder} as d
+import gleam/dynamic as d
 import time/parse.{parse_iso8601_to_gregorian_seconds}
 import gleam/pgo
 import gleam/string
 import gleam/int
-import gleam/option.{Option}
+import packages/models/hex/package.{HexPackage, hex_package_decoder}
+import packages/models/hex/release.{hex_release_decoder}
 
 pub type Error {
   HackneyError(hackney.Error)
@@ -89,7 +90,7 @@ fn update_last_scanned(
   |> result.map_error(DatabaseError)
 }
 
-fn fliter_map_packages(package: Package) -> Result(Package, Error) {
+fn fliter_map_packages(package: HexPackage) -> Result(HexPackage, Error) {
   // TODO Sort Gleam Packages
   // 1. Check if already in DB
   // 2. Check latest release
@@ -119,7 +120,7 @@ fn fliter_map_packages(package: Package) -> Result(Package, Error) {
     |> result.map_error(HackneyError)
 
   try release =
-    json.decode(response.body, full_release_decoder())
+    json.decode(response.body, hex_release_decoder())
     |> result.map_error(JsonError)
 
   // Keep this package because the current version is made with gleam! ✨
@@ -130,10 +131,10 @@ fn fliter_map_packages(package: Package) -> Result(Package, Error) {
 }
 
 fn query_all_packages(
-  last_page: List(Package),
+  last_page: List(HexPackage),
   next_page: Int,
   last_ran: Int,
-) -> Result(List(Package), Error) {
+) -> Result(List(HexPackage), Error) {
   let req =
     http.default_req()
     |> http.set_method(http.Get)
@@ -150,7 +151,7 @@ fn query_all_packages(
 
   // The packages just fetched from the page
   try packages =
-    json.decode(response.body, d.list(package_decoder()))
+    json.decode(response.body, d.list(hex_package_decoder()))
     |> result.map_error(JsonError)
 
   // The packages that have been updated since we last scanned and indexed the
@@ -173,52 +174,4 @@ fn query_all_packages(
     True -> query_all_packages(all_packages, next_page + 1, last_ran)
     False -> Ok(all_packages)
   }
-}
-
-pub type Package {
-  Package(name: String, updated_at: String, releases: List(Release))
-}
-
-pub type Release {
-  Release(version: String, url: String)
-}
-
-pub type ReleaseMeta {
-  ReleaseMeta(app: Option(String), build_tools: List(String))
-}
-
-pub type FullRelease {
-  FullRelease(version: String, url: String, meta: ReleaseMeta)
-}
-
-fn full_release_decoder() -> Decoder(FullRelease) {
-  d.decode3(
-    FullRelease,
-    d.field("version", d.string),
-    d.field("url", d.string),
-    d.field(
-      "meta",
-      d.decode2(
-        ReleaseMeta,
-        d.field("app", d.optional(d.string)),
-        d.field("build_tools", d.list(d.string)),
-      ),
-    ),
-  )
-}
-
-fn package_decoder() -> Decoder(Package) {
-  d.decode3(
-    Package,
-    d.field("name", d.string),
-    d.field("updated_at", d.string),
-    d.field(
-      "releases",
-      d.list(d.decode2(
-        Release,
-        d.field("version", d.string),
-        d.field("url", d.string),
-      )),
-    ),
-  )
 }
