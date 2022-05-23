@@ -49,7 +49,7 @@ pub fn query(db: pgo.Connection) {
   }
 
   packages
-  |> list.filter_map(sort_packages)
+  |> list.filter_map(fliter_map_packages)
   // TODO (HarryET): Remove before merge of PR
   |> io.debug
   |> Ok
@@ -89,7 +89,7 @@ fn update_last_scanned(
   |> result.map_error(DatabaseError)
 }
 
-fn sort_packages(package: Package) -> Result(Package, Error) {
+fn fliter_map_packages(package: Package) -> Result(Package, Error) {
   // TODO Sort Gleam Packages
   // 1. Check if already in DB
   // 2. Check latest release
