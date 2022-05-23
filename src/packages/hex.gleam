@@ -23,21 +23,26 @@ pub fn query(db: pgo.Connection) {
 
   try packages = query_all_packages([], 1, last_scanned)
 
+  // Get the packages into order bassed on when they have
+  // been updated with new data
+  let packages =
+    packages
+    |> list.sort(fn(a, b) {
+      int.compare(
+        parse.parse_iso8601_to_gregorian_seconds(a.updated_at),
+        parse.parse_iso8601_to_gregorian_seconds(b.updated_at),
+      )
+    })
+
   // Only update last scanned at if packages were actually
   // found that way we only ever use the time from
-  // Hex's API 
+  // Hex's API, the list is revsersed so that the last package
+  // is actually the first for easy with the case statement
   case packages
-  |> list.length >= 1 {
-    True -> {
-      let len =
-        packages
-        |> list.length
-      assert Ok(last_package) =
-        packages
-        |> list.at(len - 1)
-        |> result.map_error(ItemNotInListError)
+  |> list.reverse {
+    [last, ..] -> {
       assert Ok(_) =
-        update_last_scanned(db, parse.parse_iso8601(last_package.updated_at))
+        update_last_scanned(db, parse.parse_iso8601(last.updated_at))
       Ok(Nil)
     }
     _ -> Ok(Nil)
@@ -45,6 +50,7 @@ pub fn query(db: pgo.Connection) {
 
   packages
   |> list.filter_map(sort_packages)
+  // TODO (HarryET): Remove before merge of PR
   |> io.debug
   |> Ok
 }
