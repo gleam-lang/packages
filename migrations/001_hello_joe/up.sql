@@ -1,6 +1,10 @@
 create table packages (
   name varchar(100) primary key,
-  imported_at timestamp not null default current_timestamp
+  updated_at timestamp not null default current_timestamp,
+  imported_at timestamp not null default current_timestamp,
+  links jsonb not null default '{}'::jsonb,
+  licenses varchar(255)[] not null default '[]',
+  description not null text default 'My Description' 
 );
 
 create table previous_hex_api_scan (
