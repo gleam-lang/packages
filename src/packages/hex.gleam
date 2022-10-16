@@ -93,7 +93,7 @@ fn update_last_scanned(
   |> result.map_error(DatabaseError)
 }
 
-fn fliter_map_packages(package: HexPackage) -> Result(HexPackage, Error) {
+pub fn fliter_map_packages(package: HexPackage) -> Result(HexPackage, Error) {
   // TODO Sort Gleam Packages
   // 1. Check if already in DB
   // 2. Check latest release
