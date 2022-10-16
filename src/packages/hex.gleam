@@ -1,6 +1,7 @@
 import gleam/io
 import gleam/json
-import gleam/http
+import gleam/http/request
+import gleam/http.{Get}
 import gleam/result
 import gleam/hackney
 import gleam/list
@@ -39,8 +40,10 @@ pub fn query(db: pgo.Connection) {
   // found that way we only ever use the time from
   // Hex's API, the list is revsersed so that the last package
   // is actually the first for easy with the case statement
-  case packages
-  |> list.reverse {
+  case
+    packages
+    |> list.reverse
+  {
     [last, ..] -> {
       assert Ok(_) =
         update_last_scanned(db, parse.parse_iso8601(last.updated_at))
@@ -104,11 +107,11 @@ fn fliter_map_packages(package: HexPackage) -> Result(HexPackage, Error) {
     |> result.map_error(ItemNotInListError)
 
   let req =
-    http.default_req()
-    |> http.set_method(http.Get)
-    |> http.prepend_req_header("user-agent", "GleamPackages")
-    |> http.set_host("hex.pm")
-    |> http.set_path(
+    request.new()
+    |> request.set_method(Get)
+    |> request.prepend_header("user-agent", "GleamPackages")
+    |> request.set_host("hex.pm")
+    |> request.set_path(
       "/api/packages/"
       |> string.append(package.name)
       |> string.append("/releases/")
@@ -136,11 +139,11 @@ fn query_all_packages(
   last_ran: Int,
 ) -> Result(List(HexPackage), Error) {
   let req =
-    http.default_req()
-    |> http.set_method(http.Get)
-    |> http.prepend_req_header("user-agent", "GleamPackages")
-    |> http.set_host("hex.pm")
-    |> http.set_path(
+    request.new()
+    |> request.set_method(Get)
+    |> request.prepend_header("user-agent", "GleamPackages")
+    |> request.set_host("hex.pm")
+    |> request.set_path(
       "/api/packages?sort=updated_at&page="
       |> string.append(int.to_string(next_page)),
     )
@@ -164,7 +167,7 @@ fn query_all_packages(
 
   let all_packages = list.append(last_page, new_packages)
 
-  // Checks if the new_packages are the same length (or greater - even though 
+  // Checks if the new_packages are the same length (or greater - even though
   // imposible in theory) than the packages fetched from hex. If it is that
   // means that more packages need to be fetched as the entire page is new
   // from the last scan, if not then we know we have got all the new packages

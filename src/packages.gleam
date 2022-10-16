@@ -6,14 +6,13 @@ import gleam/io
 import gleam/pgo
 
 pub fn main() {
-  assert Ok(pg_url) = os.get_env("DATABASE_URL")
-  assert Ok(pgo_config) = pgo.url_config(pg_url)
-
-  let db = pgo.connect(pgo.Config(..pgo_config, pool_size: 15))
-
   case erlang.start_arguments() {
     ["serve"] -> web.start()
     ["query-hex"] -> {
+      assert Ok(pg_url) = os.get_env("DATABASE_URL")
+      assert Ok(pgo_config) = pgo.url_config(pg_url)
+      let db = pgo.connect(pgo.Config(..pgo_config, pool_size: 15))
+      // Query Hex.pm API
       assert Ok(_) = hex.query(db)
       Nil
     }
@@ -22,10 +21,12 @@ pub fn main() {
 }
 
 fn print_help() {
-  io.print("USAGE:
+  io.print(
+    "USAGE:
   gleam run serve
   gleam run query-hex
-")
+",
+  )
   exit(1)
 }
 
