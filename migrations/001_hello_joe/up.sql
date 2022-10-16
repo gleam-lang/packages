@@ -4,7 +4,7 @@ create table packages
     updated_at  timestamp      not null default current_timestamp,
     imported_at timestamp      not null default current_timestamp,
     links       jsonb          not null default '{}'::jsonb,
-    licenses    varchar(255)[] not null default '[]',
+    licenses    varchar(255)[] not null default array[]::varchar(255)[],
     description text           not null default 'My Description'
 );
 
