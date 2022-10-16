@@ -43,7 +43,7 @@ pub fn hex_package_decoder() -> Decoder(HexPackage) {
       d.decode3(
         HexPackageMeta,
         d.field("links", d.map(d.string, d.string)),
-        d.field("licences", d.list(d.string)),
+        d.field("licenses", d.list(d.string)),
         d.field("description", d.string),
       ),
     ),
