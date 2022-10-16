@@ -6,7 +6,7 @@ import packages/models/hex/package.{
 import gleeunit/should
 
 pub fn hex_package_decoder_test() {
-  let shimmer =
+  let json_string =
     "{
   \"configs\": {
     \"erlang.mk\": \"dep_shimmer = hex 0.0.3\",
@@ -65,7 +65,7 @@ pub fn hex_package_decoder_test() {
   \"url\": \"https://hex.pm/api/packages/shimmer\"
 }"
 
-  assert Ok(package) = json.decode(shimmer, package.hex_package_decoder())
+  assert Ok(package) = json.decode(json_string, package.hex_package_decoder())
 
   package
   |> should.equal(HexPackage(
