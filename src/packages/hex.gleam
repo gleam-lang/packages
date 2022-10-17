@@ -1,4 +1,3 @@
-import gleam/io
 import gleam/json
 import gleam/http/request
 import gleam/http.{Get}
