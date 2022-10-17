@@ -17,7 +17,7 @@ pub type Error {
   HackneyError(hackney.Error)
   JsonError(json.DecodeError)
   DatabaseError(pgo.QueryError)
-  ItemNotInListError(Nil)
+  NotGleamPackage(String)
 }
 
 pub fn query(db: pgo.Connection) {
@@ -98,35 +98,35 @@ fn update_last_scanned(
 /// 2. If is gleam in build tools: return package,
 ///    Else: return error
 pub fn is_gleam_package(package: HexPackage) -> Result(HexPackage, Error) {
-  try latest_release =
+  case
     package.releases
-    |> list.at(0)
-    |> result.map_error(ItemNotInListError)
-
-  let req =
-    request.new()
-    |> request.set_method(Get)
-    |> request.prepend_header("user-agent", "GleamPackages")
-    |> request.set_host("hex.pm")
-    |> request.set_path(
-      "/api/packages/"
-      |> string.append(package.name)
-      |> string.append("/releases/")
-      |> string.append(latest_release.version),
-    )
-
-  try response =
-    hackney.send(req)
-    |> result.map_error(HackneyError)
-
-  try release =
-    json.decode(response.body, hex_release_decoder())
-    |> result.map_error(JsonError)
-
-  // Keep this package because the current version is made with gleam! ✨
-  case list.contains(release.meta.build_tools, "gleam") {
-    True -> Ok(package)
-    False -> Error(ItemNotInListError(Nil))
+    |> list.first()
+  {
+    Ok(latest_release) -> {
+      let req =
+        request.new()
+        |> request.set_method(Get)
+        |> request.prepend_header("user-agent", "GleamPackages")
+        |> request.set_host("hex.pm")
+        |> request.set_path(
+          "/api/packages/"
+          |> string.append(package.name)
+          |> string.append("/releases/")
+          |> string.append(latest_release.version),
+        )
+      try response =
+        hackney.send(req)
+        |> result.map_error(HackneyError)
+      try release =
+        json.decode(response.body, hex_release_decoder())
+        |> result.map_error(JsonError)
+      // Keep this package because the current version is made with gleam! ✨
+      case list.contains(release.meta.build_tools, "gleam") {
+        True -> Ok(package)
+        False -> Error(NotGleamPackage(package.name))
+      }
+    }
+    Error(_) -> Error(NotGleamPackage(package.name))
   }
 }
 
