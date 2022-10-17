@@ -4,7 +4,7 @@ import packages/models/hex/package.{
 import gleam/map
 import gleam/string
 import gleam/list
-import packages/hex.{fliter_map_packages}
+import packages/hex.{is_gleam_package}
 import gleeunit/should
 
 pub fn packages_list_fliter_test() {
@@ -17,23 +17,23 @@ pub fn packages_list_fliter_test() {
 
   let flitered_packages =
     example_packages
-    |> list.filter_map(fliter_map_packages)
+    |> list.filter_map(is_gleam_package)
 
   flitered_packages
   |> list.length
   |> should.equal(2)
 }
 
-pub fn fliter_map_packages_reject_invalid_test() {
+pub fn is_gleam_package_reject_invalid_test() {
   let example_package = new_test_package("phoenix", "1.6.14")
 
-  assert Error(_) = fliter_map_packages(example_package)
+  assert Error(_) = is_gleam_package(example_package)
 }
 
-pub fn fliter_map_packages_accept_valid_test() {
+pub fn is_gleam_package_accept_valid_test() {
   let example_package = new_test_package("gleam_stdlib", "0.23.0")
 
-  assert Ok(_) = fliter_map_packages(example_package)
+  assert Ok(_) = is_gleam_package(example_package)
 }
 
 fn new_test_package(name: String, release: String) -> HexPackage {

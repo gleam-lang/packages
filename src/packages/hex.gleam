@@ -93,14 +93,12 @@ fn update_last_scanned(
   |> result.map_error(DatabaseError)
 }
 
-pub fn fliter_map_packages(package: HexPackage) -> Result(HexPackage, Error) {
-  // TODO Sort Gleam Packages
-  // 1. Check if already in DB
-  // 2. Check latest release
-  //    If is gleam: keep, else: remove
-  // 3. Save new release in DB
-  // 4. Update package in DB if out of date
-  // 5. Return the new list of DB Package Type
+/// This function is used to check if a package is written in Gleam
+/// This function works by using the following steps:
+/// 1. Check latest release
+/// 2. If is gleam in build tools: return package,
+///    Else: return error
+pub fn is_gleam_package(package: HexPackage) -> Result(HexPackage, Error) {
   try latest_release =
     package.releases
     |> list.at(0)
