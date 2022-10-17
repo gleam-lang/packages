@@ -53,8 +53,7 @@ pub fn query(db: pgo.Connection) {
   }
 
   packages
-  |> list.filter_map(fliter_map_packages)
-  // TODO (HarryET): Remove before merge of PR
+  |> list.filter_map(is_gleam_package)
   |> io.debug
   |> Ok
 }
