@@ -1,19 +1,16 @@
-create table packages
-(
-    name        varchar(100) primary key,
-    updated_at  timestamp      not null default current_timestamp,
-    imported_at timestamp      not null default current_timestamp,
-    links       jsonb          not null default '{}'::jsonb,
-    licenses    varchar(255)[] not null default array[]::varchar(255)[],
-    description text           not null default 'My Description'
+CREATE TABLE packages (
+    name varchar(100) PRIMARY KEY,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    imported_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    links jsonb NOT NULL DEFAULT '{}' ::jsonb,
+    licenses varchar(255)[] NOT NULL DEFAULT ARRAY[] ::varchar(255)[],
+    description text NOT NULL DEFAULT 'My Description'
 );
 
-create table previous_hex_api_scan
-(
-    id         boolean primary key default true,
-    scanned_at timestamp not null,
-
+CREATE TABLE previous_hex_api_scan (
+    id boolean PRIMARY KEY DEFAULT TRUE,
+    scanned_at timestamp NOT NULL,
     -- We use a constraint to enforce that the id is always the value `true` so
     -- now this table can only hold one row.
-    constraint previous_hex_api_scan_singleton check (id)
-)
+    CONSTRAINT previous_hex_api_scan_singleton CHECK (id)
+);
