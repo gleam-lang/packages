@@ -1,7 +1,8 @@
 import gleam/json
 import gleam/map
-import packages/models/hex/package.{
-  HexPackage, HexPackageMeta, HexPackageRelease,
+import gleam/option.{Some}
+import gleam/hexpm.{
+  Package, PackageDownloads, PackageMeta, PackageOwner, PackageRelease,
 }
 import gleeunit/should
 
@@ -65,28 +66,42 @@ pub fn hex_package_decoder_test() {
   \"url\": \"https://hex.pm/api/packages/shimmer\"
 }"
 
-  assert Ok(package) = json.decode(json_string, package.hex_package_decoder())
+  let assert Ok(package) = json.decode(json_string, hexpm.decode_package)
 
   package
-  |> should.equal(HexPackage(
+  |> should.equal(Package(
     name: "shimmer",
-    meta: HexPackageMeta(
+    html_url: Some("https://hex.pm/packages/shimmer"),
+    docs_html_url: Some("https://hexdocs.pm/shimmer/"),
+    meta: PackageMeta(
       description: "A Gleam library for interacting with the Discord API",
-      links: map.new()
-      |> map.insert("Repository", "https://github.com/HarryET/shimmer")
-      |> map.insert("Website", "https://gleampkg.com/packages/shimmer"),
+      links: map.from_list([
+        #("Repository", "https://github.com/HarryET/shimmer"),
+        #("Website", "https://gleampkg.com/packages/shimmer"),
+      ]),
       licenses: ["Apache-2.0"],
     ),
-    releases: [
-      HexPackageRelease(
-        version: "0.0.3",
-        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
-      ),
-      HexPackageRelease(
-        version: "0.0.1",
-        url: "https://hex.pm/api/packages/shimmer/releases/0.0.1",
+    downloads: PackageDownloads(all: 17, recent: 1),
+    owners: [
+      PackageOwner(
+        username: "harryet",
+        email: "h.bairstow22@gmail.com",
+        url: "https://hex.pm/api/users/harryet",
       ),
     ],
+    releases: [
+      PackageRelease(
+        version: "0.0.3",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+        inserted_at: "2022-07-07T19:14:04.497803Z",
+      ),
+      PackageRelease(
+        version: "0.0.1",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.1",
+        inserted_at: "2022-01-11T16:33:25.536567Z",
+      ),
+    ],
+    inserted_at: "2022-01-11T16:33:25.508966Z",
     updated_at: "2022-07-07T19:14:07.871112Z",
   ))
 }
