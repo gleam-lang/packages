@@ -60,15 +60,7 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
         dyn.field("recent", dyn.int),
       ),
     ),
-    dyn.field(
-      "owners",
-      dyn.list(dyn.decode3(
-        PackageOwner,
-        dyn.field("username", dyn.string),
-        dyn.field("email", dyn.string),
-        dyn.field("url", dyn.string),
-      )),
-    ),
+    dyn.field("owners", dyn.list(decode_package_owner)),
     dyn.field(
       "releases",
       dyn.list(dyn.decode3(
@@ -82,28 +74,84 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
     dyn.field("updated_at", dyn.string),
   )(data)
 }
-// /// Meta for a hex release
-// pub type HexReleaseMeta {
-//   HexReleaseMeta(app: Option(String), build_tools: List(String))
-// }
 
-// /// Release from /api/packages/:package/releases/:release
-// pub type HexRelease {
-//   HexRelease(version: String, url: String, meta: HexReleaseMeta)
-// }
+/// Release from /api/packages/:package/releases/:release
+pub type Release {
+  Release(
+    version: String,
+    url: String,
+    checksum: String,
+    downloads: Int,
+    publisher: PackageOwner,
+    meta: ReleaseMeta,
+    retirement: Option(ReleaseRetirement),
+  )
+}
 
-// pub fn hex_release_decoder() -> Decoder(HexRelease) {
-//   dyn.decode3(
-//     HexRelease,
-//     dyn.field("version", dyn.string),
-//     dyn.field("url", dyn.string),
-//     dyn.field(
-//       "meta",
-//       dyn.decode2(
-//         HexReleaseMeta,
-//         dyn.field("app", dyn.optional(dyn.string)),
-//         dyn.field("build_tools", dyn.list(dyn.string)),
-//       ),
-//     ),
-//   )
-// }
+/// Meta for a hex release
+pub type ReleaseMeta {
+  ReleaseMeta(app: Option(String), build_tools: List(String))
+}
+
+pub type ReleaseRetirement {
+  ReleaseRetirement(reason: RetirementReason, message: Option(String))
+}
+
+pub type RetirementReason {
+  OtherReason
+  Invalid
+  Security
+  Deprecated
+  Renamed
+}
+
+fn decode_retirement_reason(
+  data: Dynamic,
+) -> Result(RetirementReason, List(DecodeError)) {
+  case dyn.string(data) {
+    Error(e) -> Error(e)
+    Ok("invalid") -> Ok(Invalid)
+    Ok("security") -> Ok(Security)
+    Ok("deprecated") -> Ok(Deprecated)
+    Ok("renamed") -> Ok(Renamed)
+    Ok(_) -> Ok(OtherReason)
+  }
+}
+
+pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
+  dyn.decode7(
+    Release,
+    dyn.field("version", dyn.string),
+    dyn.field("url", dyn.string),
+    dyn.field("checksum", dyn.string),
+    dyn.field("downloads", dyn.int),
+    dyn.field("publisher", decode_package_owner),
+    dyn.field(
+      "meta",
+      dyn.decode2(
+        ReleaseMeta,
+        dyn.field("app", dyn.optional(dyn.string)),
+        dyn.field("build_tools", dyn.list(dyn.string)),
+      ),
+    ),
+    dyn.field(
+      "retirement",
+      dyn.optional(dyn.decode2(
+        ReleaseRetirement,
+        dyn.field("reason", decode_retirement_reason),
+        dyn.field("message", dyn.optional(dyn.string)),
+      )),
+    ),
+  )(data)
+}
+
+fn decode_package_owner(
+  data: Dynamic,
+) -> Result(PackageOwner, List(DecodeError)) {
+  dyn.decode3(
+    PackageOwner,
+    dyn.field("username", dyn.string),
+    dyn.field("email", dyn.string),
+    dyn.field("url", dyn.string),
+  )(data)
+}
