@@ -1,4 +1,4 @@
-# packages.gleam.run
+# Gleam Packages
 
 A Gleam project
 
