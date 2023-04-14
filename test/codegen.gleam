@@ -15,7 +15,7 @@ fn generate_sql_queries_module() -> Nil {
   let assert Ok(files) = file.list_directory("sql")
   let assert Ok(functions) = list.try_map(files, generate_sql_function)
 
-  let imports = ["import gleam/pgo", "import gleam/dynamic.{Dynamic}"]
+  let imports = ["import gleam/pgo", "import gleam/dynamic"]
   let module =
     string.join(
       [
@@ -40,7 +40,7 @@ fn generate_sql_function(file: String) -> Result(String, _) {
   let lines = [
     "pub fn " <> name <> "(",
     "  db: pgo.Connection,",
-    "  decoder: fn(Dynamic) -> Result(a, List(dynamic.DecodeError)),",
+    "  decoder: dynamic.Decoder(a),",
     "  arguments: List(pgo.Value),",
     ") -> QueryResult(a) {",
     "  let query =",

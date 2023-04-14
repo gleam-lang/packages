@@ -2,14 +2,14 @@
 // Regenerate with `gleam run -m codegen`
 
 import gleam/pgo
-import gleam/dynamic.{Dynamic}
+import gleam/dynamic
 
 pub type QueryResult(t) =
   Result(pgo.Returned(t), pgo.QueryError)
 
 pub fn schema(
   db: pgo.Connection,
-  decoder: fn(Dynamic) -> Result(a, List(dynamic.DecodeError)),
+  decoder: dynamic.Decoder(a),
   arguments: List(pgo.Value),
 ) -> QueryResult(a) {
   let query =
