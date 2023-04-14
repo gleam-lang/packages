@@ -14,8 +14,19 @@ fn generate_sql_queries_module() -> Nil {
   let module_path = "src/packages/generated/sql.gleam"
   let assert Ok(files) = file.list_directory("sql")
   let assert Ok(functions) = list.try_map(files, generate_sql_function)
-  let module = string.join([module_header, ..functions], "\n\n") <> "\n"
-  let assert Ok(_) = file.write(to: module_path, contents: module)
+
+  let imports = ["import gleam/pgo", "import gleam/dynamic.{Dynamic}"]
+  let module =
+    string.join(
+      [
+        module_header,
+        string.join(imports, "\n"),
+        "pub type QueryResult(t) =\n  Result(pgo.Returned(t), pgo.QueryError)",
+        ..functions
+      ],
+      "\n\n",
+    )
+  let assert Ok(_) = file.write(to: module_path, contents: module <> "\n")
   Nil
 }
 
@@ -27,8 +38,14 @@ fn generate_sql_function(file: String) -> Result(String, _) {
     |> string.replace("\\", "\\\\")
     |> string.replace("\"", "\\\"")
   let lines = [
-    "pub fn " <> name <> "() -> String {",
-    "  \"" <> escaped <> "\"",
+    "pub fn " <> name <> "(",
+    "  db: pgo.Connection,",
+    "  decoder: fn(Dynamic) -> Result(a, List(dynamic.DecodeError)),",
+    "  arguments: List(pgo.Value),",
+    ") -> QueryResult(a) {",
+    "  let query =",
+    "    \"" <> escaped <> "\"",
+    "  pgo.execute(query, db, arguments, decoder)",
     "}",
   ]
   let function = string.join(lines, "\n")

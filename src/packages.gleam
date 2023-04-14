@@ -5,7 +5,6 @@ import gleam/http/request
 import gleam/io
 import gleam/int
 import gleam/json
-import gleam/bool
 import gleam/uri
 import gleam/erlang
 import gleam/string
