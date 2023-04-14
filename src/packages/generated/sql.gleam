@@ -1,4 +1,8 @@
-do $$
+// THIS FILE IS GENERATED. DO NOT EDIT. 
+// Regenerate with `gleam run -m codegen`
+
+pub fn schema() -> String {
+  "do $$
 begin
 
 create table if not exists packages
@@ -47,3 +51,5 @@ create table if not exists releases
 
 end
 $$;
+"
+}
