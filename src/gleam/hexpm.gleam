@@ -1,6 +1,7 @@
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/map.{Map}
-import gleam/option.{Option}
+import gleam/option.{None, Option}
+import gleam/function
 
 /// Package from /api/packages
 pub type Package {
@@ -9,8 +10,8 @@ pub type Package {
     html_url: Option(String),
     docs_html_url: Option(String),
     meta: PackageMeta,
-    downloads: PackageDownloads,
-    owners: List(PackageOwner),
+    downloads: Map(String, Int),
+    owners: Option(List(PackageOwner)),
     releases: List(PackageRelease),
     inserted_at: String,
     updated_at: String,
@@ -21,7 +22,7 @@ pub type PackageMeta {
   PackageMeta(
     links: Map(String, String),
     licenses: List(String),
-    description: String,
+    description: Option(String),
   )
 }
 
@@ -30,11 +31,7 @@ pub type PackageRelease {
 }
 
 pub type PackageOwner {
-  PackageOwner(username: String, email: String, url: String)
-}
-
-pub type PackageDownloads {
-  PackageDownloads(all: Int, recent: Int)
+  PackageOwner(username: String, email: Option(String), url: String)
 }
 
 pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
@@ -49,18 +46,14 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
         PackageMeta,
         dyn.field("links", dyn.map(dyn.string, dyn.string)),
         dyn.field("licenses", dyn.list(dyn.string)),
-        dyn.field("description", dyn.string),
+        dyn.field("description", dyn.optional(dyn.string)),
       ),
     ),
-    dyn.field(
-      "downloads",
-      dyn.decode2(
-        PackageDownloads,
-        dyn.field("all", dyn.int),
-        dyn.field("recent", dyn.int),
-      ),
-    ),
-    dyn.field("owners", dyn.list(decode_package_owner)),
+    dyn.field("downloads", dyn.map(dyn.string, dyn.int)),
+    dyn.any([
+      dyn.field("owners", dyn.optional(dyn.list(decode_package_owner))),
+      fn(_) { Ok(None) },
+    ]),
     dyn.field(
       "releases",
       dyn.list(dyn.decode3(
@@ -82,7 +75,7 @@ pub type Release {
     url: String,
     checksum: String,
     downloads: Int,
-    publisher: PackageOwner,
+    publisher: Option(PackageOwner),
     meta: ReleaseMeta,
     retirement: Option(ReleaseRetirement),
   )
@@ -124,8 +117,15 @@ pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
     dyn.field("version", dyn.string),
     dyn.field("url", dyn.string),
     dyn.field("checksum", dyn.string),
-    dyn.field("downloads", dyn.int),
-    dyn.field("publisher", decode_package_owner),
+    dyn.field(
+      "downloads",
+      dyn.any([
+        dyn.int,
+        // For some unknown reason Hex will return [] when there are no downloads.
+        function.constant(Ok(0)),
+      ]),
+    ),
+    dyn.field("publisher", dyn.optional(decode_package_owner)),
     dyn.field(
       "meta",
       dyn.decode2(
@@ -151,7 +151,10 @@ fn decode_package_owner(
   dyn.decode3(
     PackageOwner,
     dyn.field("username", dyn.string),
-    dyn.field("email", dyn.string),
+    dyn.any([
+      dyn.field("email", dyn.optional(dyn.string)),
+      function.constant(Ok(None)),
+    ]),
     dyn.field("url", dyn.string),
   )(data)
 }

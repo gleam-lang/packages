@@ -1,9 +1,7 @@
 *.beam
 *.ez
+.env
+.idea
 build
 erl_crash.dump
-.env
-
-# Editors
-.vscode
-.idea
+secrets.env
