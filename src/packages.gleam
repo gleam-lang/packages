@@ -34,8 +34,6 @@ pub fn get_packages(page: Int, limit: String, key: String) {
   let assert Ok(packages) =
     json.decode(response.body, using: dynamic.list(of: hexpm.decode_package))
 
-  use <- bool.guard(when: packages == [], return: Nil)
-
   let next = iterate_over_packages(packages, limit, key)
 
   // TODO: Only get the next page if all the packages are younger than the limit
