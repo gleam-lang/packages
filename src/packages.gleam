@@ -5,18 +5,19 @@ import gleam/http/request
 import gleam/io
 import gleam/int
 import gleam/json
-import gleam/list
 import gleam/bool
 import gleam/uri
 import gleam/erlang
+import gleam/string
+import gleam/order.{Eq, Gt, Lt}
 
 pub fn main() {
-  get_packages(1)
+  let assert [key] = erlang.start_arguments()
+  let limit = "2023-04-14T10:23:29.806017Z"
+  get_packages(1, limit, key)
 }
 
-pub fn get_packages(page: Int) {
-  let assert [key] = erlang.start_arguments()
-
+pub fn get_packages(page: Int, limit: String, key: String) {
   io.println("\nPage: " <> int.to_string(page))
 
   let assert Ok(response) =
@@ -35,14 +36,49 @@ pub fn get_packages(page: Int) {
 
   use <- bool.guard(when: packages == [], return: Nil)
 
-  {
-    use package <- list.each(packages)
-    io.println(package.name)
+  let next = iterate_over_packages(packages, limit, key)
 
-    use release <- list.each(package.releases)
-    get_release(release.url, key)
+  // TODO: Only get the next page if all the packages are younger than the limit
+  case next {
+    Done -> io.println("Up to date!")
+    Continue -> get_packages(page + 1, limit, key)
   }
-  get_packages(page + 1)
+}
+
+type Next {
+  Done
+  Continue
+}
+
+fn iterate_over_packages(
+  packages: List(hexpm.Package),
+  limit: String,
+  key: String,
+) -> Next {
+  case packages {
+    [] -> Done
+    [package, ..packages] -> {
+      case string.compare(limit, package.updated_at) {
+        Eq | Gt -> Done
+        Lt -> {
+          io.println(package.name)
+          iterate_over_releases(package.releases, limit, key)
+          iterate_over_packages(packages, limit, key)
+        }
+      }
+    }
+  }
+}
+
+fn iterate_over_releases(
+  releases: List(hexpm.PackageRelease),
+  limit: String,
+  key: String,
+) -> Nil {
+  // TODO: Iterate over released until we find one that is older than the limit,
+  // or we run out of releases.
+  // get_release(release.url, key)
+  io.println("Pretending to get releases")
 }
 
 pub fn get_release(url: String, key) {
