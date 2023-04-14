@@ -1,6 +1,14 @@
 do $$
 begin
 
+create table most_recent_hex_timestamp (
+  id boolean primary key default true,
+  timestamp timestamp with time zone not null,
+  -- we use a constraint to enforce that the id is always the value `true` so
+  -- now this table can only hold one row.
+  constraint most_recent_hex_timestamp_singleton check (id)
+);
+
 create table if not exists packages
 ( id serial primary key
 , name text not null unique
