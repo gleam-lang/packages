@@ -7,6 +7,28 @@ import gleam/dynamic
 pub type QueryResult(t) =
   Result(pgo.Returned(t), pgo.QueryError)
 
+pub fn upsert_hex_user(
+  db: pgo.Connection,
+  decoder: dynamic.Decoder(a),
+  arguments: List(pgo.Value),
+) -> QueryResult(a) {
+  let query =
+    "-- Insert or update a hex_user record.
+-- If the username is already in use, update the email and hex_url.
+insert into hex_user
+  (username, email, hex_url)
+values
+  ($1, $2, $3)
+on conflict (username) do update
+set
+  email = $2
+, hex_url = $3
+returning
+  id
+"
+  pgo.execute(query, db, arguments, decoder)
+}
+
 pub fn schema(
   db: pgo.Connection,
   decoder: dynamic.Decoder(a),
