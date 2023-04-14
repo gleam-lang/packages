@@ -9,6 +9,12 @@ version = "0.1.0"
 # repository = { type = "github", user = "username", repo = "project" }
 # links = [{ title = "Website", href = "https://gleam.run" }]
 
+internal_modules = [
+  "packages/internal",
+  "packages/internal/*",
+  "packages/generated/*",
+]
+
 [dependencies]
 gleam_stdlib = "~> 0.23"
 gleam_json = "~> 0.5"
