@@ -1,8 +1,19 @@
 // THIS FILE IS GENERATED. DO NOT EDIT. 
 // Regenerate with `gleam run -m codegen`
 
-pub fn schema() -> String {
-  "do $$
+import gleam/pgo
+import gleam/dynamic.{Dynamic}
+
+pub type QueryResult(t) =
+  Result(pgo.Returned(t), pgo.QueryError)
+
+pub fn schema(
+  db: pgo.Connection,
+  decoder: fn(Dynamic) -> Result(a, List(dynamic.DecodeError)),
+  arguments: List(pgo.Value),
+) -> QueryResult(a) {
+  let query =
+    "do $$
 begin
 
 create table if not exists packages
@@ -52,4 +63,5 @@ create table if not exists releases
 end
 $$;
 "
+  pgo.execute(query, db, arguments, decoder)
 }
