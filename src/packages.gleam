@@ -1,7 +1,8 @@
-import gleam/dynamic
+import gleam/dynamic as dyn
 import gleam/hackney
 import gleam/hexpm
 import gleam/http/request
+import gleam/result
 import gleam/io
 import gleam/int
 import gleam/json
@@ -9,6 +10,10 @@ import gleam/uri
 import gleam/erlang
 import gleam/string
 import gleam/order.{Eq, Gt, Lt}
+import gleam/pgo
+import packages/generated/sql
+import packages/error.{Error}
+import birl/time.{Time}
 
 pub fn main() {
   let assert [key] = erlang.start_arguments()
@@ -31,7 +36,7 @@ pub fn get_packages(page: Int, limit: String, key: String) {
     |> hackney.send
 
   let assert Ok(packages) =
-    json.decode(response.body, using: dynamic.list(of: hexpm.decode_package))
+    json.decode(response.body, using: dyn.list(of: hexpm.decode_package))
 
   let next = iterate_over_packages(packages, limit, key)
 
@@ -68,9 +73,9 @@ fn iterate_over_packages(
 }
 
 fn iterate_over_releases(
-  releases: List(hexpm.PackageRelease),
-  limit: String,
-  key: String,
+  _releases: List(hexpm.PackageRelease),
+  _limit: String,
+  _key: String,
 ) -> Nil {
   // TODO: Iterate over released until we find one that is older than the limit,
   // or we run out of releases.
@@ -96,5 +101,24 @@ pub fn get_release(url: String, key) {
       io.debug(e)
       panic
     }
+  }
+}
+
+/// Insert or replace the most recent Hex timestamp in the database.
+pub fn upsert_most_recent_hex_timestamp(
+  db: pgo.Connection,
+  time: Time,
+) -> Result(Nil, Error) {
+  let unix = time.to_unix(time)
+  sql.upsert_most_recent_hex_timestamp(db, [pgo.int(unix)], Ok)
+  |> result.replace(Nil)
+}
+
+pub fn get_most_recent_hex_timestamp(db: pgo.Connection) -> Result(Time, Error) {
+  let decoder = dyn.element(0, dyn.int)
+  use returned <- result.map(sql.get_most_recent_hex_timestamp(db, [], decoder))
+  case returned.rows {
+    [unix] -> time.from_unix(unix)
+    _ -> time.from_unix(0)
   }
 }

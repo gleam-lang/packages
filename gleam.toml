@@ -21,6 +21,7 @@ gleam_json = "~> 0.5"
 gleam_hackney = "~> 1.0"
 gleam_erlang = "~> 0.18"
 gleam_pgo = "~> 0.4"
+birl = "~> 0.8"
 
 [dev-dependencies]
 gleeunit = "~> 0.7"

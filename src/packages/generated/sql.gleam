@@ -2,15 +2,35 @@
 // Regenerate with `gleam run -m codegen`
 
 import gleam/pgo
+import gleam/result
 import gleam/dynamic
+import packages/error.{Error}
 
 pub type QueryResult(t) =
-  Result(pgo.Returned(t), pgo.QueryError)
+  Result(pgo.Returned(t), Error)
+
+pub fn upsert_most_recent_hex_timestamp(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "insert into most_recent_hex_timestamp
+  (id, timestamp)
+values
+  (true, to_timestamp($1))
+on conflict (id) do update
+set
+  timestamp = to_timestamp($1);
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
 
 pub fn upsert_hex_user(
   db: pgo.Connection,
-  decoder: dynamic.Decoder(a),
   arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "-- Insert or update a hex_user record.
@@ -27,20 +47,36 @@ returning
   id
 "
   pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
 }
 
-pub fn schema(
+pub fn get_most_recent_hex_timestamp(
   db: pgo.Connection,
-  decoder: dynamic.Decoder(a),
   arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  floor(extract('epoch' from timestamp))::bigint as timestamp
+from most_recent_hex_timestamp
+limit 1
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn migrate_schema(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "do $$
 begin
 
-create table most_recent_hex_timestamp (
+create table if not exists most_recent_hex_timestamp (
   id boolean primary key default true,
-  timestamp timestamp with time zone not null,
+  timestamp timestamp without time zone not null
   -- we use a constraint to enforce that the id is always the value `true` so
   -- now this table can only hold one row.
   constraint most_recent_hex_timestamp_singleton check (id)
@@ -94,4 +130,5 @@ end
 $$;
 "
   pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
 }
