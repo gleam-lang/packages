@@ -6,7 +6,7 @@ values
   ($1, $2, $3)
 on conflict (username) do update
 set
-  email = $2
-, hex_url = $3
+  email = excluded.email
+, hex_url = excluded.hex_url
 returning
   id

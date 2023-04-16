@@ -2,6 +2,8 @@ import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/map.{Map}
 import gleam/option.{None, Option}
 import gleam/function
+import gleam/result
+import birl/time.{Time}
 
 /// Package from /api/packages
 pub type Package {
@@ -13,8 +15,8 @@ pub type Package {
     downloads: Map(String, Int),
     owners: Option(List(PackageOwner)),
     releases: List(PackageRelease),
-    inserted_at: String,
-    updated_at: String,
+    inserted_at: Time,
+    updated_at: Time,
   )
 }
 
@@ -27,7 +29,7 @@ pub type PackageMeta {
 }
 
 pub type PackageRelease {
-  PackageRelease(version: String, url: String, inserted_at: String)
+  PackageRelease(version: String, url: String, inserted_at: Time)
 }
 
 pub type PackageOwner {
@@ -60,12 +62,20 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
         PackageRelease,
         dyn.field("version", dyn.string),
         dyn.field("url", dyn.string),
-        dyn.field("inserted_at", dyn.string),
+        dyn.field("inserted_at", iso_timestamp),
       )),
     ),
-    dyn.field("inserted_at", dyn.string),
-    dyn.field("updated_at", dyn.string),
+    dyn.field("inserted_at", iso_timestamp),
+    dyn.field("updated_at", iso_timestamp),
   )(data)
+}
+
+fn iso_timestamp(data: Dynamic) -> Result(Time, List(DecodeError)) {
+  use s <- result.then(dyn.string(data))
+  case time.from_iso8601(s) {
+    Ok(t) -> Ok(t)
+    Error(_) -> Error([DecodeError("Timestamp", dyn.classify(data), [])])
+  }
 }
 
 /// Release from /api/packages/:package/releases/:release

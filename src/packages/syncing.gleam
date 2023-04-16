@@ -83,11 +83,10 @@ fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
   case packages {
     [] -> state.newest
     [package, ..] -> {
-      let assert Ok(updated_at) = time.from_iso8601(package.updated_at)
-      case time.compare(updated_at, state.newest) {
+      case time.compare(package.updated_at, state.newest) {
         order.Gt -> {
           state.log("got newer timestamp")
-          updated_at
+          package.updated_at
         }
         _ -> state.newest
       }
@@ -117,8 +116,7 @@ pub fn take_fresh_packages(
   limit: Time,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
-  let assert Ok(updated_at) = time.from_iso8601(package.updated_at)
-  time.compare(limit, updated_at) == order.Lt
+  time.compare(limit, package.updated_at) == order.Lt
 }
 
 pub fn with_only_fresh_releases(
@@ -128,8 +126,7 @@ pub fn with_only_fresh_releases(
   let releases =
     package.releases
     |> list.take_while(fn(release) {
-      let assert Ok(updated_at) = time.from_iso8601(release.inserted_at)
-      time.compare(limit, updated_at) == order.Lt
+      time.compare(limit, release.inserted_at) == order.Lt
     })
   hexpm.Package(..package, releases: releases)
 }

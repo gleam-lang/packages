@@ -5,6 +5,7 @@ import gleam/hexpm.{
   Package, PackageMeta, PackageOwner, PackageRelease, Release, ReleaseMeta,
   ReleaseRetirement, Security,
 }
+import birl/time.{Time}
 import gleeunit/should
 
 pub fn hex_package_decoder_test() {
@@ -94,17 +95,22 @@ pub fn hex_package_decoder_test() {
       PackageRelease(
         version: "0.0.3",
         url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
-        inserted_at: "2022-07-07T19:14:04.497803Z",
+        inserted_at: timestamp("2022-07-07T19:14:04.497803Z"),
       ),
       PackageRelease(
         version: "0.0.1",
         url: "https://hex.pm/api/packages/shimmer/releases/0.0.1",
-        inserted_at: "2022-01-11T16:33:25.536567Z",
+        inserted_at: timestamp("2022-01-11T16:33:25.536567Z"),
       ),
     ],
-    inserted_at: "2022-01-11T16:33:25.508966Z",
-    updated_at: "2022-07-07T19:14:07.871112Z",
+    inserted_at: timestamp("2022-01-11T16:33:25.508966Z"),
+    updated_at: timestamp("2022-07-07T19:14:07.871112Z"),
   ))
+}
+
+fn timestamp(string: String) -> Time {
+  let assert Ok(t) = time.from_iso8601(string)
+  t
 }
 
 pub fn hex_packages_decoder_test() {
@@ -173,11 +179,11 @@ pub fn hex_packages_decoder_test() {
       PackageRelease(
         version: "0.1.0",
         url: "https://hex.pm/api/packages/activity_pub/releases/0.1.0",
-        inserted_at: "2018-01-24T18:51:53.334078Z",
+        inserted_at: timestamp("2018-01-24T18:51:53.334078Z"),
       ),
     ],
-    inserted_at: "2018-01-24T18:51:53.327128Z",
-    updated_at: "2018-01-24T18:51:58.585612Z",
+    inserted_at: timestamp("2018-01-24T18:51:53.327128Z"),
+    updated_at: timestamp("2018-01-24T18:51:58.585612Z"),
   ))
 }
 

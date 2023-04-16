@@ -41,8 +41,8 @@ values
   ($1, $2, $3)
 on conflict (username) do update
 set
-  email = $2
-, hex_url = $3
+  email = excluded.email
+, hex_url = excluded.hex_url
 returning
   id
 "
@@ -128,6 +128,36 @@ create table if not exists releases
 
 end
 $$;
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn upsert_package(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "-- TODO: insert links and licenses
+insert into packages
+  ( name
+  , hex_html_url
+  , docs_html_url
+  , inserted_in_hex_at
+  , updated_in_hex_at
+  , description
+  )
+values
+  ($1, $2, $3, $4, $5, $6)
+on conflict (name) do update
+set
+  hex_html_url = excluded.hex_html_url
+, docs_html_url = excluded.docs_html_url
+, updated_in_hex_at = excluded.updated_in_hex_at
+, description = excluded.description
+returning
+  id
 "
   pgo.execute(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
