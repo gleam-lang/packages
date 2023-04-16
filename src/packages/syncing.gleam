@@ -4,6 +4,7 @@ import gleam/http/request
 import gleam/int
 import gleam/list
 import gleam/list_extra
+import gleam/string
 import gleam/json
 import gleam/uri
 import gleam/order
@@ -21,26 +22,40 @@ pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
 }
 
 type State {
-  State(page: Int, limit: Time, hex_api_key: String, log: fn(String) -> Nil)
+  State(
+    page: Int,
+    limit: Time,
+    newest: Time,
+    hex_api_key: String,
+    log: fn(String) -> Nil,
+  )
 }
 
 pub fn sync_new_gleam_releases(
+  // TODO: fetch this internally
   most_recent_timestamp: Time,
   hex_api_key: String,
 ) -> Result(Nil, Error) {
-  sync_packages(State(
+  use _newest <- try(sync_packages(State(
     page: 1,
     limit: most_recent_timestamp,
+    newest: most_recent_timestamp,
     hex_api_key: hex_api_key,
-    log: io.println,
-  ))
+    log: io.print,
+  )))
+  // TODO: update newest timestamp
+  Ok(Nil)
 }
 
-fn sync_packages(state: State) -> Result(Nil, Error) {
-  state.log("\nPage: " <> int.to_string(state.page))
+fn sync_packages(state: State) -> Result(Time, Error) {
+  state.log("Page(" <> int.to_string(state.page) <> ")")
 
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
+
+  // The timestamp of the first package on the page is the newest. Store this so
+  // we can record it in the database to use as the limit for the next sync.
+  let state = State(..state, newest: first_timestamp(all_packages, state))
 
   // Take all the releases that we have not seen before.
   let new_packages =
@@ -58,8 +73,24 @@ fn sync_packages(state: State) -> Result(Nil, Error) {
     // If some packages where not new then we have reached the end of the new
     // releases and can stop.
     False -> {
-      state.log("Up to date!")
-      Ok(Nil)
+      state.log("\nUp to date!")
+      Ok(state.newest)
+    }
+  }
+}
+
+fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
+  case packages {
+    [] -> state.newest
+    [package, ..] -> {
+      let assert Ok(updated_at) = time.from_iso8601(package.updated_at)
+      case time.compare(updated_at, state.newest) {
+        order.Gt -> {
+          state.log("got newer timestamp")
+          updated_at
+        }
+        _ -> state.newest
+      }
     }
   }
 }
@@ -104,14 +135,49 @@ pub fn with_only_fresh_releases(
 }
 
 fn sync_package(package: hexpm.Package, state: State) -> Result(Nil, Error) {
-  // TODO: insert package
-  list_extra.try_each(package.releases, sync_release(_, state))
+  use releases <- try(list.try_map(package.releases, lookup_release(_, state)))
+  let releases =
+    releases
+    |> list.filter(fn(release) {
+      list.contains(release.meta.build_tools, "gleam")
+    })
+
+  case releases {
+    [] -> Ok(Nil)
+    _ -> insert_package_and_releases(package, releases, state)
+  }
 }
 
-fn sync_release(
-  release: hexpm.PackageRelease,
+fn insert_package_and_releases(
+  package: hexpm.Package,
+  releases: List(hexpm.Release),
   state: State,
 ) -> Result(Nil, Error) {
+  let versions =
+    releases
+    |> list.map(fn(release) { release.version })
+    |> string.join(", v")
+  state.log("\nsyncing " <> package.name <> " v" <> versions)
+
+  // TODO: insert package
+  let id = 1
+  list_extra.try_each(releases, insert_release(_, id, state))
+}
+
+fn insert_release(
+  _release: hexpm.Release,
+  _package_id: Int,
+  _state: State,
+) -> Result(Nil, Error) {
+  // TODO: insert releases
+  Ok(Nil)
+}
+
+fn lookup_release(
+  release: hexpm.PackageRelease,
+  state: State,
+) -> Result(hexpm.Release, Error) {
+  state.log(".")
   let assert Ok(url) = uri.parse(release.url)
 
   use response <- try(
@@ -123,10 +189,6 @@ fn sync_release(
     |> result.map_error(error.HttpClientError),
   )
 
-  use _release <- try(
-    json.decode(response.body, using: hexpm.decode_release)
-    |> result.map_error(error.JsonDecodeError),
-  )
-
-  Ok(Nil)
+  json.decode(response.body, using: hexpm.decode_release)
+  |> result.map_error(error.JsonDecodeError)
 }
