@@ -1,10 +1,9 @@
-import gleam/dynamic as dyn
+import gleam/dynamic.{DecodeError, Dynamic} as dyn
+import gleam/dynamic_extra as dyn_extra
 import gleam/result
 import gleam/erlang
 import gleam/pgo
-import gleam/map
-import gleam/list
-import gleam/json
+import gleam/option.{None, Option, Some}
 import gleam/hexpm
 import packages/generated/sql
 import packages/error.{Error}
@@ -45,14 +44,49 @@ pub fn upsert_package(
 ) -> Result(Int, Error) {
   let parameters = [
     pgo.text(package.name),
+    pgo.nullable(pgo.text, package.meta.description),
     pgo.nullable(pgo.text, package.html_url),
     pgo.nullable(pgo.text, package.docs_html_url),
     pgo.int(time.to_unix(package.inserted_at)),
     pgo.int(time.to_unix(package.updated_at)),
-    pgo.nullable(pgo.text, package.meta.description),
   ]
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.then(sql.upsert_package(db, parameters, decoder))
   let assert [id] = returned.rows
   Ok(id)
+}
+
+pub type Package {
+  Package(
+    name: String,
+    description: Option(String),
+    html_url: Option(String),
+    docs_html_url: Option(String),
+    inserted_in_hex_at: Time,
+    updated_in_hex_at: Time,
+  )
+}
+
+pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
+  dyn.decode6(
+    Package,
+    dyn.element(0, dyn.string),
+    dyn.element(1, dyn.optional(dyn.string)),
+    dyn.element(2, dyn.optional(dyn.string)),
+    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(4, dyn_extra.unix_timestamp),
+    dyn.element(5, dyn_extra.unix_timestamp),
+  )(data)
+}
+
+pub fn get_package(
+  db: pgo.Connection,
+  id: Int,
+) -> Result(Option(Package), Error) {
+  let params = [pgo.int(id)]
+  use returned <- result.then(sql.get_package(db, params, decode_package))
+  case returned.rows {
+    [package] -> Ok(Some(package))
+    _ -> Ok(None)
+  }
 }

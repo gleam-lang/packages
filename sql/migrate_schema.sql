@@ -12,13 +12,13 @@ create table if not exists most_recent_hex_timestamp (
 create table if not exists packages
 ( id serial primary key
 , name text not null unique
+, description text
 , hex_html_url text
 , docs_html_url text
 , inserted_in_hex_at timestamp with time zone
 , updated_in_hex_at timestamp with time zone
 , links jsonb not null default '{}'
 , licenses text array not null default '{}'
-, description text
 );
 
 create table if not exists hex_user

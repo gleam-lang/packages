@@ -1,8 +1,9 @@
 import gleeunit
-import packages
+import packages.{Package}
 import gleam/hexpm
 import gleam/option.{None, Some}
 import gleam/map
+import gleeunit/should
 import birl/time
 import tests
 
@@ -31,8 +32,6 @@ pub fn insert_package_test() {
   use db <- tests.with_database
   tests.truncate_tables(db)
 
-  // TODO: fetch package, returns nothing
-
   let assert Ok(id) =
     packages.upsert_package(
       db,
@@ -52,5 +51,17 @@ pub fn insert_package_test() {
         updated_at: time.from_unix(1_284_352_322),
       ),
     )
-  // TODO: fetch package, returns the package
+
+  let assert Ok(Some(package)) = packages.get_package(db, id)
+  package
+  |> should.equal(Package(
+    docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+    html_url: Some("https://hex.pm/packages/gleam_stdlib"),
+    description: Some("Standard library for Gleam"),
+    name: "gleam_stdlib",
+    inserted_in_hex_at: time.from_unix(1_284_352_323),
+    updated_in_hex_at: time.from_unix(1_284_352_323),
+  ))
+
+  let assert Ok(None) = packages.get_package(db, id + 1)
 }

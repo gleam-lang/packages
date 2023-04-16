@@ -50,6 +50,29 @@ returning
   |> result.map_error(error.DatabaseError)
 }
 
+pub fn get_package(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  name
+, description
+, hex_html_url
+, docs_html_url
+, extract('epoch' from inserted_in_hex_at)::bigint as inserted_in_hex_at
+, extract('epoch' from inserted_in_hex_at)::bigint as inserted_in_hex_at
+from
+  packages
+where
+  id = $1
+limit 1;
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
 pub fn get_most_recent_hex_timestamp(
   db: pgo.Connection,
   arguments: List(pgo.Value),
@@ -85,13 +108,13 @@ create table if not exists most_recent_hex_timestamp (
 create table if not exists packages
 ( id serial primary key
 , name text not null unique
+, description text
 , hex_html_url text
 , docs_html_url text
 , inserted_in_hex_at timestamp with time zone
 , updated_in_hex_at timestamp with time zone
 , links jsonb not null default '{}'
 , licenses text array not null default '{}'
-, description text
 );
 
 create table if not exists hex_user
@@ -142,14 +165,20 @@ pub fn upsert_package(
     "-- TODO: insert links and licenses
 insert into packages
   ( name
+  , description
   , hex_html_url
   , docs_html_url
   , inserted_in_hex_at
   , updated_in_hex_at
-  , description
   )
 values
-  ($1, $2, $3, $4, $5, $6)
+  ( $1
+  , $2
+  , $3
+  , $4
+  , to_timestamp($5)
+  , to_timestamp($6)
+  )
 on conflict (name) do update
 set
   hex_html_url = excluded.hex_html_url
