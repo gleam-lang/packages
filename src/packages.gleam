@@ -1,107 +1,16 @@
 import gleam/dynamic as dyn
-import gleam/hackney
-import gleam/hexpm
-import gleam/http/request
 import gleam/result
-import gleam/io
-import gleam/int
-import gleam/json
-import gleam/uri
 import gleam/erlang
-import gleam/string
-import gleam/order.{Eq, Gt, Lt}
 import gleam/pgo
 import packages/generated/sql
 import packages/error.{Error}
 import birl/time.{Time}
+import packages/syncing
 
 pub fn main() {
   let assert [key] = erlang.start_arguments()
-  let limit = "2023-04-14T10:23:29.806017Z"
-  get_packages(1, limit, key)
-}
-
-pub fn get_packages(page: Int, limit: String, key: String) {
-  io.println("\nPage: " <> int.to_string(page))
-
-  let assert Ok(response) =
-    request.new()
-    |> request.set_host("hex.pm")
-    |> request.set_path("/api/packages")
-    |> request.set_query([
-      #("sort", "updated_at"),
-      #("page", int.to_string(page)),
-    ])
-    |> request.prepend_header("authorization", key)
-    |> hackney.send
-
-  let assert Ok(packages) =
-    json.decode(response.body, using: dyn.list(of: hexpm.decode_package))
-
-  let next = iterate_over_packages(packages, limit, key)
-
-  // TODO: Only get the next page if all the packages are younger than the limit
-  case next {
-    Done -> io.println("Up to date!")
-    Continue -> get_packages(page + 1, limit, key)
-  }
-}
-
-type Next {
-  Done
-  Continue
-}
-
-fn iterate_over_packages(
-  packages: List(hexpm.Package),
-  limit: String,
-  key: String,
-) -> Next {
-  case packages {
-    [] -> Done
-    [package, ..packages] -> {
-      case string.compare(limit, package.updated_at) {
-        Eq | Gt -> Done
-        Lt -> {
-          io.println(package.name)
-          iterate_over_releases(package.releases, limit, key)
-          iterate_over_packages(packages, limit, key)
-        }
-      }
-    }
-  }
-}
-
-fn iterate_over_releases(
-  _releases: List(hexpm.PackageRelease),
-  _limit: String,
-  _key: String,
-) -> Nil {
-  // TODO: Iterate over released until we find one that is older than the limit,
-  // or we run out of releases.
-  // get_release(release.url, key)
-  io.println("Pretending to get releases")
-}
-
-pub fn get_release(url: String, key) {
-  io.println(url)
-  let assert Ok(url) = uri.parse(url)
-
-  let assert Ok(response) =
-    request.new()
-    |> request.set_host("hex.pm")
-    |> request.set_path(url.path)
-    |> request.prepend_header("authorization", key)
-    |> hackney.send
-
-  case json.decode(response.body, using: hexpm.decode_release) {
-    Ok(_) -> Nil
-    Error(e) -> {
-      io.println(response.body)
-      io.debug(e)
-      panic
-    }
-  }
+  let assert Ok(limit) = time.from_iso8601("2022-11-21T10:23:29.806017Z")
+  syncing.sync_new_gleam_releases(limit, key)
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
@@ -114,6 +23,8 @@ pub fn upsert_most_recent_hex_timestamp(
   |> result.replace(Nil)
 }
 
+/// Get the most recent Hex timestamp from the database, returning the Unix
+/// epoch if there is no previous timestamp in the database.
 pub fn get_most_recent_hex_timestamp(db: pgo.Connection) -> Result(Time, Error) {
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.map(sql.get_most_recent_hex_timestamp(db, [], decoder))
