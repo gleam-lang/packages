@@ -102,7 +102,7 @@ pub type RetirementReason {
   Renamed
 }
 
-fn decode_retirement_reason(
+pub fn decode_retirement_reason(
   data: Dynamic,
 ) -> Result(RetirementReason, List(DecodeError)) {
   case dyn.string(data) {

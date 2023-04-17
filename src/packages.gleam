@@ -127,3 +127,40 @@ pub fn upsert_release(
   let assert [id] = returned.rows
   Ok(id)
 }
+
+pub type Release {
+  Release(
+    package_id: Int,
+    version: String,
+    hex_url: String,
+    retirement_reason: Option(hexpm.RetirementReason),
+    retirement_message: Option(String),
+    inserted_in_hex_at: Time,
+    updated_in_hex_at: Time,
+  )
+}
+
+pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
+  dyn.decode7(
+    Release,
+    dyn.element(0, dyn.int),
+    dyn.element(1, dyn.string),
+    dyn.element(2, dyn.string),
+    dyn.element(3, dyn.optional(hexpm.decode_retirement_reason)),
+    dyn.element(4, dyn.optional(dyn.string)),
+    dyn.element(5, dyn_extra.unix_timestamp),
+    dyn.element(6, dyn_extra.unix_timestamp),
+  )(data)
+}
+
+pub fn get_release(
+  db: pgo.Connection,
+  id: Int,
+) -> Result(Option(Release), Error) {
+  let params = [pgo.int(id)]
+  use returned <- result.then(sql.get_release(db, params, decode_release))
+  case returned.rows {
+    [package] -> Ok(Some(package))
+    _ -> Ok(None)
+  }
+}

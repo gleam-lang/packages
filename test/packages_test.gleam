@@ -1,5 +1,5 @@
 import gleeunit
-import packages.{Package}
+import packages.{Package, Release}
 import gleam/hexpm
 import gleam/option.{None, Some}
 import gleam/map
@@ -113,4 +113,18 @@ pub fn insert_release_test() {
         inserted_at: time.from_unix(2000),
       ),
     )
+
+  let assert Ok(Some(release)) = packages.get_release(db, id)
+  release
+  |> should.equal(Release(
+    package_id: package_id,
+    version: "0.0.3",
+    hex_url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+    retirement_reason: Some(hexpm.Security),
+    retirement_message: Some("Retired due to security concerns"),
+    inserted_in_hex_at: time.from_unix(2000),
+    updated_in_hex_at: time.from_unix(1000),
+  ))
+
+  let assert Ok(None) = packages.get_release(db, id + 1)
 }

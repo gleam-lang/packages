@@ -127,6 +127,30 @@ limit 1
   |> result.map_error(error.DatabaseError)
 }
 
+pub fn get_release(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  package_id
+, version
+, hex_url
+, retirement_reason
+, retirement_message
+, inserted_in_hex_at
+, updated_in_hex_at
+from
+  releases
+where
+  id = $1
+limit 1;
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
 pub fn migrate_schema(
   db: pgo.Connection,
   arguments: List(pgo.Value),
