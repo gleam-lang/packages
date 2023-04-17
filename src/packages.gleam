@@ -1,27 +1,33 @@
+import birl/time.{Time}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/dynamic_extra as dyn_extra
-import gleam/result
 import gleam/erlang
-import gleam/pgo
-import gleam/option.{None, Option, Some}
 import gleam/hexpm
-import gleam/string
-import gleam/list
+import gleam/erlang/process
+import gleam/http/response
+import gleam/bit_builder
 import gleam/int
 import gleam/io
-import packages/generated/sql
+import gleam/list
+import gleam/option.{None, Option, Some}
+import gleam/pgo
+import gleam/result
+import gleam/string
+import mist
 import packages/error.{Error}
-import birl/time.{Time}
+import packages/generated/sql
 import packages/syncing
 
 const usage = "Usage:
   gleam run list
+  gleam run server
   gleam run sync
 "
 
 pub fn main() {
   case erlang.start_arguments() {
     ["list"] -> list()
+    ["server"] -> server()
     ["sync", key] -> sync(key)
     _ -> io.println(usage)
   }
@@ -61,6 +67,20 @@ fn sync(key: String) -> Nil {
     )
 
   Nil
+}
+
+fn server() {
+  let service = fn(_) {
+    response.new(200)
+    |> response.set_body("Hello, world!")
+    |> response.map(bit_builder.from_string)
+  }
+  // Start the web server process
+  let assert Ok(_) = mist.run_service(3000, service, max_body_limit: 4_000_000)
+  io.println("Started listening on http://localhost:3000 ✨")
+
+  // Put the main process to sleep while the web server does its thing
+  process.sleep_forever()
 }
 
 fn start_database_connection_pool() -> pgo.Connection {
