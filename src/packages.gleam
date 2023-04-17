@@ -12,7 +12,7 @@ import packages/syncing
 
 pub fn main() {
   let assert [key] = erlang.start_arguments()
-  let assert Ok(limit) = time.from_iso8601("2022-11-21T10:23:29.806017Z")
+  let assert Ok(limit) = time.from_iso8601("2020-01-01T00:00:00.000000Z")
 
   let db =
     pgo.connect(
@@ -22,13 +22,15 @@ pub fn main() {
         pool_size: 1,
       ),
     )
+  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
 
-  syncing.sync_new_gleam_releases(
-    limit,
-    key,
-    upsert_package(db, _),
-    fn(id, r) { upsert_release(db, id, r) },
-  )
+  let assert Ok(_) =
+    syncing.sync_new_gleam_releases(
+      limit,
+      key,
+      upsert_package(db, _),
+      fn(id, r) { upsert_release(db, id, r) },
+    )
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
