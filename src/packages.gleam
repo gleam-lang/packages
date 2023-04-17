@@ -5,15 +5,65 @@ import gleam/erlang
 import gleam/pgo
 import gleam/option.{None, Option, Some}
 import gleam/hexpm
+import gleam/string
+import gleam/list
+import gleam/int
+import gleam/io
 import packages/generated/sql
 import packages/error.{Error}
 import birl/time.{Time}
 import packages/syncing
 
-pub fn main() {
-  let assert [key] = erlang.start_arguments()
-  let assert Ok(limit) = time.from_iso8601("2020-01-01T00:00:00.000000Z")
+const usage = "Usage:
+  gleam run list
+  gleam run sync
+"
 
+pub fn main() {
+  case erlang.start_arguments() {
+    ["list"] -> list()
+    ["sync", key] -> sync(key)
+    _ -> io.println(usage)
+  }
+}
+
+fn list() -> Nil {
+  let db = start_database_connection_pool()
+  let assert Ok(packages) = list_packages(db)
+  let packages =
+    packages
+    |> list.sort(fn(a, b) { string.compare(a.name, b.name) })
+
+  packages
+  |> list.each(fn(package) {
+    let name = string.pad_right(package.name <> ":", 24, " ")
+    let line = name <> " " <> package.description
+    let line = case string.length(line) > 70 {
+      True -> string.slice(line, 0, 67) <> "..."
+      False -> line
+    }
+    io.println(line)
+  })
+
+  io.println("\n" <> int.to_string(list.length(packages)) <> " packages")
+}
+
+fn sync(key: String) -> Nil {
+  let assert Ok(limit) = time.from_iso8601("2020-01-01T00:00:00.000000Z")
+  let db = start_database_connection_pool()
+
+  let assert Ok(_) =
+    syncing.sync_new_gleam_releases(
+      limit,
+      key,
+      upsert_package(db, _),
+      fn(id, r) { upsert_release(db, id, r) },
+    )
+
+  Nil
+}
+
+fn start_database_connection_pool() -> pgo.Connection {
   let db =
     pgo.connect(
       pgo.Config(
@@ -23,14 +73,7 @@ pub fn main() {
       ),
     )
   let assert Ok(_) = sql.migrate_schema(db, [], Ok)
-
-  let assert Ok(_) =
-    syncing.sync_new_gleam_releases(
-      limit,
-      key,
-      upsert_package(db, _),
-      fn(id, r) { upsert_release(db, id, r) },
-    )
+  db
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
@@ -181,8 +224,8 @@ fn decode_package_summary(
 ) -> Result(PackageSummary, List(DecodeError)) {
   dyn.decode2(
     PackageSummary,
+    dyn.element(0, dyn.string),
     dyn.element(1, dyn.string),
-    dyn.element(2, dyn.string),
   )(data)
 }
 
