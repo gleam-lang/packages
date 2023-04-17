@@ -16,10 +16,10 @@ pub fn most_recent_hex_timestamp_test() {
   tests.truncate_tables(db)
 
   let assert Ok(Nil) =
-    packages.upsert_most_recent_hex_timestamp(db, time.from_unix(1_284_352_323))
+    packages.upsert_most_recent_hex_timestamp(db, time.from_unix(0))
   let assert Ok(time) = packages.get_most_recent_hex_timestamp(db)
-  let assert "2010-09-13T04:32:03.000Z" = time.to_iso8601(time)
-  let assert 1_284_352_323 = time.to_unix(time)
+  let assert 0 = time.to_unix(time)
+  let assert "1970-01-01T00:00:00.000Z" = time.to_iso8601(time)
 
   let assert Ok(Nil) =
     packages.upsert_most_recent_hex_timestamp(db, time.from_unix(2_284_352_323))

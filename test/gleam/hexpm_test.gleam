@@ -283,6 +283,8 @@ pub fn hex_release_decoder_test() {
       reason: Security,
       message: Some("Retired due to security concerns"),
     )),
+    updated_at: timestamp("2022-07-07T19:14:07.870166Z"),
+    inserted_at: timestamp("2022-07-07T19:14:04.497803Z"),
   ))
 }
 
@@ -343,5 +345,7 @@ pub fn hex_release_decoder_with_empty_list_downloads_test() {
       reason: Security,
       message: Some("Retired due to security concerns"),
     )),
+    updated_at: timestamp("2022-07-07T19:14:07.870166Z"),
+    inserted_at: timestamp("2022-07-07T19:14:04.497803Z"),
   ))
 }

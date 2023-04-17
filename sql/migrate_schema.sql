@@ -2,11 +2,11 @@ do $$
 begin
 
 create table if not exists most_recent_hex_timestamp (
-  id boolean primary key default true,
-  timestamp timestamp without time zone not null
+  id boolean primary key default true
+, unix_timestamp bigint not null
   -- we use a constraint to enforce that the id is always the value `true` so
   -- now this table can only hold one row.
-  constraint most_recent_hex_timestamp_singleton check (id)
+, constraint most_recent_hex_timestamp_singleton check (id)
 );
 
 create table if not exists packages
@@ -15,8 +15,8 @@ create table if not exists packages
 , description text
 , hex_html_url text
 , docs_html_url text
-, inserted_in_hex_at timestamp with time zone
-, updated_in_hex_at timestamp with time zone
+, inserted_in_hex_at bigint not null
+, updated_in_hex_at bigint not null
 , links jsonb not null default '{}'
 , licenses text array not null default '{}'
 );
@@ -51,6 +51,9 @@ create table if not exists releases
 , hex_url text not null
 , retirement_reason retirement_reason
 , retirement_message text
+, inserted_in_hex_at bigint not null
+, updated_in_hex_at bigint not null
+, unique(package_id, version)
 );
 
 end

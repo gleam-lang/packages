@@ -28,6 +28,7 @@ type State {
     newest: Time,
     hex_api_key: String,
     log: fn(String) -> Nil,
+    insert_package: fn(hexpm.Package) -> Result(Int, Error),
   )
 }
 
@@ -35,6 +36,7 @@ pub fn sync_new_gleam_releases(
   // TODO: fetch this internally
   most_recent_timestamp: Time,
   hex_api_key: String,
+  insert_package: fn(hexpm.Package) -> Result(Int, Error),
 ) -> Result(Nil, Error) {
   use _newest <- try(sync_packages(State(
     page: 1,
@@ -42,14 +44,13 @@ pub fn sync_new_gleam_releases(
     newest: most_recent_timestamp,
     hex_api_key: hex_api_key,
     log: io.print,
+    insert_package: insert_package,
   )))
   // TODO: update newest timestamp
   Ok(Nil)
 }
 
 fn sync_packages(state: State) -> Result(Time, Error) {
-  state.log("Page(" <> int.to_string(state.page) <> ")")
-
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
 
@@ -84,10 +85,7 @@ fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
     [] -> state.newest
     [package, ..] -> {
       case time.compare(package.updated_at, state.newest) {
-        order.Gt -> {
-          state.log("got newer timestamp")
-          package.updated_at
-        }
+        order.Gt -> package.updated_at
         _ -> state.newest
       }
     }
@@ -156,8 +154,7 @@ fn insert_package_and_releases(
     |> string.join(", v")
   state.log("\nsyncing " <> package.name <> " v" <> versions)
 
-  // TODO: insert package
-  let id = 1
+  use id <- try(state.insert_package(package))
   list_extra.try_each(releases, insert_release(_, id, state))
 }
 

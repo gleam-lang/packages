@@ -13,7 +13,17 @@ import packages/syncing
 pub fn main() {
   let assert [key] = erlang.start_arguments()
   let assert Ok(limit) = time.from_iso8601("2022-11-21T10:23:29.806017Z")
-  syncing.sync_new_gleam_releases(limit, key)
+
+  let db =
+    pgo.connect(
+      pgo.Config(
+        ..pgo.default_config(),
+        database: "gleam_packages",
+        pool_size: 1,
+      ),
+    )
+
+  syncing.sync_new_gleam_releases(limit, key, upsert_package(db, _))
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.

@@ -9,6 +9,39 @@ import packages/error.{Error}
 pub type QueryResult(t) =
   Result(pgo.Returned(t), Error)
 
+pub fn upsert_release(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "insert into packages
+  ( package_id
+  , version
+  , hex_url
+  , retirement_reason
+  , retirement_message
+  )
+values
+  ( $1
+  , $2
+  , $3
+  , $4
+  , $5
+  )
+on conflict (name) do update
+set
+  hex_html_url = excluded.hex_html_url
+, docs_html_url = excluded.docs_html_url
+, updated_in_hex_at = excluded.updated_in_hex_at
+, description = excluded.description
+returning
+  id
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
 pub fn upsert_most_recent_hex_timestamp(
   db: pgo.Connection,
   arguments: List(pgo.Value),
@@ -16,12 +49,12 @@ pub fn upsert_most_recent_hex_timestamp(
 ) -> QueryResult(a) {
   let query =
     "insert into most_recent_hex_timestamp
-  (id, timestamp)
+  (id, unix_timestamp)
 values
-  (true, to_timestamp($1))
+  (true, $1)
 on conflict (id) do update
 set
-  timestamp = to_timestamp($1);
+  unix_timestamp = $1;
 "
   pgo.execute(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -61,8 +94,8 @@ pub fn get_package(
 , description
 , hex_html_url
 , docs_html_url
-, extract('epoch' from inserted_in_hex_at)::bigint as inserted_in_hex_at
-, extract('epoch' from inserted_in_hex_at)::bigint as inserted_in_hex_at
+, inserted_in_hex_at
+, inserted_in_hex_at
 from
   packages
 where
@@ -80,7 +113,7 @@ pub fn get_most_recent_hex_timestamp(
 ) -> QueryResult(a) {
   let query =
     "select
-  floor(extract('epoch' from timestamp))::bigint as timestamp
+  unix_timestamp
 from most_recent_hex_timestamp
 limit 1
 "
@@ -98,11 +131,11 @@ pub fn migrate_schema(
 begin
 
 create table if not exists most_recent_hex_timestamp (
-  id boolean primary key default true,
-  timestamp timestamp without time zone not null
+  id boolean primary key default true
+, unix_timestamp bigint not null
   -- we use a constraint to enforce that the id is always the value `true` so
   -- now this table can only hold one row.
-  constraint most_recent_hex_timestamp_singleton check (id)
+, constraint most_recent_hex_timestamp_singleton check (id)
 );
 
 create table if not exists packages
@@ -111,8 +144,8 @@ create table if not exists packages
 , description text
 , hex_html_url text
 , docs_html_url text
-, inserted_in_hex_at timestamp with time zone
-, updated_in_hex_at timestamp with time zone
+, inserted_in_hex_at bigint not null
+, updated_in_hex_at bigint not null
 , links jsonb not null default '{}'
 , licenses text array not null default '{}'
 );
@@ -147,6 +180,9 @@ create table if not exists releases
 , hex_url text not null
 , retirement_reason retirement_reason
 , retirement_message text
+, inserted_in_hex_at bigint not null
+, updated_in_hex_at bigint not null
+, unique(package_id, version)
 );
 
 end
@@ -176,8 +212,8 @@ values
   , $2
   , $3
   , $4
-  , to_timestamp($5)
-  , to_timestamp($6)
+  , $5
+  , $6
   )
 on conflict (name) do update
 set

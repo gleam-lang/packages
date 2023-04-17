@@ -1,11 +1,9 @@
--- TODO: insert links and licenses
 insert into packages
-  ( name
-  , description
-  , hex_html_url
-  , docs_html_url
-  , inserted_in_hex_at
-  , updated_in_hex_at
+  ( package_id
+  , version
+  , hex_url
+  , retirement_reason
+  , retirement_message
   )
 values
   ( $1
@@ -13,7 +11,6 @@ values
   , $3
   , $4
   , $5
-  , $6
   )
 on conflict (name) do update
 set

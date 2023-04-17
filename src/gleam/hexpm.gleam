@@ -70,7 +70,7 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
   )(data)
 }
 
-/// Release from /api/packages/:package/releases/:release
+/// Release from /api/packages/:name/releases/:version
 pub type Release {
   Release(
     version: String,
@@ -80,6 +80,8 @@ pub type Release {
     publisher: Option(PackageOwner),
     meta: ReleaseMeta,
     retirement: Option(ReleaseRetirement),
+    inserted_at: Time,
+    updated_at: Time,
   )
 }
 
@@ -114,7 +116,7 @@ fn decode_retirement_reason(
 }
 
 pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
-  dyn.decode7(
+  dyn.decode9(
     Release,
     dyn.field("version", dyn.string),
     dyn.field("url", dyn.string),
@@ -144,6 +146,8 @@ pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
         dyn.field("message", dyn.optional(dyn.string)),
       )),
     ),
+    dyn.field("inserted_at", dyn_extra.iso_timestamp),
+    dyn.field("updated_at", dyn_extra.iso_timestamp),
   )(data)
 }
 
