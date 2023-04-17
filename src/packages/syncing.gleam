@@ -29,6 +29,7 @@ type State {
     hex_api_key: String,
     log: fn(String) -> Nil,
     insert_package: fn(hexpm.Package) -> Result(Int, Error),
+    insert_release: fn(Int, hexpm.Release) -> Result(Int, Error),
   )
 }
 
@@ -37,6 +38,7 @@ pub fn sync_new_gleam_releases(
   most_recent_timestamp: Time,
   hex_api_key: String,
   insert_package: fn(hexpm.Package) -> Result(Int, Error),
+  insert_release: fn(Int, hexpm.Release) -> Result(Int, Error),
 ) -> Result(Nil, Error) {
   use _newest <- try(sync_packages(State(
     page: 1,
@@ -45,6 +47,7 @@ pub fn sync_new_gleam_releases(
     hex_api_key: hex_api_key,
     log: io.print,
     insert_package: insert_package,
+    insert_release: insert_release,
   )))
   // TODO: update newest timestamp
   Ok(Nil)
@@ -155,16 +158,9 @@ fn insert_package_and_releases(
   state.log("\nsyncing " <> package.name <> " v" <> versions)
 
   use id <- try(state.insert_package(package))
-  list_extra.try_each(releases, insert_release(_, id, state))
-}
 
-fn insert_release(
-  _release: hexpm.Release,
-  _package_id: Int,
-  _state: State,
-) -> Result(Nil, Error) {
-  // TODO: insert releases
-  Ok(Nil)
+  releases
+  |> list_extra.try_each(fn(release) { state.insert_release(id, release) })
 }
 
 fn lookup_release(

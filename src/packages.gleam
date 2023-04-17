@@ -23,7 +23,12 @@ pub fn main() {
       ),
     )
 
-  syncing.sync_new_gleam_releases(limit, key, upsert_package(db, _))
+  syncing.sync_new_gleam_releases(
+    limit,
+    key,
+    upsert_package(db, _),
+    fn(id, r) { upsert_release(db, id, r) },
+  )
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
