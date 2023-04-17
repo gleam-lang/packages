@@ -47,8 +47,8 @@ pub fn insert_package_test() {
         name: "gleam_stdlib",
         owners: None,
         releases: [],
-        inserted_at: time.from_unix(1_284_352_323),
-        updated_at: time.from_unix(1_284_352_322),
+        inserted_at: time.from_unix(100),
+        updated_at: time.from_unix(2000),
       ),
     )
 
@@ -59,8 +59,8 @@ pub fn insert_package_test() {
     html_url: Some("https://hex.pm/packages/gleam_stdlib"),
     description: Some("Standard library for Gleam"),
     name: "gleam_stdlib",
-    inserted_in_hex_at: time.from_unix(1_284_352_323),
-    updated_in_hex_at: time.from_unix(1_284_352_323),
+    inserted_in_hex_at: time.from_unix(100),
+    updated_in_hex_at: time.from_unix(2000),
   ))
 
   let assert Ok(None) = packages.get_package(db, id + 1)
@@ -122,8 +122,8 @@ pub fn insert_release_test() {
     hex_url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
     retirement_reason: Some(hexpm.Security),
     retirement_message: Some("Retired due to security concerns"),
-    inserted_in_hex_at: time.from_unix(2000),
     updated_in_hex_at: time.from_unix(1000),
+    inserted_in_hex_at: time.from_unix(2000),
   ))
 
   let assert Ok(None) = packages.get_release(db, id + 1)

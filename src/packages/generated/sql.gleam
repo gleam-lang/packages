@@ -101,12 +101,33 @@ pub fn get_package(
 , hex_html_url
 , docs_html_url
 , inserted_in_hex_at
-, inserted_in_hex_at
+, updated_in_hex_at
 from
   packages
 where
   id = $1
 limit 1;
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn list_packages(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  name
+, description
+from
+  packages
+where
+  id = $1
+order by
+  updated_in_hex_at
+limit 500;
 "
   pgo.execute(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)

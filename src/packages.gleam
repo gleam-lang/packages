@@ -171,3 +171,22 @@ pub fn get_release(
     _ -> Ok(None)
   }
 }
+
+pub type PackageSummary {
+  PackageSummary(name: String, description: String)
+}
+
+fn decode_package_summary(
+  data: Dynamic,
+) -> Result(PackageSummary, List(DecodeError)) {
+  dyn.decode2(
+    PackageSummary,
+    dyn.element(1, dyn.string),
+    dyn.element(2, dyn.string),
+  )(data)
+}
+
+pub fn list_packages(db: pgo.Connection) -> Result(List(PackageSummary), Error) {
+  use returned <- result.then(sql.list_packages(db, [], decode_package_summary))
+  Ok(returned.rows)
+}
