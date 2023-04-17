@@ -100,3 +100,30 @@ pub fn get_package(
     _ -> Ok(None)
   }
 }
+
+pub fn upsert_release(
+  db: pgo.Connection,
+  package_id: Int,
+  release: hexpm.Release,
+) -> Result(Int, Error) {
+  let #(retirement_reason, retirement_message) = case release.retirement {
+    Some(retirement) -> #(
+      Some(hexpm.retirement_reason_to_string(retirement.reason)),
+      retirement.message,
+    )
+    None -> #(None, None)
+  }
+  let parameters = [
+    pgo.int(package_id),
+    pgo.text(release.version),
+    pgo.text(release.url),
+    pgo.nullable(pgo.text, retirement_reason),
+    pgo.nullable(pgo.text, retirement_message),
+    pgo.int(time.to_unix(release.inserted_at)),
+    pgo.int(time.to_unix(release.updated_at)),
+  ]
+  let decoder = dyn.element(0, dyn.int)
+  use returned <- result.then(sql.upsert_release(db, parameters, decoder))
+  let assert [id] = returned.rows
+  Ok(id)
+}

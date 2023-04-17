@@ -115,6 +115,16 @@ fn decode_retirement_reason(
   }
 }
 
+pub fn retirement_reason_to_string(reason: RetirementReason) -> String {
+  case reason {
+    OtherReason -> "other"
+    Invalid -> "invalid"
+    Security -> "security"
+    Deprecated -> "deprecated"
+    Renamed -> "renamed"
+  }
+}
+
 pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
   dyn.decode9(
     Release,
