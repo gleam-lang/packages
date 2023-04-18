@@ -1,6 +1,6 @@
 # Gleam Packages
 
-A Gleam project!
+A website that lists all Gleam packages found on [Hex](https://hex.pm).
 
 ## Setup
 
