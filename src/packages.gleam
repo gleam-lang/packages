@@ -30,8 +30,7 @@ fn list() -> Nil {
   let db = start_database_connection_pool()
   let assert Ok(packages) = store.search_packages(db, "")
   let packages =
-    packages
-    |> list.sort(fn(a, b) { string.compare(a.name, b.name) })
+    list.sort(packages, fn(a, b) { string.compare(a.name, b.name) })
 
   packages
   |> list.each(fn(package) {
