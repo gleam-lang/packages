@@ -6,7 +6,30 @@ import nakai/html/attrs
 import packages/store.{PackageSummary}
 
 const stylesheet = "
+@font-face {
+  font-family: 'Lexend';
+  font-display: swap;
+  font-weight: 400;
+  src: url('https://gleam.run/fonts/Lexend.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lexend';
+  font-display: swap;
+  font-weight: 700;
+  src: url('https://gleam.run/fonts/Lexend-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Outfit';
+  font-display: swap;
+  src: url('https://gleam.run/fonts/Outfit.woff') format('woff');
+}
+
 :root {
+  --font-family-normal: 'Outfit', sans-serif;
+  --font-family: 'Lexend', sans-serif;
+
   --color-charcoal: #2f2f2f;
   --color-black: #1e1e1e;
   --color-blacker: #151515;
@@ -16,9 +39,12 @@ const stylesheet = "
   --color-unnamed-blue: #a6f0fc;
   --color-unexpected-aubergine: #584355;
 
-  --max-width: 800px;
+  --font-size-normal: 18px;
+
+  --content-width: 960px;
   --gap: 1rem;
-  --gap-s: calc(var(--gap) * 0.5)
+  --gap-s: calc(var(--gap) * 0.5);
+  --gap-l: calc(var(--gap) * 2);
 }
 
 * {
@@ -29,17 +55,31 @@ body {
   padding: 0;
   margin: 0;
   background: var(--color-white);
+  font-family: var(--font-family-normal);
+  background-color: var(--color-white);
+  font-size: var(--font-size);
+}
+
+a,
+a:visited {
+  color: unset;
+  text-decoration-color: var(--color-faff-pink);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-title);
+  font-weight: normal;
 }
 
 .content {
-  max-width: var(--max-width);
+  max-width: var(--content-width);
   padding: var(--gap);
+  margin: 0 auto;
 }
 
 .site-header {
   width: 100%;
   background-color: var(--color-faff-pink);
-  padding: var(--gap);
 }
 
 .site-header a {
@@ -83,6 +123,21 @@ body {
   padding: var(--gap);
   text-align: center;
 }
+
+.package-list {
+  padding: 0;
+  margin: 0;
+}
+
+.package-list li {
+  list-style: none;
+  margin-top: var(--gap);
+  margin-bottom: var(--gap-l);
+}
+
+.package-list h2 {
+  margin: 0 var(--gap) var(--gap-s) 0;
+}
 "
 
 pub fn packages_index(
@@ -96,7 +151,7 @@ pub fn packages_index(
         [attrs.class("site-header")],
         [
           html.nav(
-            [],
+            [attrs.class("content")],
             [
               html.a([attrs.href("/")], [html.h1_text([], "Gleam Packages")]),
               search_form(search_term),
@@ -127,7 +182,7 @@ fn search_form(search_term: String) -> Node(t) {
 }
 
 fn package_list(packages: List(PackageSummary)) -> Node(t) {
-  html.ul([], list.map(packages, package_list_item))
+  html.ul([attrs.class("package-list")], list.map(packages, package_list_item))
 }
 
 fn package_list_item(package: PackageSummary) -> Node(t) {
@@ -139,9 +194,8 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
           attrs.href("https://hex.pm/packages/" <> package.name),
           attrs.rel("noopener noreferrer"),
         ],
-        [html.Text(package.name)],
+        [html.h2_text([], package.name)],
       ),
-      html.Text(" - "),
       html.Text(package.description),
     ],
   )
