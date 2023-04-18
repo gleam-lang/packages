@@ -1,4 +1,3 @@
-import birl/time
 import gleam/erlang
 import gleam/erlang/process
 import gleam/int
@@ -49,16 +48,8 @@ fn list() -> Nil {
 }
 
 fn sync(key: String) -> Nil {
-  let assert Ok(limit) = time.from_iso8601("2020-01-01T00:00:00.000000Z")
   let db = start_database_connection_pool()
-
-  let assert Ok(_) =
-    syncing.sync_new_gleam_releases(
-      limit,
-      key,
-      store.upsert_package(db, _),
-      fn(id, r) { store.upsert_release(db, id, r) },
-    )
+  let assert Ok(Nil) = syncing.sync_new_gleam_releases(key, db)
 
   Nil
 }

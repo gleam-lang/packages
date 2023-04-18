@@ -1,18 +1,20 @@
+import birl/time.{Time}
 import gleam/dynamic as dyn
 import gleam/hackney
+import gleam/hexpm
 import gleam/http/request
 import gleam/int
+import gleam/io
+import gleam/json
 import gleam/list
 import gleam/list_extra
-import gleam/string
-import gleam/json
-import gleam/uri
 import gleam/order
-import gleam/hexpm
-import gleam/io
+import gleam/pgo
 import gleam/result
+import gleam/string
+import gleam/uri
 import packages/error.{Error}
-import birl/time.{Time}
+import packages/store
 
 pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
   case a {
@@ -28,29 +30,24 @@ type State {
     newest: Time,
     hex_api_key: String,
     log: fn(String) -> Nil,
-    insert_package: fn(hexpm.Package) -> Result(Int, Error),
-    insert_release: fn(Int, hexpm.Release) -> Result(Int, Error),
+    db: pgo.Connection,
   )
 }
 
 pub fn sync_new_gleam_releases(
-  // TODO: fetch this internally
-  most_recent_timestamp: Time,
   hex_api_key: String,
-  insert_package: fn(hexpm.Package) -> Result(Int, Error),
-  insert_release: fn(Int, hexpm.Release) -> Result(Int, Error),
+  db: pgo.Connection,
 ) -> Result(Nil, Error) {
-  use _newest <- try(sync_packages(State(
+  use limit <- try(store.get_most_recent_hex_timestamp(db))
+  use latest <- try(sync_packages(State(
     page: 1,
-    limit: most_recent_timestamp,
-    newest: most_recent_timestamp,
+    limit: limit,
+    newest: limit,
     hex_api_key: hex_api_key,
     log: io.print,
-    insert_package: insert_package,
-    insert_release: insert_release,
+    db: db,
   )))
-  // TODO: update newest timestamp
-  Ok(Nil)
+  store.upsert_most_recent_hex_timestamp(db, latest)
 }
 
 fn sync_packages(state: State) -> Result(Time, Error) {
@@ -157,10 +154,12 @@ fn insert_package_and_releases(
     |> string.join(", v")
   state.log("\nsyncing " <> package.name <> " v" <> versions)
 
-  use id <- try(state.insert_package(package))
+  use id <- try(store.upsert_package(state.db, package))
 
   releases
-  |> list_extra.try_each(fn(release) { state.insert_release(id, release) })
+  |> list_extra.try_each(fn(release) {
+    store.upsert_release(state.db, id, release)
+  })
 }
 
 fn lookup_release(
