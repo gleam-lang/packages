@@ -1,23 +1,19 @@
 import gleam/pgo
 import packages/generated/sql
+import packages/store
 
 pub fn with_database(f: fn(pgo.Connection) -> t) -> t {
   let config =
     pgo.Config(
-      ..pgo.default_config(),
+      ..store.database_config_from_env(),
       database: "gleam_packages_test",
       pool_size: 1,
     )
   let db = pgo.connect(config)
-  migrate(db)
+  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
   let t = f(db)
   let Nil = pgo.disconnect(db)
   t
-}
-
-pub fn migrate(db: pgo.Connection) -> Nil {
-  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
-  Nil
 }
 
 pub fn truncate_tables(db: pgo.Connection) -> Nil {

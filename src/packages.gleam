@@ -1,15 +1,10 @@
 import gleam/erlang
-import gleam/erlang/os
 import gleam/erlang/process
-import gleam/result
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/pgo
 import gleam/string
-import gleam/option
 import mist
-import packages/generated/sql
 import packages/syncing
 import packages/store
 import packages/web
@@ -30,7 +25,7 @@ pub fn main() {
 }
 
 fn list() -> Nil {
-  let db = start_database_connection_pool()
+  let db = store.connect()
   let assert Ok(packages) = store.search_packages(db, "")
   let packages =
     list.sort(packages, fn(a, b) { string.compare(a.name, b.name) })
@@ -50,14 +45,13 @@ fn list() -> Nil {
 }
 
 fn sync(key: String) -> Nil {
-  let db = start_database_connection_pool()
+  let db = store.connect()
   let assert Ok(Nil) = syncing.sync_new_gleam_releases(key, db)
-
   Nil
 }
 
 fn server() {
-  let db = start_database_connection_pool()
+  let db = store.connect()
 
   // Start the web server process
   let assert Ok(_) =
@@ -66,37 +60,4 @@ fn server() {
 
   // Put the main process to sleep while the web server does its thing
   process.sleep_forever()
-}
-
-fn start_database_connection_pool() -> pgo.Connection {
-  let config =
-    os.get_env("DATABASE_URL")
-    |> result.then(pgo.url_config)
-    // In production we use IPv6
-    |> result.map(fn(config) { pgo.Config(..config, ip_version: pgo.Ipv6) })
-    |> result.lazy_unwrap(fn() {
-      let user =
-        os.get_env("PGUSER")
-        |> result.unwrap("postgres")
-      let password =
-        os.get_env("PGPASSWORD")
-        |> option.from_result
-      let port =
-        os.get_env("PGPORT")
-        |> result.then(int.parse)
-        |> result.unwrap(5432)
-
-      pgo.Config(
-        ..pgo.default_config(),
-        host: "localhost",
-        database: "gleam_packages",
-        user: user,
-        password: password,
-        port: port,
-      )
-    })
-
-  let db = pgo.connect(pgo.Config(..config, pool_size: 10))
-  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
-  db
 }
