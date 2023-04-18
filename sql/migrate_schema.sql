@@ -53,5 +53,32 @@ create table if not exists releases
 , unique(package_id, version)
 );
 
+create table if not exists hidden_packages
+( name text primary key
+);
+
+-- These packages are placeholders or otherwise not useful.
+insert into hidden_packages values
+-- Test packages.
+  ('bare_package1')
+, ('bare_package_one')
+, ('bare_package_two')
+, ('first_gleam_publish_package')
+, ('gleam_module_javascript_test')
+-- Reserved official sounding names.
+, ('gleam')
+, ('gleam_deno')
+, ('gleam_email')
+, ('gleam_html')
+, ('gleam_nodejs')
+, ('gleam_tcp')
+, ('gleam_test')
+, ('gleam_toml')
+, ('gleam_xml')
+-- Reserved unreleased project names.
+, ('glitter')
+, ('sequin')
+on conflict do nothing;
+
 end
 $$;

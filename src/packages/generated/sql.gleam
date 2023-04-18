@@ -142,13 +142,20 @@ from
     limit 5
   ) as latest_releases
 where
-  $1 = ''
-  or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+  (
+    $1 = ''
+    or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+  )
+  and not exists (
+    select 1
+    from hidden_packages
+    where hidden_packages.name = packages.name
+  )
 group by
   packages.id
 order by
   packages.updated_in_hex_at desc
-limit 500;
+limit 1000;
 "
   pgo.execute(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -237,6 +244,33 @@ create table if not exists releases
 , updated_in_hex_at bigint not null
 , unique(package_id, version)
 );
+
+create table if not exists hidden_packages
+( name text primary key
+);
+
+-- These packages are placeholders or otherwise not useful.
+insert into hidden_packages values
+-- Test packages.
+  ('bare_package1')
+, ('bare_package_one')
+, ('bare_package_two')
+, ('first_gleam_publish_package')
+, ('gleam_module_javascript_test')
+-- Reserved official sounding names.
+, ('gleam')
+, ('gleam_deno')
+, ('gleam_email')
+, ('gleam_html')
+, ('gleam_nodejs')
+, ('gleam_tcp')
+, ('gleam_test')
+, ('gleam_toml')
+, ('gleam_xml')
+-- Reserved unreleased project names.
+, ('glitter')
+, ('sequin')
+on conflict do nothing;
 
 end
 $$;

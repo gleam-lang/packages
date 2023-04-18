@@ -12,8 +12,15 @@ from
     limit 5
   ) as latest_releases
 where
-  $1 = ''
-  or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+  (
+    $1 = ''
+    or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+  )
+  and not exists (
+    select 1
+    from hidden_packages
+    where hidden_packages.name = packages.name
+  )
 group by
   packages.id
 order by
