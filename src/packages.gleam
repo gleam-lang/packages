@@ -81,6 +81,10 @@ fn start_database_connection_pool() -> pgo.Connection {
       let password =
         os.get_env("PGPASSWORD")
         |> option.from_result
+      let port =
+        os.get_env("PGPORT")
+        |> result.then(int.parse)
+        |> result.unwrap(5432)
 
       pgo.Config(
         ..pgo.default_config(),
@@ -88,6 +92,7 @@ fn start_database_connection_pool() -> pgo.Connection {
         database: "gleam_packages",
         user: user,
         password: password,
+        port: port,
       )
     })
 
