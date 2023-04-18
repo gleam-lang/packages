@@ -14,5 +14,5 @@ from
 group by
   packages.id
 order by
-  packages.updated_in_hex_at
+  packages.updated_in_hex_at desc
 limit 500;

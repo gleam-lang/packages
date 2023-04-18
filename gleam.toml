@@ -24,6 +24,7 @@ gleam_pgo = "~> 0.4"
 birl = "~> 0.8"
 mist = "~> 0.10"
 gleam_http = "~> 3.1"
+nakai = "~> 0.4"
 
 [dev-dependencies]
 gleeunit = "~> 0.7"

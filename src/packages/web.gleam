@@ -2,6 +2,8 @@ import gleam/pgo
 import gleam/bit_builder.{BitBuilder}
 import gleam/http/request.{Request}
 import gleam/http/response.{Response}
+import packages/store
+import packages/web/page
 
 pub type Context {
   Context(db: pgo.Connection, request: Request(BitString))
@@ -16,9 +18,10 @@ pub fn make_service(
   }
 }
 
-pub fn handle_request(_context: Context) -> Response(BitBuilder) {
+pub fn handle_request(context: Context) -> Response(BitBuilder) {
+  let assert Ok(packages) = store.list_packages(context.db)
+  let html = page.packages_index(packages)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
-  |> response.set_body("<h1>Hello, world!</h1>")
-  |> response.map(bit_builder.from_string)
+  |> response.set_body(html)
 }

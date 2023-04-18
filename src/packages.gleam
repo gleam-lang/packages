@@ -15,7 +15,7 @@ import packages/web
 const usage = "Usage:
   gleam run list
   gleam run server
-  gleam run sync
+  gleam run sync <hex_api_key>
 "
 
 pub fn main() {
