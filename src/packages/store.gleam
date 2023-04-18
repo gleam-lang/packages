@@ -7,6 +7,40 @@ import gleam/pgo
 import gleam/result
 import packages/error.{Error}
 import packages/generated/sql
+import gleam/erlang/os
+
+pub fn connect() -> pgo.Connection {
+  let config = pgo.Config(..database_config_from_env(), pool_size: 10)
+  let db = pgo.connect(config)
+  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
+  db
+}
+
+pub fn database_config_from_env() -> pgo.Config {
+  os.get_env("DATABASE_URL")
+  |> result.then(pgo.url_config)
+  // In production we use IPv6
+  |> result.map(fn(config) { pgo.Config(..config, ip_version: pgo.Ipv6) })
+  |> result.lazy_unwrap(fn() {
+    let database_name =
+      os.get_env("PGDATABASE")
+      |> result.unwrap("gleam_packages")
+    let user =
+      os.get_env("PGUSER")
+      |> result.unwrap("postgres")
+    let password =
+      os.get_env("PGPASSWORD")
+      |> option.from_result
+
+    pgo.Config(
+      ..pgo.default_config(),
+      host: "localhost",
+      database: database_name,
+      user: user,
+      password: password,
+    )
+  })
+}
 
 /// Insert or replace the most recent Hex timestamp in the database.
 pub fn upsert_most_recent_hex_timestamp(
