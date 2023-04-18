@@ -18,7 +18,6 @@ pub fn upsert_release(
     "insert into releases
   ( package_id
   , version
-  , hex_url
   , retirement_reason
   , retirement_message
   , inserted_in_hex_at
@@ -31,12 +30,10 @@ values
   , $4
   , $5
   , $6
-  , $7
   )
 on conflict (package_id, version) do update
 set
   version = excluded.version
-, hex_url = excluded.hex_url
 , retirement_reason = excluded.retirement_reason
 , retirement_message = excluded.retirement_message
 , inserted_in_hex_at = excluded.inserted_in_hex_at
@@ -98,8 +95,6 @@ pub fn get_package(
     "select
   name
 , description
-, hex_html_url
-, docs_html_url
 , inserted_in_hex_at
 , updated_in_hex_at
 from
@@ -165,7 +160,6 @@ pub fn get_release(
     "select
   package_id
 , version
-, hex_url
 , retirement_reason
 , retirement_message
 , inserted_in_hex_at
@@ -201,8 +195,6 @@ create table if not exists packages
 ( id serial primary key
 , name text not null unique
 , description text
-, hex_html_url text
-, docs_html_url text
 , inserted_in_hex_at bigint not null
 , updated_in_hex_at bigint not null
 , links jsonb not null default '{}'
@@ -236,7 +228,6 @@ create table if not exists releases
 ( id serial primary key
 , package_id integer references packages(id) on delete cascade
 , version text not null
-, hex_url text not null
 , retirement_reason retirement_reason
 , retirement_message text
 , inserted_in_hex_at bigint not null
@@ -275,8 +266,6 @@ pub fn upsert_package(
 insert into packages
   ( name
   , description
-  , hex_html_url
-  , docs_html_url
   , inserted_in_hex_at
   , updated_in_hex_at
   )
@@ -285,14 +274,10 @@ values
   , $2
   , $3
   , $4
-  , $5
-  , $6
   )
 on conflict (name) do update
 set
-  hex_html_url = excluded.hex_html_url
-, docs_html_url = excluded.docs_html_url
-, updated_in_hex_at = excluded.updated_in_hex_at
+  updated_in_hex_at = excluded.updated_in_hex_at
 , description = excluded.description
 returning
   id

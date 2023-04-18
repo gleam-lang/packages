@@ -13,8 +13,6 @@ create table if not exists packages
 ( id serial primary key
 , name text not null unique
 , description text
-, hex_html_url text
-, docs_html_url text
 , inserted_in_hex_at bigint not null
 , updated_in_hex_at bigint not null
 , links jsonb not null default '{}'
@@ -48,7 +46,6 @@ create table if not exists releases
 ( id serial primary key
 , package_id integer references packages(id) on delete cascade
 , version text not null
-, hex_url text not null
 , retirement_reason retirement_reason
 , retirement_message text
 , inserted_in_hex_at bigint not null

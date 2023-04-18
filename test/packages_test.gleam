@@ -55,8 +55,6 @@ pub fn insert_package_test() {
   let assert Ok(Some(package)) = packages.get_package(db, id)
   package
   |> should.equal(Package(
-    docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
-    html_url: Some("https://hex.pm/packages/gleam_stdlib"),
     description: Some("Standard library for Gleam"),
     name: "gleam_stdlib",
     inserted_in_hex_at: time.from_unix(100),
@@ -119,7 +117,6 @@ pub fn insert_release_test() {
   |> should.equal(Release(
     package_id: package_id,
     version: "0.0.3",
-    hex_url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
     retirement_reason: Some(hexpm.Security),
     retirement_message: Some("Retired due to security concerns"),
     updated_in_hex_at: time.from_unix(1000),

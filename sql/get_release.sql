@@ -1,7 +1,6 @@
 select
   package_id
 , version
-, hex_url
 , retirement_reason
 , retirement_message
 , inserted_in_hex_at

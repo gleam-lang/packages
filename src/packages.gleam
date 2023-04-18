@@ -125,8 +125,6 @@ pub fn upsert_package(
   let parameters = [
     pgo.text(package.name),
     pgo.nullable(pgo.text, package.meta.description),
-    pgo.nullable(pgo.text, package.html_url),
-    pgo.nullable(pgo.text, package.docs_html_url),
     pgo.int(time.to_unix(package.inserted_at)),
     pgo.int(time.to_unix(package.updated_at)),
   ]
@@ -140,22 +138,18 @@ pub type Package {
   Package(
     name: String,
     description: Option(String),
-    html_url: Option(String),
-    docs_html_url: Option(String),
     inserted_in_hex_at: Time,
     updated_in_hex_at: Time,
   )
 }
 
 pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
-  dyn.decode6(
+  dyn.decode4(
     Package,
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.optional(dyn.string)),
-    dyn.element(2, dyn.optional(dyn.string)),
-    dyn.element(3, dyn.optional(dyn.string)),
-    dyn.element(4, dyn_extra.unix_timestamp),
-    dyn.element(5, dyn_extra.unix_timestamp),
+    dyn.element(2, dyn_extra.unix_timestamp),
+    dyn.element(3, dyn_extra.unix_timestamp),
   )(data)
 }
 
@@ -186,7 +180,6 @@ pub fn upsert_release(
   let parameters = [
     pgo.int(package_id),
     pgo.text(release.version),
-    pgo.text(release.url),
     pgo.nullable(pgo.text, retirement_reason),
     pgo.nullable(pgo.text, retirement_message),
     pgo.int(time.to_unix(release.inserted_at)),
@@ -202,7 +195,6 @@ pub type Release {
   Release(
     package_id: Int,
     version: String,
-    hex_url: String,
     retirement_reason: Option(hexpm.RetirementReason),
     retirement_message: Option(String),
     inserted_in_hex_at: Time,
@@ -211,15 +203,14 @@ pub type Release {
 }
 
 pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
-  dyn.decode7(
+  dyn.decode6(
     Release,
     dyn.element(0, dyn.int),
     dyn.element(1, dyn.string),
-    dyn.element(2, dyn.string),
-    dyn.element(3, dyn.optional(hexpm.decode_retirement_reason)),
-    dyn.element(4, dyn.optional(dyn.string)),
+    dyn.element(2, dyn.optional(hexpm.decode_retirement_reason)),
+    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(4, dyn_extra.unix_timestamp),
     dyn.element(5, dyn_extra.unix_timestamp),
-    dyn.element(6, dyn_extra.unix_timestamp),
   )(data)
 }
 
