@@ -157,7 +157,11 @@ fn decode_package_summary(
   )(data)
 }
 
-pub fn list_packages(db: pgo.Connection) -> Result(List(PackageSummary), Error) {
-  use returned <- result.then(sql.list_packages(db, [], decode_package_summary))
-  Ok(returned.rows)
+pub fn search_packages(
+  db: pgo.Connection,
+  search_term: String,
+) -> Result(List(PackageSummary), Error) {
+  let params = [pgo.text(search_term)]
+  sql.search_packages(db, params, decode_package_summary)
+  |> result.map(fn(r) { r.rows })
 }

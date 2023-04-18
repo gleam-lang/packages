@@ -5,11 +5,35 @@ import nakai/html.{Node}
 import nakai/html/attrs
 import packages/store.{PackageSummary}
 
-pub fn packages_index(packages: List(PackageSummary)) -> BitBuilder {
-  html.main([], [html.h1_text([], "Gleam Packages"), package_list(packages)])
+pub fn packages_index(
+  packages: List(PackageSummary),
+  search_term: String,
+) -> BitBuilder {
+  html.main(
+    [],
+    [
+      html.a([attrs.href("/")], [html.h1_text([], "Gleam Packages")]),
+      search_form(search_term),
+      package_list(packages),
+    ],
+  )
   |> layout
   |> nakai.render
   |> bit_builder.from_string
+}
+
+fn search_form(search_term: String) -> Node(t) {
+  html.form(
+    [attrs.Attr("method", "GET")],
+    [
+      html.input([
+        attrs.name("search"),
+        attrs.type_("search"),
+        attrs.value(search_term),
+      ]),
+      html.input([attrs.type_("submit"), attrs.value("Search")]),
+    ],
+  )
 }
 
 fn package_list(packages: List(PackageSummary)) -> Node(t) {
@@ -41,7 +65,7 @@ fn layout(content: Node(t)) -> Node(t) {
         attrs.name("viewport"),
         attrs.content("width=device-width, initial-scale=1"),
       ]),
-      html.title_text([], "Midsummer Night's Tea Party"),
+      html.title_text([], "Gleam Packages"),
     ]),
     content,
     html.footer(

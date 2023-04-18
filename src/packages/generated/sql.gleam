@@ -107,7 +107,22 @@ limit 1;
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn list_packages(
+pub fn get_most_recent_hex_timestamp(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  unix_timestamp
+from most_recent_hex_timestamp
+limit 1
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn search_packages(
   db: pgo.Connection,
   arguments: List(pgo.Value),
   decoder: dynamic.Decoder(a),
@@ -126,26 +141,14 @@ from
     order by releases.inserted_in_hex_at desc
     limit 5
   ) as latest_releases
+where
+  $1 = ''
+  or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
 group by
   packages.id
 order by
   packages.updated_in_hex_at desc
 limit 500;
-"
-  pgo.execute(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn get_most_recent_hex_timestamp(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  unix_timestamp
-from most_recent_hex_timestamp
-limit 1
 "
   pgo.execute(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)

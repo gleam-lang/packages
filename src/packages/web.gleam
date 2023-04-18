@@ -1,4 +1,8 @@
 import gleam/pgo
+import gleam/uri
+import gleam/option
+import gleam/list
+import gleam/result
 import gleam/bit_builder.{BitBuilder}
 import gleam/http/request.{Request}
 import gleam/http/response.{Response}
@@ -19,8 +23,15 @@ pub fn make_service(
 }
 
 pub fn handle_request(context: Context) -> Response(BitBuilder) {
-  let assert Ok(packages) = store.list_packages(context.db)
-  let html = page.packages_index(packages)
+  let search_term =
+    context.request.query
+    |> option.to_result(Nil)
+    |> result.then(uri.parse_query)
+    |> result.then(list.key_find(_, "search"))
+    |> result.unwrap("")
+  let assert Ok(packages) = store.search_packages(context.db, search_term)
+
+  let html = page.packages_index(packages, search_term)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
   |> response.set_body(html)

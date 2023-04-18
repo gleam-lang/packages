@@ -11,8 +11,11 @@ from
     order by releases.inserted_in_hex_at desc
     limit 5
   ) as latest_releases
+where
+  $1 = ''
+  or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
 group by
   packages.id
 order by
   packages.updated_in_hex_at desc
-limit 500;
+limit 1000;

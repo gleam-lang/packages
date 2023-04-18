@@ -29,7 +29,7 @@ pub fn main() {
 
 fn list() -> Nil {
   let db = start_database_connection_pool()
-  let assert Ok(packages) = store.list_packages(db)
+  let assert Ok(packages) = store.search_packages(db, "")
   let packages =
     packages
     |> list.sort(fn(a, b) { string.compare(a.name, b.name) })
