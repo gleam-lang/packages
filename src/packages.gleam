@@ -1,10 +1,13 @@
 import gleam/erlang
+import gleam/erlang/os
 import gleam/erlang/process
+import gleam/result
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/pgo
 import gleam/string
+import gleam/option
 import mist
 import packages/generated/sql
 import packages/syncing
@@ -66,14 +69,29 @@ fn server() {
 }
 
 fn start_database_connection_pool() -> pgo.Connection {
-  let db =
-    pgo.connect(
+  let config =
+    os.get_env("DATABASE_URL")
+    |> result.then(pgo.url_config)
+    // In production we use IPv6
+    |> result.map(fn(config) { pgo.Config(..config, ip_version: pgo.Ipv6) })
+    |> result.lazy_unwrap(fn() {
+      let user =
+        os.get_env("PGUSER")
+        |> result.unwrap("postgres")
+      let password =
+        os.get_env("PGPASSWORD")
+        |> option.from_result
+
       pgo.Config(
         ..pgo.default_config(),
+        host: "localhost",
         database: "gleam_packages",
-        pool_size: 1,
-      ),
-    )
+        user: user,
+        password: password,
+      )
+    })
+
+  let db = pgo.connect(pgo.Config(..config, pool_size: 10))
   let assert Ok(_) = sql.migrate_schema(db, [], Ok)
   db
 }
