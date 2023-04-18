@@ -65,7 +65,7 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   list.map(new_packages, with_only_fresh_releases(_, state.limit))
 
   // Insert the new releases into the database.
-  use Nil <- try(list_extra.try_each(new_packages, sync_package(_, state)))
+  use _ <- try(list_extra.try_each(new_packages, sync_package(_, state)))
 
   case list.length(all_packages) == list.length(new_packages) {
     // If all the releases were new then there may be more on the next page.
