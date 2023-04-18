@@ -236,16 +236,21 @@ pub fn get_release(
 }
 
 pub type PackageSummary {
-  PackageSummary(name: String, description: String)
+  PackageSummary(
+    name: String,
+    description: String,
+    latest_versions: List(String),
+  )
 }
 
 fn decode_package_summary(
   data: Dynamic,
 ) -> Result(PackageSummary, List(DecodeError)) {
-  dyn.decode2(
+  dyn.decode3(
     PackageSummary,
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.string),
+    dyn.element(2, dyn.list(dyn.string)),
   )(data)
 }
 
