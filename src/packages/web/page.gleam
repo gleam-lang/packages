@@ -217,6 +217,15 @@ fn layout(content: Node(t)) -> Node(t) {
       ]),
       html.title_text([], "Gleam Packages"),
       html.Element("style", [attrs.type_("text/css")], [html.Text(stylesheet)]),
+      html.Element(
+        "script",
+        [
+          attrs.defer(),
+          attrs.src("https://plausible.io/js/plausible.js"),
+          attrs.Attr("data-domain", "packages.gleam.run"),
+        ],
+        [],
+      ),
     ]),
     content,
     html.footer(
