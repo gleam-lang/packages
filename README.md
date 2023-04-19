@@ -22,3 +22,12 @@ gleam test
 # Run the server
 gleam run server
 ```
+
+## Deployment
+
+The application and the PostgreSQL database are hosted on [Fly](https://fly.io).
+
+```shell
+# Deploy the application
+fly deploy
+```

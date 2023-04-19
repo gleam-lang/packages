@@ -23,6 +23,13 @@ pub fn make_service(
 }
 
 pub fn handle_request(context: Context) -> Response(BitBuilder) {
+  case request.path_segments(context.request) {
+    [] -> search(context)
+    _ -> redirect(to: "/")
+  }
+}
+
+fn search(context: Context) -> Response(BitBuilder) {
   let search_term =
     context.request.query
     |> option.to_result(Nil)
@@ -31,8 +38,13 @@ pub fn handle_request(context: Context) -> Response(BitBuilder) {
     |> result.unwrap("")
   let assert Ok(packages) = store.search_packages(context.db, search_term)
 
-  let html = page.packages_index(packages, search_term)
+  let html = page.packages_search(packages, search_term)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
   |> response.set_body(html)
+}
+
+fn redirect(to destination: String) -> Response(BitBuilder) {
+  response.redirect(destination)
+  |> response.map(bit_builder.from_string)
 }
