@@ -225,8 +225,26 @@ fn layout(content: Node(t)) -> Node(t) {
         html.div(
           [],
           [
-            html.Text("© Louis Pilfold. Made with "),
-            html.a([attrs.href("https://gleam.run/")], [html.Text("Gleam")]),
+            html.Text("Special thanks to the "),
+            external_link_text("https://hex.pm/", "Hex"),
+            html.Text(" team."),
+          ],
+        ),
+        html.div(
+          [],
+          [
+            html.Text("Kindly hosted by "),
+            external_link_text("https://fly.io/", "Fly"),
+            html.Text("."),
+          ],
+        ),
+        html.div(
+          [],
+          [
+            external_link_text(
+              "https://github.com/gleam-lang/packages",
+              "Source code",
+            ),
             html.Text("."),
           ],
         ),
