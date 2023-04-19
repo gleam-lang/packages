@@ -138,6 +138,10 @@ h1, h2, h3, h4, h5, h6 {
 .package-list h2 {
   margin: 0 var(--gap) var(--gap-s) 0;
 }
+
+.package-list p {
+  margin: 0;
+}
 "
 
 pub fn packages_index(
@@ -186,18 +190,20 @@ fn package_list(packages: List(PackageSummary)) -> Node(t) {
 }
 
 fn package_list_item(package: PackageSummary) -> Node(t) {
+  let url = "https://hex.pm/packages/" <> package.name
   html.li(
     [],
     [
-      html.a(
-        [
-          attrs.href("https://hex.pm/packages/" <> package.name),
-          attrs.rel("noopener noreferrer"),
-        ],
-        [html.h2_text([], package.name)],
-      ),
-      html.Text(package.description),
+      html.h2([], [external_link_text(url, package.name)]),
+      html.p_text([], package.description),
     ],
+  )
+}
+
+fn external_link_text(url: String, text: String) -> Node(t) {
+  html.a_text(
+    [attrs.href(url), attrs.rel("noopener noreferrer"), attrs.target("_blank")],
+    text,
   )
 }
 

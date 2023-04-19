@@ -1,0 +1,14 @@
+*.beam
+*.ez
+.env
+.github
+.gitignore
+.idea
+README.md
+bin
+build
+erl_crash.dump
+fly.toml
+secrets.env
+sql
+test
