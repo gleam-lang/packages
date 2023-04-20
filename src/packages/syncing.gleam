@@ -1,4 +1,5 @@
 import birl/time.{Time}
+import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
 import gleam/hexpm
@@ -29,6 +30,7 @@ type State {
     limit: Time,
     newest: Time,
     hex_api_key: String,
+    last_logged: Time,
     db: pgo.Connection,
   )
 }
@@ -44,6 +46,7 @@ pub fn sync_new_gleam_releases(
     limit: limit,
     newest: limit,
     hex_api_key: hex_api_key,
+    last_logged: time.now(),
     db: db,
   )))
   let latest = store.upsert_most_recent_hex_timestamp(db, latest)
@@ -66,7 +69,7 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   list.map(new_packages, with_only_fresh_releases(_, state.limit))
 
   // Insert the new releases into the database.
-  use _ <- try(list_extra.try_each(new_packages, sync_package(_, state)))
+  use state <- try(list.try_fold(new_packages, state, sync_package))
 
   case list.length(all_packages) == list.length(new_packages) {
     // If all the releases were new then there may be more on the next page.
@@ -129,7 +132,7 @@ pub fn with_only_fresh_releases(
   hexpm.Package(..package, releases: releases)
 }
 
-fn sync_package(package: hexpm.Package, state: State) -> Result(Nil, Error) {
+fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
   use releases <- try(list.try_map(package.releases, lookup_release(_, state)))
   let releases =
     releases
@@ -138,8 +141,28 @@ fn sync_package(package: hexpm.Package, state: State) -> Result(Nil, Error) {
     })
 
   case releases {
-    [] -> Ok(Nil)
-    _ -> insert_package_and_releases(package, releases, state)
+    [] -> {
+      let state = log_if_needed(state)
+      Ok(state)
+    }
+    _ -> {
+      use _ <- try(insert_package_and_releases(package, releases, state))
+      let state = State(..state, last_logged: time.now())
+      Ok(state)
+    }
+  }
+}
+
+fn log_if_needed(state: State) -> State {
+  let interval = duration.new([#(5, duration.Second)])
+  let print_deadline = time.add(state.last_logged, interval)
+  let not_logged_recently = time.compare(print_deadline, time.now()) == order.Lt
+  case not_logged_recently {
+    True -> {
+      io.println("Still syncing...")
+      State(..state, last_logged: time.now())
+    }
+    False -> state
   }
 }
 
@@ -152,7 +175,7 @@ fn insert_package_and_releases(
     releases
     |> list.map(fn(release) { release.version })
     |> string.join(", v")
-  io.print("\nsyncing " <> package.name <> " v" <> versions)
+  io.println("Saving " <> package.name <> " v" <> versions)
 
   use id <- try(store.upsert_package(state.db, package))
 
@@ -166,7 +189,6 @@ fn lookup_release(
   release: hexpm.PackageRelease,
   state: State,
 ) -> Result(hexpm.Release, Error) {
-  io.print(".")
   let assert Ok(url) = uri.parse(release.url)
 
   use response <- try(
