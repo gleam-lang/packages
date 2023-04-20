@@ -29,7 +29,6 @@ type State {
     limit: Time,
     newest: Time,
     hex_api_key: String,
-    log: fn(String) -> Nil,
     db: pgo.Connection,
   )
 }
@@ -38,16 +37,18 @@ pub fn sync_new_gleam_releases(
   hex_api_key: String,
   db: pgo.Connection,
 ) -> Result(Nil, Error) {
+  io.println("Syncing new releases from Hex")
   use limit <- try(store.get_most_recent_hex_timestamp(db))
   use latest <- try(sync_packages(State(
     page: 1,
     limit: limit,
     newest: limit,
     hex_api_key: hex_api_key,
-    log: io.print,
     db: db,
   )))
-  store.upsert_most_recent_hex_timestamp(db, latest)
+  let latest = store.upsert_most_recent_hex_timestamp(db, latest)
+  io.println("\nUp to date!")
+  latest
 }
 
 fn sync_packages(state: State) -> Result(Time, Error) {
@@ -74,7 +75,6 @@ fn sync_packages(state: State) -> Result(Time, Error) {
     // If some packages where not new then we have reached the end of the new
     // releases and can stop.
     False -> {
-      state.log("\nUp to date!")
       Ok(state.newest)
     }
   }
@@ -152,7 +152,7 @@ fn insert_package_and_releases(
     releases
     |> list.map(fn(release) { release.version })
     |> string.join(", v")
-  state.log("\nsyncing " <> package.name <> " v" <> versions)
+  io.print("\nsyncing " <> package.name <> " v" <> versions)
 
   use id <- try(store.upsert_package(state.db, package))
 
@@ -166,7 +166,7 @@ fn lookup_release(
   release: hexpm.PackageRelease,
   state: State,
 ) -> Result(hexpm.Release, Error) {
-  state.log(".")
+  io.print(".")
   let assert Ok(url) = uri.parse(release.url)
 
   use response <- try(

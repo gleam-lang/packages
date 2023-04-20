@@ -1,5 +1,6 @@
 import gleam/erlang
 import gleam/erlang/process
+import gleam/erlang/os
 import gleam/int
 import gleam/io
 import gleam/list
@@ -8,18 +9,19 @@ import mist
 import packages/syncing
 import packages/store
 import packages/web
+import packages/periodic
 
 const usage = "Usage:
   gleam run list
   gleam run server
-  gleam run sync <hex_api_key>
+  gleam run sync
 "
 
 pub fn main() {
   case erlang.start_arguments() {
     ["list"] -> list()
     ["server"] -> server()
-    ["sync", key] -> sync(key)
+    ["sync"] -> sync()
     _ -> io.println(usage)
   }
 }
@@ -44,14 +46,23 @@ fn list() -> Nil {
   io.println("\n" <> int.to_string(list.length(packages)) <> " packages")
 }
 
-fn sync(key: String) -> Nil {
+fn sync() -> Nil {
   let db = store.connect()
+  let assert Ok(key) = os.get_env("HEX_API_KEY")
   let assert Ok(Nil) = syncing.sync_new_gleam_releases(key, db)
   Nil
 }
 
 fn server() {
   let db = store.connect()
+
+  // Start syncing new releases periodically
+  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let assert Ok(_) =
+    periodic.periodically(
+      do: fn() { syncing.sync_new_gleam_releases(key, db) },
+      waiting: 60 * 1000,
+    )
 
   // Start the web server process
   let assert Ok(_) =
