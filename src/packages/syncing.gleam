@@ -141,7 +141,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
-      let state = log_if_needed(state)
+      let state = log_if_needed(state, package.updated_at)
       Ok(state)
     }
     _ -> {
@@ -152,13 +152,13 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
   }
 }
 
-fn log_if_needed(state: State) -> State {
+fn log_if_needed(state: State, time: Time) -> State {
   let interval = duration.new([#(5, duration.Second)])
   let print_deadline = time.add(state.last_logged, interval)
   let not_logged_recently = time.compare(print_deadline, time.now()) == order.Lt
   case not_logged_recently {
     True -> {
-      io.println("Still syncing...")
+      io.println("Still syncing, up to " <> time.to_iso8601(time))
       State(..state, last_logged: time.now())
     }
     False -> state
