@@ -3,6 +3,8 @@ import gleam/uri
 import gleam/option
 import gleam/list
 import gleam/result
+import gleam/erlang/file
+import gleam/erlang_extra
 import gleam/bit_builder.{BitBuilder}
 import gleam/http/request.{Request}
 import gleam/http/response.{Response}
@@ -25,8 +27,17 @@ pub fn make_service(
 pub fn handle_request(context: Context) -> Response(BitBuilder) {
   case request.path_segments(context.request) {
     [] -> search(context)
+    ["styles.css"] -> stylesheet()
     _ -> redirect(to: "/")
   }
+}
+
+fn stylesheet() -> Response(BitBuilder) {
+  let assert Ok(priv) = erlang_extra.priv_directory("packages")
+  let assert Ok(css) = file.read_bits(priv <> "/styles.css")
+  response.new(200)
+  |> response.set_header("content-type", "text/css; charset=utf-8")
+  |> response.set_body(bit_builder.from_bit_string(css))
 }
 
 fn search(context: Context) -> Response(BitBuilder) {
