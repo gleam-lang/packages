@@ -78,6 +78,10 @@ fn layout(content: Node(t)) -> Node(t) {
       ]),
       html.title_text([], "Gleam Packages"),
       html.link([attrs.rel("stylesheet"), attrs.href("/styles.css")]),
+      html.link([
+        attrs.rel("icon"),
+        attrs.href("https://gleam.run/images/lucy-circle.svg"),
+      ]),
       html.Element(
         "script",
         [
