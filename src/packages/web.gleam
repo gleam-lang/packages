@@ -28,7 +28,7 @@ pub fn handle_request(context: Context) -> Response(BitBuilder) {
   case request.path_segments(context.request) {
     [] -> search(context)
     ["styles.css"] -> stylesheet()
-    ["favicon.svg"] -> favicon()
+    ["favicon.ico"] -> favicon()
     _ -> redirect(to: "/")
   }
 }
