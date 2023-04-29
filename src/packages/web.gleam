@@ -28,6 +28,7 @@ pub fn handle_request(context: Context) -> Response(BitBuilder) {
   case request.path_segments(context.request) {
     [] -> search(context)
     ["styles.css"] -> stylesheet()
+    ["favicon.svg"] -> favicon()
     _ -> redirect(to: "/")
   }
 }
@@ -37,6 +38,14 @@ fn stylesheet() -> Response(BitBuilder) {
   let assert Ok(css) = file.read_bits(priv <> "/styles.css")
   response.new(200)
   |> response.set_header("content-type", "text/css; charset=utf-8")
+  |> response.set_body(bit_builder.from_bit_string(css))
+}
+
+fn favicon() -> Response(BitBuilder) {
+  let assert Ok(priv) = erlang_extra.priv_directory("packages")
+  let assert Ok(css) = file.read_bits(priv <> "/lucy-circle.svg")
+  response.new(200)
+  |> response.set_header("content-type", "image/svg+xml")
   |> response.set_body(bit_builder.from_bit_string(css))
 }
 
