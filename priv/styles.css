@@ -16,6 +16,7 @@
   --font-family-title: 'Lexend', sans-serif;
 
   --color-charcoal: #2f2f2f;
+  --color-graphite: #545454;
   --color-black: #1e1e1e;
   --color-blacker: #151515;
   --color-white: #fefefc;
@@ -121,8 +122,22 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--gap-l);
 }
 
-.package-list h2 {
+.package-list li div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--gap);
+
   margin: 0 var(--gap) var(--gap-s) 0;
+}
+
+.package-list li div span {
+  color: var(--color-graphite);
+}
+
+.package-list h2 {
+  margin: 0
 }
 
 .package-list p {

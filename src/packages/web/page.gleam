@@ -1,3 +1,4 @@
+import birl/time
 import gleam/bit_builder.{BitBuilder}
 import gleam/list
 import nakai
@@ -55,7 +56,13 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
   html.li(
     [],
     [
-      html.h2([], [external_link_text(url, package.name)]),
+      html.div(
+        [],
+        [
+          html.h2([], [external_link_text(url, package.name)]),
+          html.span_text([], time.to_iso8601(package.updated_in_hex_at)),
+        ],
+      ),
       html.p_text([], package.description),
     ],
   )
