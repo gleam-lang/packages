@@ -7,7 +7,7 @@ import gleam/list
 import gleam/string
 import mist
 import packages/syncing
-import packages/store
+import packages/index
 import packages/web
 import packages/periodic
 
@@ -27,8 +27,8 @@ pub fn main() {
 }
 
 fn list() -> Nil {
-  let db = store.connect()
-  let assert Ok(packages) = store.search_packages(db, "")
+  let db = index.connect()
+  let assert Ok(packages) = index.search_packages(db, "")
   let packages =
     list.sort(packages, fn(a, b) { string.compare(a.name, b.name) })
 
@@ -47,28 +47,25 @@ fn list() -> Nil {
 }
 
 fn sync() -> Nil {
-  let db = store.connect()
+  let db = index.connect()
   let assert Ok(key) = os.get_env("HEX_API_KEY")
   let assert Ok(Nil) = syncing.sync_new_gleam_releases(key, db)
   Nil
 }
 
 fn server() {
-  let db = store.connect()
+  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let db = index.connect()
 
   // Start syncing new releases periodically
-  let assert Ok(key) = os.get_env("HEX_API_KEY")
-  let assert Ok(_) =
-    periodic.periodically(
-      do: fn() { syncing.sync_new_gleam_releases(key, db) },
-      waiting: 60 * 1000,
-    )
+  let sync = fn() { syncing.sync_new_gleam_releases(key, db) }
+  let assert Ok(_) = periodic.periodically(do: sync, waiting: 60 * 1000)
 
-  // Start the web server process
-  let assert Ok(_) =
-    mist.run_service(3000, web.make_service(db), max_body_limit: 4_000_000)
+  // Start the web server
+  let service = web.make_service(db)
+  let assert Ok(_) = mist.run_service(3000, service, max_body_limit: 4_000_000)
   io.println("Started listening on http://localhost:3000 ✨")
 
-  // Put the main process to sleep while the web server does its thing
+  // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
 }

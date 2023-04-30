@@ -15,7 +15,7 @@ import gleam/result
 import gleam/string
 import gleam/uri
 import packages/error.{Error}
-import packages/store
+import packages/index
 
 pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
   case a {
@@ -40,7 +40,7 @@ pub fn sync_new_gleam_releases(
   db: pgo.Connection,
 ) -> Result(Nil, Error) {
   io.println("Syncing new releases from Hex")
-  use limit <- try(store.get_most_recent_hex_timestamp(db))
+  use limit <- try(index.get_most_recent_hex_timestamp(db))
   use latest <- try(sync_packages(State(
     page: 1,
     limit: limit,
@@ -49,7 +49,7 @@ pub fn sync_new_gleam_releases(
     last_logged: time.now(),
     db: db,
   )))
-  let latest = store.upsert_most_recent_hex_timestamp(db, latest)
+  let latest = index.upsert_most_recent_hex_timestamp(db, latest)
   io.println("\nUp to date!")
   latest
 }
@@ -58,7 +58,7 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
 
-  // The timestamp of the first package on the page is the newest. Store this so
+  // The timestamp of the first package on the page is the newest. index this so
   // we can record it in the database to use as the limit for the next sync.
   let state = State(..state, newest: first_timestamp(all_packages, state))
 
@@ -176,11 +176,11 @@ fn insert_package_and_releases(
     |> string.join(", v")
   io.println("Saving " <> package.name <> " v" <> versions)
 
-  use id <- try(store.upsert_package(state.db, package))
+  use id <- try(index.upsert_package(state.db, package))
 
   releases
   |> list_extra.try_each(fn(release) {
-    store.upsert_release(state.db, id, release)
+    index.upsert_release(state.db, id, release)
   })
 }
 

@@ -8,7 +8,7 @@ import gleam/erlang_extra
 import gleam/bit_builder.{BitBuilder}
 import gleam/http/request.{Request}
 import gleam/http/response.{Response}
-import packages/store
+import packages/index
 import packages/web/page
 
 pub type Context {
@@ -42,18 +42,21 @@ fn stylesheet() -> Response(BitBuilder) {
 }
 
 fn search(context: Context) -> Response(BitBuilder) {
-  let search_term =
-    context.request.query
-    |> option.to_result(Nil)
-    |> result.then(uri.parse_query)
-    |> result.then(list.key_find(_, "search"))
-    |> result.unwrap("")
-  let assert Ok(packages) = store.search_packages(context.db, search_term)
+  let search_term = get_search_parameter(context.request)
+  let assert Ok(packages) = index.search_packages(context.db, search_term)
 
   let html = page.packages_search(packages, search_term)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
   |> response.set_body(html)
+}
+
+fn get_search_parameter(request: Request(_)) -> String {
+  request.query
+  |> option.to_result(Nil)
+  |> result.then(uri.parse_query)
+  |> result.then(list.key_find(_, "search"))
+  |> result.unwrap("")
 }
 
 fn redirect(to destination: String) -> Response(BitBuilder) {

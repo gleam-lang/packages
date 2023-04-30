@@ -1,4 +1,4 @@
-import packages/store.{Package, Release}
+import packages/index.{Package, Release}
 import gleam/hexpm
 import gleam/option.{None, Some}
 import gleam/map
@@ -11,14 +11,14 @@ pub fn most_recent_hex_timestamp_test() {
   tests.truncate_tables(db)
 
   let assert Ok(Nil) =
-    store.upsert_most_recent_hex_timestamp(db, time.from_unix(0))
-  let assert Ok(time) = store.get_most_recent_hex_timestamp(db)
+    index.upsert_most_recent_hex_timestamp(db, time.from_unix(0))
+  let assert Ok(time) = index.get_most_recent_hex_timestamp(db)
   let assert 0 = time.to_unix(time)
   let assert "1970-01-01T00:00:00.000Z" = time.to_iso8601(time)
 
   let assert Ok(Nil) =
-    store.upsert_most_recent_hex_timestamp(db, time.from_unix(2_284_352_323))
-  let assert Ok(time) = store.get_most_recent_hex_timestamp(db)
+    index.upsert_most_recent_hex_timestamp(db, time.from_unix(2_284_352_323))
+  let assert Ok(time) = index.get_most_recent_hex_timestamp(db)
   let assert "2042-05-22T06:18:43.000Z" = time.to_iso8601(time)
   let assert 2_284_352_323 = time.to_unix(time)
 }
@@ -28,7 +28,7 @@ pub fn insert_package_test() {
   tests.truncate_tables(db)
 
   let assert Ok(id) =
-    store.upsert_package(
+    index.upsert_package(
       db,
       hexpm.Package(
         downloads: map.from_list([#("all", 5), #("recent", 2)]),
@@ -47,7 +47,7 @@ pub fn insert_package_test() {
       ),
     )
 
-  let assert Ok(Some(package)) = store.get_package(db, id)
+  let assert Ok(Some(package)) = index.get_package(db, id)
   package
   |> should.equal(Package(
     description: Some("Standard library for Gleam"),
@@ -56,7 +56,7 @@ pub fn insert_package_test() {
     updated_in_hex_at: time.from_unix(2000),
   ))
 
-  let assert Ok(None) = store.get_package(db, id + 1)
+  let assert Ok(None) = index.get_package(db, id + 1)
 }
 
 pub fn insert_release_test() {
@@ -64,7 +64,7 @@ pub fn insert_release_test() {
   tests.truncate_tables(db)
 
   let assert Ok(package_id) =
-    store.upsert_package(
+    index.upsert_package(
       db,
       hexpm.Package(
         downloads: map.from_list([#("all", 5), #("recent", 2)]),
@@ -84,7 +84,7 @@ pub fn insert_release_test() {
     )
 
   let assert Ok(id) =
-    store.upsert_release(
+    index.upsert_release(
       db,
       package_id,
       hexpm.Release(
@@ -107,7 +107,7 @@ pub fn insert_release_test() {
       ),
     )
 
-  let assert Ok(Some(release)) = store.get_release(db, id)
+  let assert Ok(Some(release)) = index.get_release(db, id)
   release
   |> should.equal(Release(
     package_id: package_id,
@@ -118,5 +118,5 @@ pub fn insert_release_test() {
     inserted_in_hex_at: time.from_unix(2000),
   ))
 
-  let assert Ok(None) = store.get_release(db, id + 1)
+  let assert Ok(None) = index.get_release(db, id + 1)
 }

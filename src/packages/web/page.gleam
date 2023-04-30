@@ -3,7 +3,7 @@ import gleam/list
 import nakai
 import nakai/html.{Node}
 import nakai/html/attrs
-import packages/store.{PackageSummary}
+import packages/index.{PackageSummary}
 
 pub fn packages_search(
   packages: List(PackageSummary),

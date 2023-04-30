@@ -1,11 +1,11 @@
 import gleam/pgo
 import packages/generated/sql
-import packages/store
+import packages/index
 
 pub fn with_database(f: fn(pgo.Connection) -> t) -> t {
   let config =
     pgo.Config(
-      ..store.database_config_from_env(),
+      ..index.database_config_from_env(),
       database: "gleam_packages_test",
       pool_size: 1,
     )
