@@ -132,6 +132,7 @@ pub fn search_packages(
   packages.name
 , description
 , array_agg(latest_releases.version) as latest_releases
+, packages.updated_in_hex_at
 from
   packages,
   lateral (
