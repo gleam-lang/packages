@@ -5,7 +5,7 @@ import nakai/html.{Node}
 import nakai/html/attrs
 import packages/index.{PackageSummary}
 
-pub fn packages_search(
+pub fn packages_list(
   packages: List(PackageSummary),
   search_term: String,
 ) -> BitBuilder {

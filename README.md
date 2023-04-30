@@ -23,6 +23,9 @@ gleam test
 gleam run server
 ```
 
+The SQL query functions are generated from the `sql` directory. To regenerate
+them run `gleam run -m codegen`.
+
 ## Deployment
 
 The application and the PostgreSQL database are hosted on [Fly](https://fly.io).
