@@ -25,7 +25,8 @@ pub fn make_service(
 }
 
 pub fn handle_request(context: Context) -> Response(BitBuilder) {
-  case request.path_segments(context.request) {
+  let path = request.path_segments(context.request)
+  case path {
     [] -> search(context)
     ["styles.css"] -> stylesheet()
     _ -> redirect(to: "/")
