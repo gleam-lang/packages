@@ -1,4 +1,4 @@
-import birl/time.{Time}
+import birl/time.{DateTime}
 import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
@@ -27,10 +27,10 @@ pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
 type State {
   State(
     page: Int,
-    limit: Time,
-    newest: Time,
+    limit: DateTime,
+    newest: DateTime,
     hex_api_key: String,
-    last_logged: Time,
+    last_logged: DateTime,
     db: pgo.Connection,
   )
 }
@@ -54,7 +54,7 @@ pub fn sync_new_gleam_releases(
   latest
 }
 
-fn sync_packages(state: State) -> Result(Time, Error) {
+fn sync_packages(state: State) -> Result(DateTime, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
 
@@ -82,7 +82,7 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   }
 }
 
-fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
+fn first_timestamp(packages: List(hexpm.Package), state: State) -> DateTime {
   case packages {
     [] -> state.newest
     [package, ..] -> {
@@ -113,7 +113,7 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
 
 pub fn take_fresh_packages(
   packages: List(hexpm.Package),
-  limit: Time,
+  limit: DateTime,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
   time.compare(limit, package.updated_at) == order.Lt
@@ -121,7 +121,7 @@ pub fn take_fresh_packages(
 
 pub fn with_only_fresh_releases(
   package: hexpm.Package,
-  limit: Time,
+  limit: DateTime,
 ) -> hexpm.Package {
   let releases =
     package.releases
@@ -152,7 +152,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
   }
 }
 
-fn log_if_needed(state: State, time: Time) -> State {
+fn log_if_needed(state: State, time: DateTime) -> State {
   let interval = duration.new([#(5, duration.Second)])
   let print_deadline = time.add(state.last_logged, interval)
   let not_logged_recently = time.compare(print_deadline, time.now()) == order.Lt

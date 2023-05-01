@@ -28,8 +28,8 @@ pub fn packages_list(
     ],
   )
   |> layout
-  |> nakai.render
-  |> bit_builder.from_string
+  |> nakai.to_string_builder
+  |> bit_builder.from_string_builder
 }
 
 fn search_form(search_term: String) -> Node(t) {
@@ -70,13 +70,13 @@ fn external_link_text(url: String, text: String) -> Node(t) {
 
 fn layout(content: Node(t)) -> Node(t) {
   html.Fragment([
-    html.head([
+    html.Head([
       html.meta([attrs.charset("utf-8")]),
       html.meta([
         attrs.name("viewport"),
         attrs.content("width=device-width, initial-scale=1"),
       ]),
-      html.title_text([], "Gleam Packages"),
+      html.title("Gleam Packages"),
       html.link([attrs.rel("stylesheet"), attrs.href("/styles.css")]),
       html.link([
         attrs.rel("icon"),

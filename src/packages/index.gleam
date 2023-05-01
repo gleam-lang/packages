@@ -1,4 +1,4 @@
-import birl/time.{Time}
+import birl/time.{DateTime}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/dynamic_extra as dyn_extra
 import gleam/hexpm
@@ -45,7 +45,7 @@ pub fn database_config_from_env() -> pgo.Config {
 /// Insert or replace the most recent Hex timestamp in the database.
 pub fn upsert_most_recent_hex_timestamp(
   db: pgo.Connection,
-  time: Time,
+  time: DateTime,
 ) -> Result(Nil, Error) {
   let unix = time.to_unix(time)
   sql.upsert_most_recent_hex_timestamp(db, [pgo.int(unix)], Ok)
@@ -54,7 +54,9 @@ pub fn upsert_most_recent_hex_timestamp(
 
 /// Get the most recent Hex timestamp from the database, returning the Unix
 /// epoch if there is no previous timestamp in the database.
-pub fn get_most_recent_hex_timestamp(db: pgo.Connection) -> Result(Time, Error) {
+pub fn get_most_recent_hex_timestamp(
+  db: pgo.Connection,
+) -> Result(DateTime, Error) {
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.map(sql.get_most_recent_hex_timestamp(db, [], decoder))
   case returned.rows {
@@ -84,8 +86,8 @@ pub type Package {
   Package(
     name: String,
     description: Option(String),
-    inserted_in_hex_at: Time,
-    updated_in_hex_at: Time,
+    inserted_in_hex_at: DateTime,
+    updated_in_hex_at: DateTime,
   )
 }
 
@@ -143,8 +145,8 @@ pub type Release {
     version: String,
     retirement_reason: Option(hexpm.RetirementReason),
     retirement_message: Option(String),
-    inserted_in_hex_at: Time,
-    updated_in_hex_at: Time,
+    inserted_in_hex_at: DateTime,
+    updated_in_hex_at: DateTime,
   )
 }
 
