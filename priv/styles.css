@@ -101,6 +101,7 @@ h1, h2, h3, h4, h5, h6 {
   height: 30px;
   padding: 0 var(--gap-s);
   margin-left: 1px;
+  -webkit-appearance: none;
 }
 
 .site-footer {
