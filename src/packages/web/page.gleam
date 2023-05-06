@@ -56,7 +56,10 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
   html.li(
     [],
     [
-      html.div_text([attrs.class("package-date-time")], format_date(package.updated_in_hex_at)),
+      html.div_text(
+        [attrs.class("package-date-time")],
+        format_date(package.updated_in_hex_at),
+      ),
       html.h2([], [external_link_text(url, package.name)]),
       html.p_text([], package.description),
     ],
