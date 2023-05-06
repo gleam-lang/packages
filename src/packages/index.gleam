@@ -179,7 +179,7 @@ pub type PackageSummary {
     name: String,
     description: String,
     latest_versions: List(String),
-    updated_in_hex_at: Time,
+    updated_in_hex_at: DateTime,
   )
 }
 
