@@ -122,18 +122,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--gap-l);
 }
 
-.package-list li div {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: var(--gap);
-
-  margin: 0 var(--gap) var(--gap-s) 0;
-}
-
-.package-list li div span {
+.package-date-time {
+  float: right;
   color: var(--color-graphite);
+  margin-top: 0.3rem;
 }
 
 .package-list h2 {
