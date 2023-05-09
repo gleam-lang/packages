@@ -39,10 +39,10 @@ fn search_form(search_term: String) -> Node(t) {
     [
       html.input([
         attrs.name("search"),
-        attrs.Attr("type", "search"),
+        attrs.type_("search"),
         attrs.value(search_term),
       ]),
-      html.input([attrs.Attr("type", "submit"), attrs.value("🔎")]),
+      html.input([attrs.type_("submit"), attrs.value("🔎")]),
     ],
   )
 }
