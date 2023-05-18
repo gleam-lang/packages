@@ -95,7 +95,7 @@ fn first_timestamp(packages: List(hexpm.Package), state: State) -> DateTime {
 }
 
 fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
-  let assert Ok(response) =
+  use response <- result.try(
     request.new()
     |> request.set_host("hex.pm")
     |> request.set_path("/api/packages")
@@ -105,9 +105,13 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
     ])
     |> request.prepend_header("authorization", state.hex_api_key)
     |> hackney.send
+    |> result.map_error(error.HttpClientError),
+  )
 
-  let assert Ok(all_packages) =
+  use all_packages <- result.try(
     json.decode(response.body, using: dyn.list(of: hexpm.decode_package))
+    |> result.map_error(error.JsonDecodeError),
+  )
   Ok(all_packages)
 }
 
