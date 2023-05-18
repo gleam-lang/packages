@@ -1,15 +1,17 @@
 import gleam/erlang
-import gleam/erlang/process
 import gleam/erlang/os
+import gleam/erlang/process
 import gleam/int
 import gleam/io
 import gleam/list
+import gleam/otp/actor
+import gleam/otp/supervisor
 import gleam/string
 import mist
-import packages/syncing
 import packages/index
-import packages/web
 import packages/periodic
+import packages/syncing
+import packages/web
 
 const usage = "Usage:
   gleam run list
@@ -57,15 +59,25 @@ fn server() {
   let assert Ok(key) = os.get_env("HEX_API_KEY")
   let db = index.connect()
 
-  // Start syncing new releases periodically
-  let sync = fn() { syncing.sync_new_gleam_releases(key, db) }
-  let assert Ok(_) = periodic.periodically(do: sync, waiting: 60 * 1000)
-
   // Start the web server
   let service = web.make_service(db)
   let assert Ok(_) = mist.run_service(3000, service, max_body_limit: 4_000_000)
   io.println("Started listening on http://localhost:3000 ✨")
 
+  // Start syncing new releases periodically
+  let assert Ok(_) =
+    supervise(fn() {
+      let sync = fn() { syncing.sync_new_gleam_releases(key, db) }
+      periodic.periodically(do: sync, waiting: 60 * 1000)
+    })
+
   // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
+}
+
+fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {
+  supervisor.start(fn(children) {
+    children
+    |> supervisor.add(supervisor.worker(fn(_) { start() }))
+  })
 }
