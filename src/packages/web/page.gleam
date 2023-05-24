@@ -5,6 +5,7 @@ import nakai
 import nakai/html.{Node}
 import nakai/html/attrs
 import packages/index.{PackageSummary}
+import gleam/string
 
 pub fn packages_list(
   packages: List(PackageSummary),
@@ -25,7 +26,7 @@ pub fn packages_list(
           ),
         ],
       ),
-      html.div([attrs.class("content")], [package_list(packages)]),
+      html.div([attrs.class("content")], [package_list(packages, search_term)]),
     ],
   )
   |> layout
@@ -47,8 +48,19 @@ fn search_form(search_term: String) -> Node(t) {
   )
 }
 
-fn package_list(packages: List(PackageSummary)) -> Node(t) {
-  html.ul([attrs.class("package-list")], list.map(packages, package_list_item))
+fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) {
+  case packages, string.is_empty(search_term) {
+    [], False ->
+      html.p_text(
+        [],
+        "I couldn't find any package matching your search: " <> search_term,
+      )
+    _, _ ->
+      html.ul(
+        [attrs.class("package-list")],
+        list.map(packages, package_list_item),
+      )
+  }
 }
 
 fn package_list_item(package: PackageSummary) -> Node(t) {
