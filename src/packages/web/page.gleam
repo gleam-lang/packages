@@ -6,6 +6,7 @@ import nakai/html.{Node}
 import nakai/html/attrs
 import packages/index.{PackageSummary}
 import gleam/string
+import gleam/option
 
 pub fn packages_list(
   packages: List(PackageSummary),
@@ -65,6 +66,16 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
 
 fn package_list_item(package: PackageSummary) -> Node(t) {
   let url = "https://hex.pm/packages/" <> package.name
+
+  let links =
+    [
+      package.docs_url
+      |> option.map(external_link_text(_, "Documentation")),
+      package.docs_url
+      |> option.map(external_link_text(_, "Repository")),
+    ]
+    |> list.filter_map(option.to_result(_, Nil))
+
   html.li(
     [],
     [
@@ -74,6 +85,17 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
       ),
       html.h2([], [external_link_text(url, package.name)]),
       html.p_text([], package.description),
+      case links {
+        [] -> html.span([], [])
+        links ->
+          html.div(
+            [attrs.class("package-links")],
+            links
+            |> list.map(fn(link) {
+              html.span([attrs.style("margin-right: var(--gap);")], [link])
+            }),
+          )
+      },
     ],
   )
 }

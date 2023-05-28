@@ -95,6 +95,7 @@ pub fn get_package(
     "select
   name
 , description
+, docs_url
 , inserted_in_hex_at
 , updated_in_hex_at
 from
@@ -131,6 +132,7 @@ pub fn search_packages(
     "select
   packages.name
 , description
+, docs_url
 , array_agg(latest_releases.version) as latest_releases
 , packages.updated_in_hex_at
 from
@@ -201,6 +203,11 @@ create table if not exists most_recent_hex_timestamp (
   -- now this table can only hold one row.
 , constraint most_recent_hex_timestamp_singleton check (id)
 );
+
+-- Use the timestamp of the first ever Gleam package as the initial timestamp.
+-- insert into most_recent_hex_timestamp
+-- values (1635092380)
+-- on conflict do nothing;
 
 create table if not exists packages
 ( id serial primary key

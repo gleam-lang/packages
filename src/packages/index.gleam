@@ -179,6 +179,7 @@ pub type PackageSummary {
   PackageSummary(
     name: String,
     description: String,
+    docs_url: Option(String),
     latest_versions: List(String),
     updated_in_hex_at: DateTime,
   )
@@ -187,12 +188,13 @@ pub type PackageSummary {
 fn decode_package_summary(
   data: Dynamic,
 ) -> Result(PackageSummary, List(DecodeError)) {
-  dyn.decode4(
+  dyn.decode5(
     PackageSummary,
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.string),
-    dyn.element(2, dyn.list(dyn.string)),
-    dyn.element(3, dyn_extra.unix_timestamp),
+    dyn.element(2, dyn.optional(dyn.string)),
+    dyn.element(3, dyn.list(dyn.string)),
+    dyn.element(4, dyn_extra.unix_timestamp),
   )(data)
 }
 

@@ -1,6 +1,7 @@
 select
   name
 , description
+, docs_url
 , inserted_in_hex_at
 , updated_in_hex_at
 from
