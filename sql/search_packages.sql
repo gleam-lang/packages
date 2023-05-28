@@ -1,6 +1,7 @@
 select
   packages.name
 , description
+, docs_url
 , array_agg(latest_releases.version) as latest_releases
 , packages.updated_in_hex_at
 from
