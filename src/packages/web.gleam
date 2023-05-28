@@ -29,7 +29,7 @@ pub fn handle_request(context: Context) -> Response(BitBuilder) {
   case path {
     [] -> search(context)
     ["styles.css"] -> stylesheet()
-    ["search-input.js"] -> search_input_script()
+    ["main.js"] -> javascript()
     _ -> redirect(to: "/")
   }
 }
@@ -42,9 +42,9 @@ fn stylesheet() -> Response(BitBuilder) {
   |> response.set_body(bit_builder.from_bit_string(css))
 }
 
-fn search_input_script() -> Response(BitBuilder) {
+fn javascript() -> Response(BitBuilder) {
   let assert Ok(priv) = erlang_extra.priv_directory("packages")
-  let assert Ok(js) = file.read_bits(priv <> "/search-input.js")
+  let assert Ok(js) = file.read_bits(priv <> "/main.js")
   response.new(200)
   |> response.set_header(
     "content-type",
