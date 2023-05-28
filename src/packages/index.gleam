@@ -73,6 +73,7 @@ pub fn upsert_package(
   let parameters = [
     pgo.text(package.name),
     pgo.nullable(pgo.text, package.meta.description),
+    pgo.nullable(pgo.text, package.docs_html_url),
     pgo.int(time.to_unix(package.inserted_at)),
     pgo.int(time.to_unix(package.updated_at)),
   ]
