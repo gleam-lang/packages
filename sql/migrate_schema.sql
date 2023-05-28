@@ -85,5 +85,9 @@ insert into hidden_packages values
 , ('sequin')
 on conflict do nothing;
 
+alter table packages
+add column if not exists docs_url text,
+add column if not exists repository_url text;
+
 end
 $$;
