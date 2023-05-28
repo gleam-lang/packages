@@ -1,6 +1,6 @@
 document.addEventListener("keypress", (event) => {
   if (event.key === "/") {
-    const searchInput = document.getElementById("search-input");
+    const searchInput = document.querySelector("[data-search-input]");
     if (searchInput) {
       const isAlreadyFocused = document.activeElement === searchInput;
       if (!isAlreadyFocused) {
