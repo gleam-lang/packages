@@ -39,7 +39,7 @@ fn search_form(search_term: String) -> Node(t) {
     [attrs.class("search-form"), attrs.Attr("method", "GET")],
     [
       html.input([
-        attrs.id("search-input"),
+        attrs.data("search-input", ""),
         attrs.name("search"),
         attrs.type_("search"),
         attrs.value(search_term),
