@@ -210,7 +210,9 @@ fn decode_package_links(
   use json_data <- try(dyn.string(data))
 
   json.decode(json_data, using: dyn.map(of: dyn.string, to: dyn.string))
-  |> result.map_error(fn(error) { todo })
+  |> result.map_error(fn(_) {
+    [DecodeError(expected: "Map(String, String)", found: json_data, path: [])]
+  })
 }
 
 fn decode_package_summary(
