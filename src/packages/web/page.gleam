@@ -92,7 +92,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
         format_date(package.updated_in_hex_at),
       ),
       html.h2([], [external_link_text(url, package.name)]),
-      html.p_text([], package.description),
+      html.p_text([attrs.class("package-description")], package.description),
       case links {
         [] -> html.Nothing
         links ->
