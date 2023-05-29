@@ -88,7 +88,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
       html.h2([], [external_link_text(url, package.name)]),
       html.p_text([], package.description),
       case links {
-        [] -> html.span([], [])
+        [] -> html.Nothing
         links -> html.div([attrs.class("package-links")], links)
       },
     ],
