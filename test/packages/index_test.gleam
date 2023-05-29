@@ -37,7 +37,10 @@ pub fn insert_package_test() {
         meta: hexpm.PackageMeta(
           description: Some("Standard library for Gleam"),
           licenses: ["Apache-2.0"],
-          links: map.new(),
+          links: map.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
         ),
         name: "gleam_stdlib",
         owners: None,
@@ -53,7 +56,10 @@ pub fn insert_package_test() {
     description: Some("Standard library for Gleam"),
     name: "gleam_stdlib",
     docs_url: Some("https://hexdocs.pm/gleam_stdlib/"),
-    repository_url: None,
+    links: map.from_list([
+      #("Website", "https://gleam.run/"),
+      #("Repository", "https://github.com/gleam-lang/stdlib"),
+    ]),
     inserted_in_hex_at: time.from_unix(100),
     updated_in_hex_at: time.from_unix(2000),
   ))

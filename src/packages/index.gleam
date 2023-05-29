@@ -1,11 +1,13 @@
 import birl/time.{DateTime}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/dynamic_extra as dyn_extra
-import gleam/map
+import gleam/map.{Map}
 import gleam/hexpm
+import gleam/json
+import gleam/list
 import gleam/option.{None, Option, Some}
 import gleam/pgo
-import gleam/result
+import gleam/result.{try}
 import packages/error.{Error}
 import packages/generated/sql
 import gleam/erlang/os
@@ -66,21 +68,26 @@ pub fn get_most_recent_hex_timestamp(
   }
 }
 
-// TODO: insert licences and links also
+// TODO: insert licences also
 pub fn upsert_package(
   db: pgo.Connection,
   package: hexpm.Package,
 ) -> Result(Int, Error) {
-  let repository_url =
+  let links_json =
     package.meta.links
-    |> map.get("Repository")
-    |> option.from_result
+    |> map.to_list
+    |> list.map(fn(pair) {
+      let #(name, url) = pair
+      #(name, json.string(url))
+    })
+    |> json.object
+    |> json.to_string
 
   let parameters = [
     pgo.text(package.name),
     pgo.nullable(pgo.text, package.meta.description),
     pgo.nullable(pgo.text, package.docs_html_url),
-    pgo.nullable(pgo.text, repository_url),
+    pgo.text(links_json),
     pgo.int(time.to_unix(package.inserted_at)),
     pgo.int(time.to_unix(package.updated_at)),
   ]
@@ -95,7 +102,7 @@ pub type Package {
     name: String,
     description: Option(String),
     docs_url: Option(String),
-    repository_url: Option(String),
+    links: Map(String, String),
     inserted_in_hex_at: DateTime,
     updated_in_hex_at: DateTime,
   )
@@ -107,7 +114,7 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.optional(dyn.string)),
     dyn.element(2, dyn.optional(dyn.string)),
-    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(3, decode_package_links),
     dyn.element(4, dyn_extra.unix_timestamp),
     dyn.element(5, dyn_extra.unix_timestamp),
   )(data)
@@ -191,10 +198,19 @@ pub type PackageSummary {
     name: String,
     description: String,
     docs_url: Option(String),
-    repository_url: Option(String),
+    links: Map(String, String),
     latest_versions: List(String),
     updated_in_hex_at: DateTime,
   )
+}
+
+fn decode_package_links(
+  data: Dynamic,
+) -> Result(Map(String, String), List(DecodeError)) {
+  use json_data <- try(dyn.string(data))
+
+  json.decode(json_data, using: dyn.map(of: dyn.string, to: dyn.string))
+  |> result.map_error(fn(error) { todo })
 }
 
 fn decode_package_summary(
@@ -205,7 +221,7 @@ fn decode_package_summary(
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.string),
     dyn.element(2, dyn.optional(dyn.string)),
-    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(3, decode_package_links),
     dyn.element(4, dyn.list(dyn.string)),
     dyn.element(5, dyn_extra.unix_timestamp),
   )(data)

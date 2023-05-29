@@ -3,7 +3,7 @@ insert into packages
   ( name
   , description
   , docs_url
-  , repository_url
+  , links
   , inserted_in_hex_at
   , updated_in_hex_at
   )
@@ -20,6 +20,6 @@ set
   updated_in_hex_at = excluded.updated_in_hex_at
 , description = excluded.description
 , docs_url = excluded.docs_url
-, repository_url = excluded.repository_url
+, links = excluded.links
 returning
   id
