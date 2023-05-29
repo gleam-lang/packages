@@ -1,6 +1,7 @@
 import birl/time.{DateTime}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/dynamic_extra as dyn_extra
+import gleam/map
 import gleam/hexpm
 import gleam/option.{None, Option, Some}
 import gleam/pgo
@@ -70,10 +71,16 @@ pub fn upsert_package(
   db: pgo.Connection,
   package: hexpm.Package,
 ) -> Result(Int, Error) {
+  let repository_url =
+    package.meta.links
+    |> map.get("Repository")
+    |> option.from_result
+
   let parameters = [
     pgo.text(package.name),
     pgo.nullable(pgo.text, package.meta.description),
     pgo.nullable(pgo.text, package.docs_html_url),
+    pgo.nullable(pgo.text, repository_url),
     pgo.int(time.to_unix(package.inserted_at)),
     pgo.int(time.to_unix(package.updated_at)),
   ]
@@ -180,6 +187,7 @@ pub type PackageSummary {
     name: String,
     description: String,
     docs_url: Option(String),
+    repository_url: Option(String),
     latest_versions: List(String),
     updated_in_hex_at: DateTime,
   )
@@ -188,13 +196,14 @@ pub type PackageSummary {
 fn decode_package_summary(
   data: Dynamic,
 ) -> Result(PackageSummary, List(DecodeError)) {
-  dyn.decode5(
+  dyn.decode6(
     PackageSummary,
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.string),
     dyn.element(2, dyn.optional(dyn.string)),
-    dyn.element(3, dyn.list(dyn.string)),
-    dyn.element(4, dyn_extra.unix_timestamp),
+    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(4, dyn.list(dyn.string)),
+    dyn.element(5, dyn_extra.unix_timestamp),
   )(data)
 }
 
