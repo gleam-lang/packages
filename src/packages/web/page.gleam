@@ -89,14 +89,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
       html.p_text([], package.description),
       case links {
         [] -> html.span([], [])
-        links ->
-          html.div(
-            [attrs.class("package-links")],
-            links
-            |> list.map(fn(link) {
-              html.span([attrs.style("margin-right: var(--gap);")], [link])
-            }),
-          )
+        links -> html.div([attrs.class("package-links")], links)
       },
     ],
   )
