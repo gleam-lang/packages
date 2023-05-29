@@ -2,12 +2,12 @@ import birl/time.{DateTime}
 import gleam/bit_builder.{BitBuilder}
 import gleam/list
 import gleam/map
+import gleam/option
 import nakai
 import nakai/html.{Node}
 import nakai/html/attrs
 import packages/index.{PackageSummary}
 import gleam/string
-import gleam/option
 
 pub fn packages_list(
   packages: List(PackageSummary),
