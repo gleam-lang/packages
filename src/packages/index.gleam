@@ -94,18 +94,22 @@ pub type Package {
   Package(
     name: String,
     description: Option(String),
+    docs_url: Option(String),
+    repository_url: Option(String),
     inserted_in_hex_at: DateTime,
     updated_in_hex_at: DateTime,
   )
 }
 
 pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
-  dyn.decode4(
+  dyn.decode6(
     Package,
     dyn.element(0, dyn.string),
     dyn.element(1, dyn.optional(dyn.string)),
-    dyn.element(2, dyn_extra.unix_timestamp),
-    dyn.element(3, dyn_extra.unix_timestamp),
+    dyn.element(2, dyn.optional(dyn.string)),
+    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(4, dyn_extra.unix_timestamp),
+    dyn.element(5, dyn_extra.unix_timestamp),
   )(data)
 }
 
