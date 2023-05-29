@@ -137,6 +137,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: var(--gap);
 }
 
+.package-links a {
+  margin-right: var(--gap);
+}
+
 .package-list h2 {
   margin: 0 var(--gap) var(--gap-s) 0;
 }
