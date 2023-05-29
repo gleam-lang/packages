@@ -9,10 +9,10 @@ create table if not exists most_recent_hex_timestamp (
 , constraint most_recent_hex_timestamp_singleton check (id)
 );
 
--- Use the timestamp of the first ever Gleam package as the initial timestamp.
--- insert into most_recent_hex_timestamp
--- values (1635092380)
--- on conflict do nothing;
+Use the timestamp of the first ever Gleam package as the initial timestamp.
+insert into most_recent_hex_timestamp
+values (1635092380)
+on conflict do nothing;
 
 create table if not exists packages
 ( id serial primary key
