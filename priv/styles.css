@@ -26,6 +26,7 @@
   --color-unexpected-aubergine: #584355;
 
   --font-size-normal: 18px;
+  --font-size-small: 14px;
 
   --content-width: 960px;
   --gap: 1rem;
@@ -137,8 +138,21 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: var(--gap);
 }
 
+.package-links ul {
+  display: flex;
+  padding: 0;
+  list-style-type: none;
+}
+
+.package-links li {
+  margin: 0;
+}
+
 .package-links a {
   margin-right: var(--gap);
+  color: var(--color-unexpected-aubergine);
+  font-size: var(--font-size-small);
+  text-decoration: none;
 }
 
 .package-list h2 {
