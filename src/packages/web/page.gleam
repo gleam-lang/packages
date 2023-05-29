@@ -73,7 +73,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
     [
       package.docs_url
       |> option.map(external_link_text(_, "Documentation")),
-      package.docs_url
+      package.repository_url
       |> option.map(external_link_text(_, "Repository")),
     ]
     |> list.filter_map(option.to_result(_, Nil))
