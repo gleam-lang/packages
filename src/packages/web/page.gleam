@@ -89,7 +89,17 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
       html.p_text([], package.description),
       case links {
         [] -> html.Nothing
-        links -> html.div([attrs.class("package-links")], links)
+        links ->
+          html.nav(
+            [attrs.class("package-links")],
+            [
+              html.ul(
+                [],
+                links
+                |> list.map(fn(link) { html.li([], [link]) }),
+              ),
+            ],
+          )
       },
     ],
   )
