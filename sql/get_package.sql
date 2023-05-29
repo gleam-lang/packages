@@ -2,7 +2,7 @@ select
   name
 , description
 , docs_url
-, repository_url
+, links
 , inserted_in_hex_at
 , updated_in_hex_at
 from

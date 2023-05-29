@@ -1,6 +1,7 @@
 import birl/time.{DateTime}
 import gleam/bit_builder.{BitBuilder}
 import gleam/list
+import gleam/map
 import nakai
 import nakai/html.{Node}
 import nakai/html/attrs
@@ -69,11 +70,16 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
 fn package_list_item(package: PackageSummary) -> Node(t) {
   let url = "https://hex.pm/packages/" <> package.name
 
+  let repository_url =
+    package.links
+    |> map.get("Repository")
+    |> option.from_result
+
   let links =
     [
       package.docs_url
       |> option.map(external_link_text(_, "Documentation")),
-      package.repository_url
+      repository_url
       |> option.map(external_link_text(_, "Repository")),
     ]
     |> list.filter_map(option.to_result(_, Nil))
