@@ -41,11 +41,11 @@ fn search_form(search_term: String) -> Node(t) {
     [attrs.class("search-form"), attrs.Attr("method", "GET")],
     [
       html.input([
-        attrs.data("search-input", ""),
+        attrs.data("keybind-focus", "/"),
         attrs.name("search"),
         attrs.type_("search"),
         attrs.value(search_term),
-        attrs.placeholder("Search for packages (/ to focus)"),
+        attrs.placeholder("Press / to focus"),
       ]),
       html.input([attrs.type_("submit"), attrs.value("🔎")]),
     ],
