@@ -95,13 +95,18 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 100px 0 0 100px;
 }
 
+@media screen and (min-width: 60em) {
+  .search-form input[type=search] {
+    min-width: 300px;
+  }
+}
+
 .search-form input[type=submit] {
   background: var(--color-white);
   border: none;
   border-radius: 0 100px 100px 0;
   height: 30px;
   padding: 0 var(--gap-s);
-  margin-left: 1px;
   -webkit-appearance: none;
 }
 

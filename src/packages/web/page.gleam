@@ -40,9 +40,11 @@ fn search_form(search_term: String) -> Node(t) {
     [attrs.class("search-form"), attrs.Attr("method", "GET")],
     [
       html.input([
+        attrs.data("search-input", ""),
         attrs.name("search"),
         attrs.type_("search"),
         attrs.value(search_term),
+        attrs.placeholder("Search for packages (/ to focus)"),
       ]),
       html.input([attrs.type_("submit"), attrs.value("🔎")]),
     ],
@@ -134,6 +136,7 @@ fn layout(content: Node(t)) -> Node(t) {
         ],
         [],
       ),
+      html.Element("script", [attrs.type_("module"), attrs.src("/main.js")], []),
     ]),
     content,
     html.footer(

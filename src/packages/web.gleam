@@ -29,6 +29,7 @@ pub fn handle_request(context: Context) -> Response(BitBuilder) {
   case path {
     [] -> search(context)
     ["styles.css"] -> stylesheet()
+    ["main.js"] -> javascript()
     _ -> redirect(to: "/")
   }
 }
@@ -39,6 +40,17 @@ fn stylesheet() -> Response(BitBuilder) {
   response.new(200)
   |> response.set_header("content-type", "text/css; charset=utf-8")
   |> response.set_body(bit_builder.from_bit_string(css))
+}
+
+fn javascript() -> Response(BitBuilder) {
+  let assert Ok(priv) = erlang_extra.priv_directory("packages")
+  let assert Ok(js) = file.read_bits(priv <> "/main.js")
+  response.new(200)
+  |> response.set_header(
+    "content-type",
+    "application/javascript; charset=utf-8",
+  )
+  |> response.set_body(bit_builder.from_bit_string(js))
 }
 
 fn search(context: Context) -> Response(BitBuilder) {
