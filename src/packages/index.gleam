@@ -1,10 +1,10 @@
 import birl/time.{DateTime}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/dynamic_extra as dyn_extra
-import gleam/map.{Map}
 import gleam/hexpm
 import gleam/json
 import gleam/list
+import gleam/map.{Map}
 import gleam/option.{None, Option, Some}
 import gleam/pgo
 import gleam/result.{try}
