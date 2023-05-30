@@ -27,7 +27,7 @@ gleam_http = "~> 3.1"
 nakai = "~> 0.4"
 gleam_otp = "~> 0.5"
 gleam_hexpm = "~> 0.1"
+glenvy = "~> 0.1"
 
 [dev-dependencies]
 gleeunit = "~> 0.7"
-glenvy = "~> 0.1"
