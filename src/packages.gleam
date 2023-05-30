@@ -7,6 +7,7 @@ import gleam/list
 import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/string
+import glenvy/dotenv
 import mist
 import packages/index
 import packages/periodic
@@ -20,6 +21,8 @@ const usage = "Usage:
 "
 
 pub fn main() {
+  let _ = dotenv.load()
+
   case erlang.start_arguments() {
     ["list"] -> list()
     ["server"] -> server()
