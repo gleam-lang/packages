@@ -56,8 +56,9 @@ fn javascript() -> Response(BitBuilder) {
 fn search(context: Context) -> Response(BitBuilder) {
   let search_term = get_search_parameter(context.request)
   let assert Ok(packages) = index.search_packages(context.db, search_term)
+  let assert Ok(total_package_count) = index.get_total_package_count(context.db)
 
-  let html = page.packages_list(packages, search_term)
+  let html = page.packages_list(packages, total_package_count, search_term)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
   |> response.set_body(html)
