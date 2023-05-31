@@ -100,7 +100,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
           ),
           case latest_version {
             Ok(latest_version) ->
-              html.h3_text(
+              html.div_text(
                 [attrs.class("package-latest-version")],
                 "v" <> latest_version,
               )
