@@ -81,9 +81,7 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
         "I couldn't find any package matching your search: " <> search_term,
       )
     _, False -> {
-      let package_count =
-        packages
-        |> list.length
+      let package_count = list.length(packages)
 
       html.div(
         [],
@@ -92,8 +90,7 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
             [],
             [
               "I found",
-              package_count
-              |> int.to_string,
+              int.to_string(package_count),
               pluralize_package(package_count),
               "matching your search:",
               search_term,
