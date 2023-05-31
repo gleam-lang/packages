@@ -132,6 +132,16 @@ pub fn get_package(
   }
 }
 
+pub fn get_total_package_count(db: pgo.Connection) -> Result(Int, Error) {
+  use returned <- result.then(sql.get_total_package_count(
+    db,
+    [],
+    dyn.element(0, dyn.int),
+  ))
+  let assert [count] = returned.rows
+  Ok(count)
+}
+
 pub fn upsert_release(
   db: pgo.Connection,
   package_id: Int,

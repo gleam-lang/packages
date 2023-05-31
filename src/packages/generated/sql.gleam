@@ -124,6 +124,21 @@ limit 1
   |> result.map_error(error.DatabaseError)
 }
 
+pub fn get_total_package_count(
+  db: pgo.Connection,
+  arguments: List(pgo.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  count(1)
+from
+  packages
+"
+  pgo.execute(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
 pub fn search_packages(
   db: pgo.Connection,
   arguments: List(pgo.Value),

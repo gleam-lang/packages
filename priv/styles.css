@@ -106,6 +106,12 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-appearance: none;
 }
 
+.site-subheader {
+  max-width: var(--content-width);
+  padding: var(--gap);
+  margin: 0 auto;
+}
+
 .site-footer {
   width: 100%;
   padding: var(--gap);

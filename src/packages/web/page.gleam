@@ -1,5 +1,6 @@
 import birl/time.{DateTime}
 import gleam/bit_builder.{BitBuilder}
+import gleam/int
 import gleam/list
 import gleam/map
 import gleam/option
@@ -11,6 +12,7 @@ import gleam/string
 
 pub fn packages_list(
   packages: List(PackageSummary),
+  total_package_count: Int,
   search_term: String,
 ) -> BitBuilder {
   html.main(
@@ -28,12 +30,31 @@ pub fn packages_list(
           ),
         ],
       ),
+      html.div_text(
+        [attrs.class("site-subheader")],
+        [
+          "There are",
+          total_package_count
+          |> int.to_string,
+          pluralize_package(total_package_count),
+          "available ✨",
+        ]
+        |> string.join(" "),
+      ),
       html.div([attrs.class("content")], [package_list(packages, search_term)]),
     ],
   )
   |> layout
   |> nakai.to_string_builder
   |> bit_builder.from_string_builder
+}
+
+/// Pluralizes the word "package" based on the number we're referring to.
+fn pluralize_package(amount: Int) -> String {
+  case amount {
+    1 -> "package"
+    _ -> "packages"
+  }
 }
 
 fn search_form(search_term: String) -> Node(t) {
@@ -59,6 +80,33 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
         [],
         "I couldn't find any package matching your search: " <> search_term,
       )
+    _, False -> {
+      let package_count =
+        packages
+        |> list.length
+
+      html.div(
+        [],
+        [
+          html.p_text(
+            [],
+            [
+              "I found",
+              package_count
+              |> int.to_string,
+              pluralize_package(package_count),
+              "matching your search:",
+              search_term,
+            ]
+            |> string.join(" "),
+          ),
+          html.ul(
+            [attrs.class("package-list")],
+            list.map(packages, package_list_item),
+          ),
+        ],
+      )
+    }
     _, _ ->
       html.ul(
         [attrs.class("package-list")],
