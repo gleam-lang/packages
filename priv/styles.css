@@ -123,6 +123,16 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--gap-l);
 }
 
+.package-name {
+  display: inline-block;
+  margin: 0 var(--gap) var(--gap-s) 0;
+}
+
+.package-latest-version {
+  display: inline-block;
+  margin: 0 var(--gap) var(--gap-s) 0;
+}
+
 .package-date-time {
   float: right;
   color: var(--color-graphite);
@@ -152,8 +162,4 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-unexpected-aubergine);
   font-size: var(--font-size-small);
   text-decoration: none;
-}
-
-.package-list h2 {
-  margin: 0 var(--gap) var(--gap-s) 0;
 }

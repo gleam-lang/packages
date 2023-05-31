@@ -87,11 +87,27 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
   html.li(
     [],
     [
-      html.div_text(
-        [attrs.class("package-date-time")],
-        format_date(package.updated_in_hex_at),
+      html.div(
+        [],
+        [
+          html.h2(
+            [attrs.class("package-name")],
+            [external_link_text(url, package.name)],
+          ),
+          case list.first(package.latest_versions) {
+            Ok(latest_version) ->
+              html.h3_text(
+                [attrs.class("package-latest-version")],
+                "v" <> latest_version,
+              )
+            Error(Nil) -> html.Nothing
+          },
+          html.div_text(
+            [attrs.class("package-date-time")],
+            format_date(package.updated_in_hex_at),
+          ),
+        ],
       ),
-      html.h2([], [external_link_text(url, package.name)]),
       html.p_text([attrs.class("package-description")], package.description),
       case links {
         [] -> html.Nothing
