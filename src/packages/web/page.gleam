@@ -70,6 +70,10 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
 fn package_list_item(package: PackageSummary) -> Node(t) {
   let url = "https://hex.pm/packages/" <> package.name
 
+  let latest_version =
+    package.latest_versions
+    |> list.first
+
   let repository_url =
     package.links
     |> map.get("Repository")
@@ -94,7 +98,7 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
             [attrs.class("package-name")],
             [external_link_text(url, package.name)],
           ),
-          case list.first(package.latest_versions) {
+          case latest_version {
             Ok(latest_version) ->
               html.h3_text(
                 [attrs.class("package-latest-version")],
