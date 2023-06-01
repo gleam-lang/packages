@@ -30,31 +30,15 @@ pub fn packages_list(
           ),
         ],
       ),
-      html.div_text(
-        [attrs.class("site-subheader")],
-        [
-          "There are",
-          total_package_count
-          |> int.to_string,
-          pluralize_package(total_package_count),
-          "available ✨",
-        ]
-        |> string.join(" "),
+      html.div(
+        [attrs.class("content")],
+        [search_aware_package_list(packages, total_package_count, search_term)],
       ),
-      html.div([attrs.class("content")], [package_list(packages, search_term)]),
     ],
   )
   |> layout
   |> nakai.to_string_builder
   |> bit_builder.from_string_builder
-}
-
-/// Pluralizes the word "package" based on the number we're referring to.
-fn pluralize_package(amount: Int) -> String {
-  case amount {
-    1 -> "package"
-    _ -> "packages"
-  }
 }
 
 fn search_form(search_term: String) -> Node(t) {
@@ -73,11 +57,23 @@ fn search_form(search_term: String) -> Node(t) {
   )
 }
 
-fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) {
+/// Pluralizes the word "package" based on the number we're referring to.
+fn pluralize_package(amount: Int) -> String {
+  case amount {
+    1 -> "package"
+    _ -> "packages"
+  }
+}
+
+fn search_aware_package_list(
+  packages: List(PackageSummary),
+  total_package_count: Int,
+  search_term: String,
+) -> Node(t) {
   case packages, string.is_empty(search_term) {
     [], False ->
       html.p_text(
-        [],
+        [attrs.class("package-list-message")],
         "I couldn't find any package matching your search: " <> search_term,
       )
     _, False -> {
@@ -87,7 +83,7 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
         [],
         [
           html.p_text(
-            [],
+            [attrs.class("package-list-message")],
             [
               "I found",
               int.to_string(package_count),
@@ -97,19 +93,33 @@ fn package_list(packages: List(PackageSummary), search_term: String) -> Node(t) 
             ]
             |> string.join(" "),
           ),
-          html.ul(
-            [attrs.class("package-list")],
-            list.map(packages, package_list_item),
-          ),
+          package_list(packages),
         ],
       )
     }
     _, _ ->
-      html.ul(
-        [attrs.class("package-list")],
-        list.map(packages, package_list_item),
+      html.div(
+        [],
+        [
+          html.p_text(
+            [attrs.class("package-list-message")],
+            [
+              "There are",
+              total_package_count
+              |> int.to_string,
+              pluralize_package(total_package_count),
+              "available ✨",
+            ]
+            |> string.join(" "),
+          ),
+          package_list(packages),
+        ],
       )
   }
+}
+
+fn package_list(packages: List(PackageSummary)) -> Node(t) {
+  html.ul([attrs.class("package-list")], list.map(packages, package_list_item))
 }
 
 fn package_list_item(package: PackageSummary) -> Node(t) {
