@@ -106,12 +106,6 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-appearance: none;
 }
 
-.site-subheader {
-  max-width: var(--content-width);
-  padding: var(--gap);
-  margin: 0 auto;
-}
-
 .site-footer {
   width: 100%;
   padding: var(--gap);
@@ -127,6 +121,10 @@ h1, h2, h3, h4, h5, h6 {
   list-style: none;
   margin-top: var(--gap);
   margin-bottom: var(--gap-l);
+}
+
+.package-list-message {
+  margin: 0;
 }
 
 .package-date-time {
