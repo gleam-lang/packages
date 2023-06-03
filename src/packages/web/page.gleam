@@ -74,7 +74,7 @@ fn search_aware_package_list(
     [], False ->
       html.p_text(
         [attrs.class("package-list-message")],
-        "I couldn't find any package matching your search: " <> search_term,
+        "I couldn't find any package matching your search.",
       )
     _, False -> {
       let package_count = list.length(packages)
@@ -88,8 +88,7 @@ fn search_aware_package_list(
               "I found",
               int.to_string(package_count),
               pluralize_package(package_count),
-              "matching your search:",
-              search_term,
+              "matching your search.",
             ]
             |> string.join(" "),
           ),
