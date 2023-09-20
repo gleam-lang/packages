@@ -144,12 +144,7 @@ pub fn with_only_fresh_releases(
 }
 
 fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
-  use releases <- try(list.try_map(package.releases, lookup_release(_, state)))
-  let releases =
-    releases
-    |> list.filter(fn(release) {
-      list.contains(release.meta.build_tools, "gleam")
-    })
+  use releases <- try(lookup_gleam_releases(package, secret: state.hex_api_key))
 
   case releases {
     [] -> {
@@ -157,11 +152,26 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
       Ok(state)
     }
     _ -> {
-      use _ <- try(insert_package_and_releases(package, releases, state))
+      use _ <- try(insert_package_and_releases(package, releases, state.db))
       let state = State(..state, last_logged: time.now())
       Ok(state)
     }
   }
+}
+
+fn lookup_gleam_releases(
+  package: hexpm.Package,
+  secret hex_api_key: String,
+) -> Result(List(hexpm.Release), Error) {
+  use releases <- try(list.try_map(
+    package.releases,
+    lookup_release(_, hex_api_key),
+  ))
+  releases
+  |> list.filter(fn(release) {
+    list.contains(release.meta.build_tools, "gleam")
+  })
+  |> Ok
 }
 
 fn log_if_needed(state: State, time: DateTime) -> State {
@@ -180,7 +190,7 @@ fn log_if_needed(state: State, time: DateTime) -> State {
 fn insert_package_and_releases(
   package: hexpm.Package,
   releases: List(hexpm.Release),
-  state: State,
+  db: pgo.Connection,
 ) -> Result(Nil, Error) {
   let versions =
     releases
@@ -188,17 +198,15 @@ fn insert_package_and_releases(
     |> string.join(", v")
   io.println("Saving " <> package.name <> " v" <> versions)
 
-  use id <- try(index.upsert_package(state.db, package))
+  use id <- try(index.upsert_package(db, package))
 
   releases
-  |> list_extra.try_each(fn(release) {
-    index.upsert_release(state.db, id, release)
-  })
+  |> list_extra.try_each(fn(release) { index.upsert_release(db, id, release) })
 }
 
 fn lookup_release(
   release: hexpm.PackageRelease,
-  state: State,
+  secret hex_api_key: String,
 ) -> Result(hexpm.Release, Error) {
   let assert Ok(url) = uri.parse(release.url)
 
@@ -206,7 +214,7 @@ fn lookup_release(
     request.new()
     |> request.set_host("hex.pm")
     |> request.set_path(url.path)
-    |> request.prepend_header("authorization", state.hex_api_key)
+    |> request.prepend_header("authorization", hex_api_key)
     |> hackney.send
     |> result.map_error(error.HttpClientError),
   )
