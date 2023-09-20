@@ -54,6 +54,14 @@ pub fn sync_new_gleam_releases(
   latest
 }
 
+pub fn fetch_and_sync_package(
+  db: pgo.Connection,
+  secret hex_api_key: String,
+  package name: String,
+) -> Result(Nil, Error) {
+  todo as "wip"
+}
+
 fn sync_packages(state: State) -> Result(DateTime, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))

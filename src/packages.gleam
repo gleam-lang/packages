@@ -18,13 +18,15 @@ const usage = "Usage:
   gleam run list
   gleam run server
   gleam run sync
+  gleam run sync --name PACKAGE_NAME
 "
 
 pub fn main() {
   case erlang.start_arguments() {
     ["list"] -> list()
     ["server"] -> server()
-    ["sync"] -> sync()
+    ["sync"] -> sync_all()
+    ["sync", "--name", name] -> sync_one(name)
     _ -> io.println(usage)
   }
 }
@@ -49,10 +51,18 @@ fn list() -> Nil {
   io.println("\n" <> int.to_string(list.length(packages)) <> " packages")
 }
 
-fn sync() -> Nil {
+fn sync_all() -> Nil {
   let db = index.connect()
   let assert Ok(key) = os.get_env("HEX_API_KEY")
   let assert Ok(Nil) = syncing.sync_new_gleam_releases(key, db)
+  Nil
+}
+
+fn sync_one(name: String) -> Nil {
+  let db = index.connect()
+  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let assert Ok(Nil) =
+    syncing.fetch_and_sync_package(db, secret: key, package: name)
   Nil
 }
 
