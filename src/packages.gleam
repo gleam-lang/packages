@@ -1,5 +1,6 @@
 import gleam/erlang
 import gleam/erlang/os
+import gleam/result
 import gleam/erlang/process
 import gleam/int
 import gleam/io
@@ -56,7 +57,9 @@ fn sync() -> Nil {
 }
 
 fn server() {
-  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let assert Ok(key) =
+    os.get_env("HEX_API_KEY")
+    |> result.map_error(fn(_) { "HEX_API_KEY environment variable is missing" })
   let db = index.connect()
 
   // Start the web server
