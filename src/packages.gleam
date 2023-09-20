@@ -26,7 +26,7 @@ pub fn main() {
     ["list"] -> list()
     ["server"] -> server()
     ["sync"] -> sync_all()
-    ["sync", "--name", name] -> sync_one(name)
+    ["sync", "--name", package_name] -> sync_one(package_name)
     _ -> io.println(usage)
   }
 }
@@ -58,11 +58,11 @@ fn sync_all() -> Nil {
   Nil
 }
 
-fn sync_one(name: String) -> Nil {
+fn sync_one(package_name: String) -> Nil {
   let db = index.connect()
   let assert Ok(key) = os.get_env("HEX_API_KEY")
   let assert Ok(Nil) =
-    syncing.fetch_and_sync_package(db, secret: key, package: name)
+    syncing.fetch_and_sync_package(db, package_name, secret: key)
   Nil
 }
 

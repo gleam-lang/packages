@@ -56,10 +56,14 @@ pub fn sync_new_gleam_releases(
 
 pub fn fetch_and_sync_package(
   db: pgo.Connection,
+  package_name: String,
   secret hex_api_key: String,
-  package name: String,
 ) -> Result(Nil, Error) {
-  todo as "wip"
+  use package <- try(get_api_package(package_name, secret: hex_api_key))
+  io.println("Syncing package data from Hex")
+  use _ <- try(sync_single_package(db, package, hex_api_key))
+  io.println("\nDone")
+  Ok(Nil)
 }
 
 fn sync_packages(state: State) -> Result(DateTime, Error) {
@@ -123,6 +127,26 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
   Ok(all_packages)
 }
 
+fn get_api_package(
+  package_name: String,
+  secret hex_api_key: String,
+) -> Result(hexpm.Package, Error) {
+  use response <- result.try(
+    request.new()
+    |> request.set_host("hex.pm")
+    |> request.set_path("/api/packages/" <> package_name)
+    |> request.prepend_header("authorization", hex_api_key)
+    |> hackney.send
+    |> result.map_error(error.HttpClientError),
+  )
+
+  use package <- result.try(
+    json.decode(response.body, using: hexpm.decode_package)
+    |> result.map_error(error.JsonDecodeError),
+  )
+  Ok(package)
+}
+
 pub fn take_fresh_packages(
   packages: List(hexpm.Package),
   limit: DateTime,
@@ -155,6 +179,24 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
       use _ <- try(insert_package_and_releases(package, releases, state.db))
       let state = State(..state, last_logged: time.now())
       Ok(state)
+    }
+  }
+}
+
+fn sync_single_package(
+  db: pgo.Connection,
+  package: hexpm.Package,
+  secret hex_api_key: String,
+) -> Result(Nil, Error) {
+  use releases <- try(lookup_gleam_releases(package, secret: hex_api_key))
+
+  case releases {
+    [] -> {
+      Ok(Nil)
+    }
+    _ -> {
+      use _ <- try(insert_package_and_releases(package, releases, db))
+      Ok(Nil)
     }
   }
 }
