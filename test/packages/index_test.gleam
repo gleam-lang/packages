@@ -8,7 +8,6 @@ import tests
 
 pub fn most_recent_hex_timestamp_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(Nil) =
     index.upsert_most_recent_hex_timestamp(db, time.from_unix(0))
@@ -25,7 +24,6 @@ pub fn most_recent_hex_timestamp_test() {
 
 pub fn insert_package_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(id) =
     index.upsert_package(
@@ -69,7 +67,6 @@ pub fn insert_package_test() {
 
 pub fn insert_release_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(package_id) =
     index.upsert_package(

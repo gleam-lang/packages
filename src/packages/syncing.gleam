@@ -10,7 +10,6 @@ import gleam/json
 import gleam/list
 import gleam/list_extra
 import gleam/order
-import gleam/pgo
 import gleam/result
 import gleam/string
 import gleam/uri
@@ -31,13 +30,13 @@ type State {
     newest: DateTime,
     hex_api_key: String,
     last_logged: DateTime,
-    db: pgo.Connection,
+    db: index.Connection,
   )
 }
 
 pub fn sync_new_gleam_releases(
   hex_api_key: String,
-  db: pgo.Connection,
+  db: index.Connection,
 ) -> Result(Nil, Error) {
   io.println("Syncing new releases from Hex")
   use limit <- try(index.get_most_recent_hex_timestamp(db))
