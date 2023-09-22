@@ -1,3 +1,4 @@
+import mist
 import gleam/pgo
 import gleam/uri
 import gleam/option
@@ -17,10 +18,19 @@ pub type Context {
 
 pub fn make_service(
   db: pgo.Connection,
-) -> fn(Request(BitString)) -> Response(BitBuilder) {
+) -> fn(Request(mist.Connection)) -> Response(mist.ResponseData) {
   fn(request) {
-    let context = Context(db: db, request: request)
-    handle_request(context)
+    case mist.read_body(request, 1024 * 1024 * 10) {
+      Ok(request) -> {
+        let context = Context(db: db, request: request)
+        handle_request(context)
+      }
+      Error(_) -> {
+        response.new(400)
+        |> response.set_body(bit_builder.new())
+      }
+    }
+    |> response.map(mist.Bytes)
   }
 }
 

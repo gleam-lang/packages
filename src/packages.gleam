@@ -60,8 +60,11 @@ fn server() {
   let db = index.connect()
 
   // Start the web server
-  let service = web.make_service(db)
-  let assert Ok(_) = mist.run_service(3000, service, max_body_limit: 4_000_000)
+  let assert Ok(_) =
+    web.make_service(db)
+    |> mist.new
+    |> mist.port(3000)
+    |> mist.start_http
   io.println("Started listening on http://localhost:3000 ✨")
 
   // Start syncing new releases periodically
