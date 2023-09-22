@@ -1,9 +1,9 @@
-import gleam/pgo
+import sqlight
 import gleam/json
 import gleam/hackney
 
 pub type Error {
-  DatabaseError(pgo.QueryError)
+  DatabaseError(sqlight.Error)
   HttpClientError(hackney.Error)
   JsonDecodeError(json.DecodeError)
 }

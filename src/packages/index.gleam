@@ -6,63 +6,149 @@ import gleam/json
 import gleam/list
 import gleam/map.{Map}
 import gleam/option.{None, Option, Some}
-import gleam/pgo
 import gleam/result.{try}
 import packages/error.{Error}
 import packages/generated/sql
-import gleam/erlang/os
+import sqlight
 
-pub fn connect() -> pgo.Connection {
-  let config = pgo.Config(..database_config_from_env(), pool_size: 10)
-  let db = pgo.connect(config)
-  let assert Ok(_) = sql.migrate_schema(db, [], Ok)
-  db
+pub opaque type Connection {
+  Connection(inner: sqlight.Connection)
 }
 
-pub fn database_config_from_env() -> pgo.Config {
-  os.get_env("DATABASE_URL")
-  |> result.then(pgo.url_config)
-  // In production we use IPv6
-  |> result.map(fn(config) { pgo.Config(..config, ip_version: pgo.Ipv6) })
-  |> result.lazy_unwrap(fn() {
-    let database_name =
-      os.get_env("PGDATABASE")
-      |> result.unwrap("gleam_packages")
-    let user =
-      os.get_env("PGUSER")
-      |> result.unwrap("postgres")
-    let password =
-      os.get_env("PGPASSWORD")
-      |> option.from_result
+const schema = "
+create table if not exists most_recent_hex_timestamp (
+  id integer primary key default 1
+    -- we use a constraint to enforce that the id is always the value `1` so
+    -- now this table can only hold one row.
+    check (id == 1),
+  
+  unix_timestamp integer not null
+) strict;
 
-    pgo.Config(
-      ..pgo.default_config(),
-      host: "localhost",
-      database: database_name,
-      user: user,
-      password: password,
-    )
-  })
+-- Use the timestamp of the first ever Gleam package as the initial timestamp.
+insert into most_recent_hex_timestamp
+  values (1, 1635092380)
+  on conflict do nothing;
+
+create table if not exists packages (
+  id integer primary key autoincrement not null,
+  name text not null unique,
+  description text,
+  inserted_in_hex_at integer not null,
+  updated_in_hex_at integer not null,
+  docs_url text,
+
+  links text not null default '{}'
+    check (json(links) not null)
+) strict;
+
+create table if not exists hex_user (
+  id integer primary key autoincrement not null,
+  username text not null unique,
+  email text,
+  hex_url text
+) strict;
+
+create table if not exists package_ownership (
+  package_id integer references packages(id) on delete cascade,
+  hex_user_id integer references hex_user(id) on delete cascade,
+  primary key (package_id, hex_user_id)
+) strict;
+
+-- if to_regtype('retirement_reason') is null then
+--   create type retirement_reason as enum
+--   ( 'other'
+--   , 'invalid'
+--   , 'security'
+--   , 'deprecated'
+--   , 'renamed'
+--   );
+-- end if;
+
+create table if not exists releases (
+  id integer primary key autoincrement not null,
+  package_id integer references packages(id) on delete cascade,
+  version text not null,
+
+  retirement_reason text
+    check (retirement_reason in (
+      'other', 'invalid', 'security', 'deprecated', 'renamed'
+    )),
+
+  retirement_message text,
+  inserted_in_hex_at integer not null,
+  updated_in_hex_at integer not null,
+
+  unique(package_id, version)
+) strict;
+
+create table if not exists hidden_packages (
+  name text primary key
+) strict;
+
+-- These packages are placeholders or otherwise not useful.
+insert into hidden_packages values
+  -- Test packages.
+  ('bare_package1'),
+  ('bare_package_one'),
+  ('bare_package_two'),
+  ('first_gleam_publish_package'),
+  ('gleam_module_javascript_test'),
+  -- Reserved official sounding names.
+  ('gleam'),
+  ('gleam_deno'),
+  ('gleam_email'),
+  ('gleam_html'),
+  ('gleam_nodejs'),
+  ('gleam_tcp'),
+  ('gleam_test'),
+  ('gleam_toml'),
+  ('gleam_xml'),
+  -- Reserved unreleased project names.
+  ('glitter'),
+  ('sequin')
+on conflict do nothing;
+"
+
+pub fn connect(database: String) -> Connection {
+  let assert Ok(db) = sqlight.open(database)
+  let assert Ok(_) = sqlight.exec("pragma foreign_keys = on;", db)
+  let assert Ok(_) = sqlight.exec("pragma journal_mode=wal;", db)
+  let assert Ok(_) = sqlight.exec(schema, db)
+  Connection(db)
+}
+
+pub fn disconnect(conn: Connection) -> Nil {
+  let _ = conn
+  Nil
+}
+
+pub fn exec(db: Connection, sql: String) -> Result(Nil, Error) {
+  sqlight.exec(sql, db.inner)
+  |> result.replace(Nil)
+  |> result.map_error(error.DatabaseError)
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
 pub fn upsert_most_recent_hex_timestamp(
-  db: pgo.Connection,
+  db: Connection,
   time: DateTime,
 ) -> Result(Nil, Error) {
   let unix = time.to_unix(time)
-  sql.upsert_most_recent_hex_timestamp(db, [pgo.int(unix)], Ok)
+  sql.upsert_most_recent_hex_timestamp(db.inner, [sqlight.int(unix)], Ok)
   |> result.replace(Nil)
 }
 
 /// Get the most recent Hex timestamp from the database, returning the Unix
 /// epoch if there is no previous timestamp in the database.
-pub fn get_most_recent_hex_timestamp(
-  db: pgo.Connection,
-) -> Result(DateTime, Error) {
+pub fn get_most_recent_hex_timestamp(db: Connection) -> Result(DateTime, Error) {
   let decoder = dyn.element(0, dyn.int)
-  use returned <- result.map(sql.get_most_recent_hex_timestamp(db, [], decoder))
-  case returned.rows {
+  use returned <- result.map(sql.get_most_recent_hex_timestamp(
+    db.inner,
+    [],
+    decoder,
+  ))
+  case returned {
     [unix] -> time.from_unix(unix)
     _ -> time.from_unix(0)
   }
@@ -70,7 +156,7 @@ pub fn get_most_recent_hex_timestamp(
 
 // TODO: insert licences also
 pub fn upsert_package(
-  db: pgo.Connection,
+  db: Connection,
   package: hexpm.Package,
 ) -> Result(Int, Error) {
   let links_json =
@@ -84,16 +170,16 @@ pub fn upsert_package(
     |> json.to_string
 
   let parameters = [
-    pgo.text(package.name),
-    pgo.nullable(pgo.text, package.meta.description),
-    pgo.nullable(pgo.text, package.docs_html_url),
-    pgo.text(links_json),
-    pgo.int(time.to_unix(package.inserted_at)),
-    pgo.int(time.to_unix(package.updated_at)),
+    sqlight.text(package.name),
+    sqlight.nullable(sqlight.text, package.meta.description),
+    sqlight.nullable(sqlight.text, package.docs_html_url),
+    sqlight.text(links_json),
+    sqlight.int(time.to_unix(package.inserted_at)),
+    sqlight.int(time.to_unix(package.updated_at)),
   ]
   let decoder = dyn.element(0, dyn.int)
-  use returned <- result.then(sql.upsert_package(db, parameters, decoder))
-  let assert [id] = returned.rows
+  use returned <- result.then(sql.upsert_package(db.inner, parameters, decoder))
+  let assert [id] = returned
   Ok(id)
 }
 
@@ -120,30 +206,27 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
   )(data)
 }
 
-pub fn get_package(
-  db: pgo.Connection,
-  id: Int,
-) -> Result(Option(Package), Error) {
-  let params = [pgo.int(id)]
-  use returned <- result.then(sql.get_package(db, params, decode_package))
-  case returned.rows {
+pub fn get_package(db: Connection, id: Int) -> Result(Option(Package), Error) {
+  let params = [sqlight.int(id)]
+  use returned <- result.then(sql.get_package(db.inner, params, decode_package))
+  case returned {
     [package] -> Ok(Some(package))
     _ -> Ok(None)
   }
 }
 
-pub fn get_total_package_count(db: pgo.Connection) -> Result(Int, Error) {
+pub fn get_total_package_count(db: Connection) -> Result(Int, Error) {
   use returned <- result.then(sql.get_total_package_count(
-    db,
+    db.inner,
     [],
     dyn.element(0, dyn.int),
   ))
-  let assert [count] = returned.rows
+  let assert [count] = returned
   Ok(count)
 }
 
 pub fn upsert_release(
-  db: pgo.Connection,
+  db: Connection,
   package_id: Int,
   release: hexpm.Release,
 ) -> Result(Int, Error) {
@@ -155,16 +238,16 @@ pub fn upsert_release(
     None -> #(None, None)
   }
   let parameters = [
-    pgo.int(package_id),
-    pgo.text(release.version),
-    pgo.nullable(pgo.text, retirement_reason),
-    pgo.nullable(pgo.text, retirement_message),
-    pgo.int(time.to_unix(release.inserted_at)),
-    pgo.int(time.to_unix(release.updated_at)),
+    sqlight.int(package_id),
+    sqlight.text(release.version),
+    sqlight.nullable(sqlight.text, retirement_reason),
+    sqlight.nullable(sqlight.text, retirement_message),
+    sqlight.int(time.to_unix(release.inserted_at)),
+    sqlight.int(time.to_unix(release.updated_at)),
   ]
   let decoder = dyn.element(0, dyn.int)
-  use returned <- result.then(sql.upsert_release(db, parameters, decoder))
-  let assert [id] = returned.rows
+  use returned <- result.then(sql.upsert_release(db.inner, parameters, decoder))
+  let assert [id] = returned
   Ok(id)
 }
 
@@ -191,13 +274,10 @@ pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
   )(data)
 }
 
-pub fn get_release(
-  db: pgo.Connection,
-  id: Int,
-) -> Result(Option(Release), Error) {
-  let params = [pgo.int(id)]
-  use returned <- result.then(sql.get_release(db, params, decode_release))
-  case returned.rows {
+pub fn get_release(db: Connection, id: Int) -> Result(Option(Release), Error) {
+  let params = [sqlight.int(id)]
+  use returned <- result.then(sql.get_release(db.inner, params, decode_release))
+  case returned {
     [package] -> Ok(Some(package))
     _ -> Ok(None)
   }
@@ -240,10 +320,9 @@ fn decode_package_summary(
 }
 
 pub fn search_packages(
-  db: pgo.Connection,
+  db: Connection,
   search_term: String,
 ) -> Result(List(PackageSummary), Error) {
-  let params = [pgo.text(search_term)]
-  sql.search_packages(db, params, decode_package_summary)
-  |> result.map(fn(r) { r.rows })
+  let params = [sqlight.text(search_term)]
+  sql.search_packages(db.inner, params, decode_package_summary)
 }
