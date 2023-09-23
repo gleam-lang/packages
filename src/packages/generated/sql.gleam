@@ -146,25 +146,21 @@ pub fn search_packages(
 ) -> QueryResult(a) {
   let query =
     "select
-  packages.name
+  name
 , description
 , docs_url
 , links
-, array_agg(latest_releases.version) as latest_releases
-, packages.updated_in_hex_at
+, updated_in_hex_at
 from
-  packages,
-  lateral (
-    select version
-    from releases
-    where package_id = packages.id
-    order by releases.inserted_in_hex_at desc
-    limit 5
-  ) as latest_releases
+  packages
 where
   (
     $1 = ''
-    or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+    or rowid in (
+      select rowid
+      from packages_fts
+      where packages_fts match $1
+    )
   )
   and not exists (
     select 1
