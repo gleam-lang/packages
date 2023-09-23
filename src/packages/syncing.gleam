@@ -38,19 +38,28 @@ pub fn sync_new_gleam_releases(
   hex_api_key: String,
   db: index.Connection,
 ) -> Result(Nil, Error) {
-  io.println("Syncing new releases from Hex")
-  use limit <- try(index.get_most_recent_hex_timestamp(db))
-  use latest <- try(sync_packages(State(
-    page: 1,
-    limit: limit,
-    newest: limit,
-    hex_api_key: hex_api_key,
-    last_logged: time.now(),
-    db: db,
-  )))
-  let latest = index.upsert_most_recent_hex_timestamp(db, latest)
-  io.println("\nUp to date!")
-  latest
+  case index.has_write_permission() {
+    True -> {
+      io.println("Syncing new releases from Hex")
+      use limit <- try(index.get_most_recent_hex_timestamp(db))
+      use latest <- try(sync_packages(State(
+        page: 1,
+        limit: limit,
+        newest: limit,
+        hex_api_key: hex_api_key,
+        last_logged: time.now(),
+        db: db,
+      )))
+      let latest = index.upsert_most_recent_hex_timestamp(db, latest)
+      io.println("\nUp to date!")
+      latest
+    }
+
+    False -> {
+      io.println("Node lacks write permission to DB, not syncing")
+      Ok(Nil)
+    }
+  }
 }
 
 fn sync_packages(state: State) -> Result(DateTime, Error) {

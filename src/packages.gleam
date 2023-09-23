@@ -72,7 +72,6 @@ fn server() {
     |> mist.new
     |> mist.port(3000)
     |> mist.start_http
-  io.println("Started listening on http://localhost:3000 ✨")
 
   // Start syncing new releases periodically
   let assert Ok(_) =
