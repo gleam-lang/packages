@@ -16,6 +16,9 @@ pub opaque type Connection {
 }
 
 const schema = "
+pragma foreign_keys = on;
+pragma journal_mode = wal;
+
 create table if not exists most_recent_hex_timestamp (
   id integer primary key default 1
     -- we use a constraint to enforce that the id is always the value `1` so
@@ -42,6 +45,38 @@ create table if not exists packages (
     check (json(links) not null)
 ) strict;
 
+-- We want to be able to use full-text-search for packages.
+create virtual table if not exists packages_fts using fts5(
+  name,
+  description,
+  content=packages,
+  content_rowid=id
+);
+
+-- Triggers to keep the full-text-search table up to date.
+create trigger if not exists packages_text_insert
+after insert on packages
+begin
+  insert into packages_fts (rowid, name, description)
+    values (new.id, new.name, new.description);
+end;
+
+create trigger if not exists packages_packages_delete
+after delete on packages
+begin
+  insert into packages_fts (packages_fts, rowid, name, description)
+    values ('delete', old.id, old.name, old.description);
+end;
+
+create trigger if not exists packages_text_update
+after update on packages
+begin
+  insert into packages_fts (packages_fts, rowid, name, description)
+    values ('delete', old.id, old.name, old.description);
+  insert into packages_fts (rowid, name, description)
+    values (new.id, new.name, new.description);
+end;
+
 create table if not exists hex_user (
   id integer primary key autoincrement not null,
   username text not null unique,
@@ -54,16 +89,6 @@ create table if not exists package_ownership (
   hex_user_id integer references hex_user(id) on delete cascade,
   primary key (package_id, hex_user_id)
 ) strict;
-
--- if to_regtype('retirement_reason') is null then
---   create type retirement_reason as enum
---   ( 'other'
---   , 'invalid'
---   , 'security'
---   , 'deprecated'
---   , 'renamed'
---   );
--- end if;
 
 create table if not exists releases (
   id integer primary key autoincrement not null,
@@ -112,8 +137,6 @@ on conflict do nothing;
 
 pub fn connect(database: String) -> Connection {
   let assert Ok(db) = sqlight.open(database)
-  let assert Ok(_) = sqlight.exec("pragma foreign_keys = on;", db)
-  let assert Ok(_) = sqlight.exec("pragma journal_mode=wal;", db)
   let assert Ok(_) = sqlight.exec(schema, db)
   Connection(db)
 }
@@ -314,8 +337,8 @@ fn decode_package_summary(
     dyn.element(1, dyn.string),
     dyn.element(2, dyn.optional(dyn.string)),
     dyn.element(3, decode_package_links),
-    dyn.element(4, dyn.list(dyn.string)),
-    dyn.element(5, dyn_extra.unix_timestamp),
+    fn(_) { Ok([]) },
+    dyn.element(4, dyn_extra.unix_timestamp),
   )(data)
 }
 

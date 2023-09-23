@@ -125,3 +125,51 @@ pub fn insert_release_test() {
 
   let assert Ok(None) = index.get_release(db, id + 1)
 }
+
+pub fn search_packages_empty_test() {
+  use db <- tests.with_database
+
+  let assert Ok(_) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: map.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+        html_url: Some("https://hex.pm/packages/gleam_stdlib"),
+        meta: hexpm.PackageMeta(
+          description: Some("Standard library for Gleam"),
+          licenses: ["Apache-2.0"],
+          links: map.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
+        ),
+        name: "gleam_stdlib",
+        owners: None,
+        releases: [],
+        inserted_at: time.from_unix(100),
+        updated_at: time.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(packages) = index.search_packages(db, "wibble")
+  packages
+  |> should.equal([])
+
+  let assert Ok(packages) = index.search_packages(db, "library")
+  packages
+  |> should.equal([
+    index.PackageSummary(
+      name: "gleam_stdlib",
+      description: "Standard library for Gleam",
+      docs_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+      links: map.from_list([
+        #("Website", "https://gleam.run/"),
+        #("Repository", "https://github.com/gleam-lang/stdlib"),
+      ]),
+      latest_versions: [],
+      updated_in_hex_at: time.from_unix(2000),
+    ),
+  ])
+  // TODO: include latest versions
+}
