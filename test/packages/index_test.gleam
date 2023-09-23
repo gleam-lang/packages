@@ -129,7 +129,7 @@ pub fn insert_release_test() {
 pub fn search_packages_empty_test() {
   use db <- tests.with_database
 
-  let assert Ok(_) =
+  let assert Ok(package_id) =
     index.upsert_package(
       db,
       hexpm.Package(
@@ -152,6 +152,54 @@ pub fn search_packages_empty_test() {
       ),
     )
 
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "0.0.3",
+        checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "harryet",
+          email: None,
+          url: "https://hex.pm/api/users/harryet",
+        )),
+        retirement: Some(hexpm.ReleaseRetirement(
+          reason: hexpm.Security,
+          message: Some("Retired due to security concerns"),
+        )),
+        updated_at: time.from_unix(1000),
+        inserted_at: time.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "0.0.4",
+        checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "harryet",
+          email: None,
+          url: "https://hex.pm/api/users/harryet",
+        )),
+        retirement: Some(hexpm.ReleaseRetirement(
+          reason: hexpm.Security,
+          message: Some("Retired due to security concerns"),
+        )),
+        updated_at: time.from_unix(1001),
+        inserted_at: time.from_unix(2001),
+      ),
+    )
+
   let assert Ok(packages) = index.search_packages(db, "wibble")
   packages
   |> should.equal([])
@@ -160,6 +208,7 @@ pub fn search_packages_empty_test() {
   packages
   |> should.equal([
     index.PackageSummary(
+      id: package_id,
       name: "gleam_stdlib",
       description: "Standard library for Gleam",
       docs_url: Some("https://hexdocs.pm/gleam_stdlib/"),
@@ -167,7 +216,7 @@ pub fn search_packages_empty_test() {
         #("Website", "https://gleam.run/"),
         #("Repository", "https://github.com/gleam-lang/stdlib"),
       ]),
-      latest_versions: [],
+      latest_versions: ["0.0.4", "0.0.3"],
       updated_in_hex_at: time.from_unix(2000),
     ),
   ])
