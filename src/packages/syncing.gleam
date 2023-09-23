@@ -10,7 +10,6 @@ import gleam/json
 import gleam/list
 import gleam/list_extra
 import gleam/order
-import gleam/pgo
 import gleam/result
 import gleam/string
 import gleam/uri
@@ -31,31 +30,40 @@ type State {
     newest: DateTime,
     hex_api_key: String,
     last_logged: DateTime,
-    db: pgo.Connection,
+    db: index.Connection,
   )
 }
 
 pub fn sync_new_gleam_releases(
   hex_api_key: String,
-  db: pgo.Connection,
+  db: index.Connection,
 ) -> Result(Nil, Error) {
-  io.println("Syncing new releases from Hex")
-  use limit <- try(index.get_most_recent_hex_timestamp(db))
-  use latest <- try(sync_packages(State(
-    page: 1,
-    limit: limit,
-    newest: limit,
-    hex_api_key: hex_api_key,
-    last_logged: time.now(),
-    db: db,
-  )))
-  let latest = index.upsert_most_recent_hex_timestamp(db, latest)
-  io.println("\nUp to date!")
-  latest
+  case index.has_write_permission() {
+    True -> {
+      io.println("Syncing new releases from Hex")
+      use limit <- try(index.get_most_recent_hex_timestamp(db))
+      use latest <- try(sync_packages(State(
+        page: 1,
+        limit: limit,
+        newest: limit,
+        hex_api_key: hex_api_key,
+        last_logged: time.now(),
+        db: db,
+      )))
+      let latest = index.upsert_most_recent_hex_timestamp(db, latest)
+      io.println("\nUp to date!")
+      latest
+    }
+
+    False -> {
+      io.println("Node lacks write permission to DB, not syncing")
+      Ok(Nil)
+    }
+  }
 }
 
 pub fn fetch_and_sync_package(
-  db: pgo.Connection,
+  db: index.Connection,
   package_name: String,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
@@ -184,7 +192,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 }
 
 fn sync_single_package(
-  db: pgo.Connection,
+  db: index.Connection,
   package: hexpm.Package,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
@@ -232,7 +240,7 @@ fn log_if_needed(state: State, time: DateTime) -> State {
 fn insert_package_and_releases(
   package: hexpm.Package,
   releases: List(hexpm.Release),
-  db: pgo.Connection,
+  db: index.Connection,
 ) -> Result(Nil, Error) {
   let versions =
     releases

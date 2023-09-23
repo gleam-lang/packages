@@ -1,17 +1,37 @@
 // THIS FILE IS GENERATED. DO NOT EDIT. 
 // Regenerate with `gleam run -m codegen`
 
-import gleam/pgo
+import sqlight
 import gleam/result
 import gleam/dynamic
 import packages/error.{Error}
 
 pub type QueryResult(t) =
-  Result(pgo.Returned(t), Error)
+  Result(List(t), Error)
+
+pub fn get_most_recent_releases(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  version
+from
+  releases
+where
+  package_id = $1
+order by
+  inserted_in_hex_at desc
+limit 5;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
 
 pub fn upsert_release(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -41,31 +61,31 @@ set
 returning
   id
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn upsert_most_recent_hex_timestamp(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "insert into most_recent_hex_timestamp
   (id, unix_timestamp)
 values
-  (true, $1)
+  (1, $1)
 on conflict (id) do update
 set
   unix_timestamp = $1;
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn upsert_hex_user(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -82,13 +102,13 @@ set
 returning
   id
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn get_package(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -105,13 +125,13 @@ where
   id = $1
 limit 1;
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn get_most_recent_hex_timestamp(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -120,51 +140,48 @@ pub fn get_most_recent_hex_timestamp(
 from most_recent_hex_timestamp
 limit 1
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn get_total_package_count(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "select
   count(1)
 from
-  packages
+  packages;
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn search_packages(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "select
-  packages.name
+  id
+, name
 , description
 , docs_url
 , links
-, array_agg(latest_releases.version) as latest_releases
-, packages.updated_in_hex_at
+, updated_in_hex_at
 from
-  packages,
-  lateral (
-    select version
-    from releases
-    where package_id = packages.id
-    order by releases.inserted_in_hex_at desc
-    limit 5
-  ) as latest_releases
+  packages
 where
   (
     $1 = ''
-    or to_tsvector(packages.name || ' ' || packages.description) @@ websearch_to_tsquery($1)
+    or rowid in (
+      select rowid
+      from packages_fts
+      where packages_fts match $1
+    )
   )
   and not exists (
     select 1
@@ -177,13 +194,13 @@ order by
   packages.updated_in_hex_at desc
 limit 1000;
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn get_release(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -200,111 +217,13 @@ where
   id = $1
 limit 1;
 "
-  pgo.execute(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn migrate_schema(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "do $$
-begin
-
-create table if not exists most_recent_hex_timestamp (
-  id boolean primary key default true
-, unix_timestamp bigint not null
-  -- we use a constraint to enforce that the id is always the value `true` so
-  -- now this table can only hold one row.
-, constraint most_recent_hex_timestamp_singleton check (id)
-);
-
-create table if not exists packages
-( id serial primary key
-, name text not null unique
-, description text
-, inserted_in_hex_at bigint not null
-, updated_in_hex_at bigint not null
-, links jsonb not null default '{}'
-, licenses text array not null default '{}'
-);
-
-create table if not exists hex_user
-( id serial primary key
-, username text not null unique
-, email text
-, hex_url text
-);
-
-create table if not exists package_ownership
-( package_id integer references packages(id) on delete cascade
-, hex_user_id integer references hex_user(id) on delete cascade
-, primary key (package_id, hex_user_id)
-);
-
-if to_regtype('retirement_reason') is null then
-  create type retirement_reason as enum
-  ( 'other'
-  , 'invalid'
-  , 'security'
-  , 'deprecated'
-  , 'renamed'
-  );
-end if;
-
-create table if not exists releases
-( id serial primary key
-, package_id integer references packages(id) on delete cascade
-, version text not null
-, retirement_reason retirement_reason
-, retirement_message text
-, inserted_in_hex_at bigint not null
-, updated_in_hex_at bigint not null
-, unique(package_id, version)
-);
-
-create table if not exists hidden_packages
-( name text primary key
-);
-
--- These packages are placeholders or otherwise not useful.
-insert into hidden_packages values
--- Test packages.
-  ('bare_package1')
-, ('bare_package_one')
-, ('bare_package_two')
-, ('first_gleam_publish_package')
-, ('gleam_module_javascript_test')
--- Reserved official sounding names.
-, ('gleam')
-, ('gleam_deno')
-, ('gleam_email')
-, ('gleam_html')
-, ('gleam_nodejs')
-, ('gleam_tcp')
-, ('gleam_test')
-, ('gleam_toml')
-, ('gleam_xml')
--- Reserved unreleased project names.
-, ('glitter')
-, ('sequin')
-on conflict do nothing;
-
-alter table packages
-add column if not exists docs_url text;
-
-end
-$$;
-"
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn json_dump(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -312,13 +231,13 @@ pub fn json_dump(
   json_agg(row_to_json(packages))
 from packages;
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
 pub fn upsert_package(
-  db: pgo.Connection,
-  arguments: List(pgo.Value),
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
@@ -348,6 +267,6 @@ set
 returning
   id
 "
-  pgo.execute(query, db, arguments, decoder)
+  sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }

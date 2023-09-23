@@ -39,12 +39,12 @@ fn init(
   actor.Ready(state, selector)
 }
 
-fn loop(message: Message, state: State(a)) -> actor.Next(State(a)) {
+fn loop(message: Message, state: State(a)) -> actor.Next(Message, State(a)) {
   case message {
     Rerun -> {
       log_error(state.work())
       enqueue_next_rerun(state)
-      actor.Continue(state)
+      actor.continue(state)
     }
   }
 }

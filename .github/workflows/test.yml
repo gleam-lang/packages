@@ -32,11 +32,11 @@ jobs:
       PGPASSWORD: postgres
 
     steps:
-      - uses: actions/checkout@v3.1.0
-      - uses: erlef/setup-beam@v1.15.0
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
         with:
-          otp-version: "24.2"
-          gleam-version: "0.28.2"
+          otp-version: "26.0.2"
+          gleam-version: "0.31.0-rc1"
           rebar3-version: "3"
       - run: gleam format --check src test
       - run: gleam test

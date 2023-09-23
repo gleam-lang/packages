@@ -16,7 +16,7 @@ fn generate_sql_queries_module() -> Nil {
   let assert Ok(functions) = list.try_map(files, generate_sql_function)
 
   let imports = [
-    "import gleam/pgo", "import gleam/result", "import gleam/dynamic",
+    "import sqlight", "import gleam/result", "import gleam/dynamic",
     "import packages/error.{Error}",
   ]
   let module =
@@ -24,7 +24,7 @@ fn generate_sql_queries_module() -> Nil {
       [
         module_header,
         string.join(imports, "\n"),
-        "pub type QueryResult(t) =\n  Result(pgo.Returned(t), Error)",
+        "pub type QueryResult(t) =\n  Result(List(t), Error)",
         ..functions
       ],
       "\n\n",
@@ -42,13 +42,13 @@ fn generate_sql_function(file: String) -> Result(String, _) {
     |> string.replace("\"", "\\\"")
   let lines = [
     "pub fn " <> name <> "(",
-    "  db: pgo.Connection,",
-    "  arguments: List(pgo.Value),",
+    "  db: sqlight.Connection,",
+    "  arguments: List(sqlight.Value),",
     "  decoder: dynamic.Decoder(a),",
     ") -> QueryResult(a) {",
     "  let query =",
     "    \"" <> escaped <> "\"",
-    "  pgo.execute(query, db, arguments, decoder)",
+    "  sqlight.query(query, db, arguments, decoder)",
     "  |> result.map_error(error.DatabaseError)",
     "}",
   ]

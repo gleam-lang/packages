@@ -8,7 +8,6 @@ import tests
 
 pub fn most_recent_hex_timestamp_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(Nil) =
     index.upsert_most_recent_hex_timestamp(db, time.from_unix(0))
@@ -25,7 +24,6 @@ pub fn most_recent_hex_timestamp_test() {
 
 pub fn insert_package_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(id) =
     index.upsert_package(
@@ -69,7 +67,6 @@ pub fn insert_package_test() {
 
 pub fn insert_release_test() {
   use db <- tests.with_database
-  tests.truncate_tables(db)
 
   let assert Ok(package_id) =
     index.upsert_package(
@@ -127,4 +124,101 @@ pub fn insert_release_test() {
   ))
 
   let assert Ok(None) = index.get_release(db, id + 1)
+}
+
+pub fn search_packages_empty_test() {
+  use db <- tests.with_database
+
+  let assert Ok(package_id) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: map.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+        html_url: Some("https://hex.pm/packages/gleam_stdlib"),
+        meta: hexpm.PackageMeta(
+          description: Some("Standard library for Gleam"),
+          licenses: ["Apache-2.0"],
+          links: map.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
+        ),
+        name: "gleam_stdlib",
+        owners: None,
+        releases: [],
+        inserted_at: time.from_unix(100),
+        updated_at: time.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "0.0.3",
+        checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "harryet",
+          email: None,
+          url: "https://hex.pm/api/users/harryet",
+        )),
+        retirement: Some(hexpm.ReleaseRetirement(
+          reason: hexpm.Security,
+          message: Some("Retired due to security concerns"),
+        )),
+        updated_at: time.from_unix(1000),
+        inserted_at: time.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "0.0.4",
+        checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
+        url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "harryet",
+          email: None,
+          url: "https://hex.pm/api/users/harryet",
+        )),
+        retirement: Some(hexpm.ReleaseRetirement(
+          reason: hexpm.Security,
+          message: Some("Retired due to security concerns"),
+        )),
+        updated_at: time.from_unix(1001),
+        inserted_at: time.from_unix(2001),
+      ),
+    )
+
+  let assert Ok(packages) = index.search_packages(db, "wibble")
+  packages
+  |> should.equal([])
+
+  let assert Ok(packages) = index.search_packages(db, "library")
+  packages
+  |> should.equal([
+    index.PackageSummary(
+      id: package_id,
+      name: "gleam_stdlib",
+      description: "Standard library for Gleam",
+      docs_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+      links: map.from_list([
+        #("Website", "https://gleam.run/"),
+        #("Repository", "https://github.com/gleam-lang/stdlib"),
+      ]),
+      latest_versions: ["0.0.4", "0.0.3"],
+      updated_in_hex_at: time.from_unix(2000),
+    ),
+  ])
+  // TODO: include latest versions
 }
