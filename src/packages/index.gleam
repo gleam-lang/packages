@@ -9,10 +9,23 @@ import gleam/option.{None, Option, Some}
 import gleam/result.{try}
 import packages/error.{Error}
 import packages/generated/sql
+import simplifile
 import sqlight
+import gleam/erlang/os
 
 pub opaque type Connection {
   Connection(inner: sqlight.Connection)
+}
+
+/// The application is considered to have write permissions if the
+/// `DATABASE_LOCK_PATH` environment variable is not set, or if it is set and a
+/// file exists at that path.
+///
+pub fn has_write_permission() -> Bool {
+  case os.get_env("LITEFS_PRIMARY_FILE") {
+    Ok(path) -> !simplifile.is_file(path)
+    Error(_) -> True
+  }
 }
 
 const schema = "
