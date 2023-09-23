@@ -74,9 +74,7 @@ fn sync_one(package_name: String) -> Nil {
 }
 
 fn server() {
-  let assert Ok(key) =
-    os.get_env("HEX_API_KEY")
-    |> result.map_error(fn(_) { "HEX_API_KEY environment variable is missing" })
+  let assert Ok(key) = os.get_env("HEX_API_KEY")
   let database_name = database_name()
 
   // Start the web server
