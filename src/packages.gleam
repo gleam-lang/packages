@@ -1,6 +1,5 @@
 import gleam/erlang
 import gleam/erlang/os
-import gleam/result
 import gleam/erlang/process
 import gleam/int
 import gleam/io
