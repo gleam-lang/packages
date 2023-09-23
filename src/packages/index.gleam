@@ -308,6 +308,7 @@ pub fn get_release(db: Connection, id: Int) -> Result(Option(Release), Error) {
 
 pub type PackageSummary {
   PackageSummary(
+    id: Int,
     name: String,
     description: String,
     docs_url: Option(String),
@@ -331,14 +332,15 @@ fn decode_package_links(
 fn decode_package_summary(
   data: Dynamic,
 ) -> Result(PackageSummary, List(DecodeError)) {
-  dyn.decode6(
+  dyn.decode7(
     PackageSummary,
-    dyn.element(0, dyn.string),
+    dyn.element(0, dyn.int),
     dyn.element(1, dyn.string),
-    dyn.element(2, dyn.optional(dyn.string)),
-    dyn.element(3, decode_package_links),
+    dyn.element(2, dyn.string),
+    dyn.element(3, dyn.optional(dyn.string)),
+    dyn.element(4, decode_package_links),
     fn(_) { Ok([]) },
-    dyn.element(4, dyn_extra.unix_timestamp),
+    dyn.element(5, dyn_extra.unix_timestamp),
   )(data)
 }
 
@@ -346,6 +348,18 @@ pub fn search_packages(
   db: Connection,
   search_term: String,
 ) -> Result(List(PackageSummary), Error) {
+  let db = db.inner
   let params = [sqlight.text(search_term)]
-  sql.search_packages(db.inner, params, decode_package_summary)
+  let result = sql.search_packages(db, params, decode_package_summary)
+  use packages <- result.try(result)
+
+  // Look up the latest versions for each package
+  packages
+  |> list.try_map(fn(package) {
+    let params = [sqlight.int(package.id)]
+    let decoder = dyn.element(0, dyn.string)
+    let result = sql.get_most_recent_releases(db, params, decoder)
+    use versions <- result.try(result)
+    Ok(PackageSummary(..package, latest_versions: versions))
+  })
 }

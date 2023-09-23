@@ -1,5 +1,6 @@
 select
-  name
+  id
+, name
 , description
 , docs_url
 , links

@@ -9,6 +9,26 @@ import packages/error.{Error}
 pub type QueryResult(t) =
   Result(List(t), Error)
 
+pub fn get_most_recent_releases(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  version
+from
+  releases
+where
+  package_id = $1
+order by
+  inserted_in_hex_at desc
+limit 5;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
 pub fn upsert_release(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
@@ -146,7 +166,8 @@ pub fn search_packages(
 ) -> QueryResult(a) {
   let query =
     "select
-  name
+  id
+, name
 , description
 , docs_url
 , links
