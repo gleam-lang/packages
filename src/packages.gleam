@@ -12,6 +12,7 @@ import packages/index
 import packages/periodic
 import packages/syncing
 import packages/web
+import packages/error.{Error}
 
 const usage = "Usage:
   gleam run list
@@ -83,6 +84,17 @@ fn server() {
       periodic.periodically(do: sync, waiting: 60 * 1000)
     })
 
+  // Start exporting the database periodically so that folks can download it if
+  // they want to.
+  let assert Ok(_) = export_database(database_name)
+  let assert Ok(_) =
+    supervise(fn() {
+      periodic.periodically(
+        do: fn() { export_database(database_name) },
+        waiting: 60 * 60 * 1000,
+      )
+    })
+
   // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
 }
@@ -92,4 +104,10 @@ fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {
     children
     |> supervisor.add(supervisor.worker(fn(_) { start() }))
   })
+}
+
+fn export_database(name: String) -> Result(Nil, Error) {
+  io.println("Exporting database to enable downloads")
+  let db = index.connect(name)
+  index.export(db)
 }

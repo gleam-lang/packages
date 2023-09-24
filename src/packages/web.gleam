@@ -1,11 +1,10 @@
 import mist
 import gleam/uri
-import gleam/option
+import gleam/option.{None}
 import gleam/list
 import gleam/result
-import gleam/erlang/file
 import gleam/erlang_extra
-import gleam/bit_builder.{BitBuilder}
+import gleam/bit_builder
 import gleam/http/request.{Request}
 import gleam/http/response.{Response}
 import packages/index
@@ -28,42 +27,57 @@ pub fn make_service(
       Error(_) -> {
         response.new(400)
         |> response.set_body(bit_builder.new())
+        |> response.map(mist.Bytes)
       }
     }
-    |> response.map(mist.Bytes)
   }
 }
 
-pub fn handle_request(context: Context) -> Response(BitBuilder) {
+pub fn handle_request(context: Context) -> Response(mist.ResponseData) {
   let path = request.path_segments(context.request)
   case path {
     [] -> search(context)
+    ["packages.sqlite"] -> download_database()
     ["styles.css"] -> stylesheet()
     ["main.js"] -> javascript()
     _ -> redirect(to: "/")
   }
 }
 
-fn stylesheet() -> Response(BitBuilder) {
-  let assert Ok(priv) = erlang_extra.priv_directory("packages")
-  let assert Ok(css) = file.read_bits(priv <> "/styles.css")
+fn download_database() -> Response(mist.ResponseData) {
+  let assert Ok(file) =
+    mist.send_file(index.export_path, offset: 0, limit: None)
   response.new(200)
-  |> response.set_header("content-type", "text/css; charset=utf-8")
-  |> response.set_body(bit_builder.from_bit_string(css))
+  |> response.set_header("content-type", "application/vnd.sqlite3")
+  |> response.set_header(
+    "content-disposition",
+    "attachment; filename=packages.sqlite",
+  )
+  |> response.set_body(file)
 }
 
-fn javascript() -> Response(BitBuilder) {
+fn stylesheet() -> Response(mist.ResponseData) {
   let assert Ok(priv) = erlang_extra.priv_directory("packages")
-  let assert Ok(js) = file.read_bits(priv <> "/main.js")
+  let assert Ok(file) =
+    mist.send_file(priv <> "/styles.css", offset: 0, limit: None)
+  response.new(200)
+  |> response.set_header("content-type", "text/css; charset=utf-8")
+  |> response.set_body(file)
+}
+
+fn javascript() -> Response(mist.ResponseData) {
+  let assert Ok(priv) = erlang_extra.priv_directory("packages")
+  let assert Ok(file) =
+    mist.send_file(priv <> "/main.js", offset: 0, limit: None)
   response.new(200)
   |> response.set_header(
     "content-type",
     "application/javascript; charset=utf-8",
   )
-  |> response.set_body(bit_builder.from_bit_string(js))
+  |> response.set_body(file)
 }
 
-fn search(context: Context) -> Response(BitBuilder) {
+fn search(context: Context) -> Response(mist.ResponseData) {
   let search_term = get_search_parameter(context.request)
   let assert Ok(packages) = index.search_packages(context.db, search_term)
   let assert Ok(total_package_count) = index.get_total_package_count(context.db)
@@ -71,7 +85,7 @@ fn search(context: Context) -> Response(BitBuilder) {
   let html = page.packages_list(packages, total_package_count, search_term)
   response.new(200)
   |> response.set_header("content-type", "text/html; charset=utf-8")
-  |> response.set_body(html)
+  |> response.set_body(mist.Bytes(html))
 }
 
 fn get_search_parameter(request: Request(_)) -> String {
@@ -82,7 +96,8 @@ fn get_search_parameter(request: Request(_)) -> String {
   |> result.unwrap("")
 }
 
-fn redirect(to destination: String) -> Response(BitBuilder) {
+fn redirect(to destination: String) -> Response(mist.ResponseData) {
   response.redirect(destination)
   |> response.map(bit_builder.from_string)
+  |> response.map(mist.Bytes)
 }

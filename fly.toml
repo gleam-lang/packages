@@ -18,7 +18,6 @@ strategy = "rolling"
   PRIMARY_REGION = "lhr"
   DATABASE_PATH = "/litefs/packages.sqlite"
   LITEFS_PRIMARY_FILE = "/litefs/.primary"
-  WOBBLE = "buggle"
 
 [[services]]
   protocol = "tcp"

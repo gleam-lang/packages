@@ -29,6 +29,9 @@ The application is configured with a series of environment variables.
 Install Gleam! See `./Dockerfile` for which version is used in production.
 
 ```shell
+# Download a recent copy of the database
+curl -o database.sqlite https://packages.gleam.run/packages.sqlite
+
 gleam test        # Run the tests
 gleam run server  # Run the server
 ```

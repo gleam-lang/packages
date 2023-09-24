@@ -2,6 +2,7 @@
 *.ez
 *.sqlite*
 .env
+.git
 .github
 .gitignore
 .idea

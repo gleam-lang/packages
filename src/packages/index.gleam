@@ -13,6 +13,10 @@ import simplifile
 import sqlight
 import gleam/erlang/os
 
+pub const export_path = "/tmp/packages-export.sqlite"
+
+const export_path_tmp = "/tmp/packages-export-new.sqlite"
+
 pub opaque type Connection {
   Connection(inner: sqlight.Connection)
 }
@@ -26,6 +30,19 @@ pub fn has_write_permission() -> Bool {
     Ok(path) -> !simplifile.is_file(path)
     Error(_) -> True
   }
+}
+
+/// Vacuum (export) the database to `export_path`
+///
+pub fn export(conn: Connection) -> Result(Nil, Error) {
+  let params = [sqlight.text(export_path_tmp)]
+  use _ <- result.try(
+    sqlight.query("vacuum into ?", conn.inner, params, Ok)
+    |> result.replace(Nil)
+    |> result.map_error(error.DatabaseError),
+  )
+  simplifile.rename_file(at: export_path_tmp, to: export_path)
+  |> result.map_error(error.FileError)
 }
 
 const schema = "
