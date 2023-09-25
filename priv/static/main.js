@@ -3,7 +3,7 @@ const keybinds = {};
 function focus(element, event) {
   if (document.activeElement !== element) {
     event.preventDefault();
-    element.focus();
+    element.select();
   }
 }
 
