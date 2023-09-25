@@ -62,6 +62,18 @@ pub fn sync_new_gleam_releases(
   }
 }
 
+pub fn fetch_and_sync_package(
+  db: index.Connection,
+  package_name: String,
+  secret hex_api_key: String,
+) -> Result(Nil, Error) {
+  use package <- try(get_api_package(package_name, secret: hex_api_key))
+  io.println("Syncing package data from Hex")
+  use _ <- try(sync_single_package(db, package, hex_api_key))
+  io.println("\nDone")
+  Ok(Nil)
+}
+
 fn sync_packages(state: State) -> Result(DateTime, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
@@ -123,6 +135,26 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
   Ok(all_packages)
 }
 
+fn get_api_package(
+  package_name: String,
+  secret hex_api_key: String,
+) -> Result(hexpm.Package, Error) {
+  use response <- result.try(
+    request.new()
+    |> request.set_host("hex.pm")
+    |> request.set_path("/api/packages/" <> package_name)
+    |> request.prepend_header("authorization", hex_api_key)
+    |> hackney.send
+    |> result.map_error(error.HttpClientError),
+  )
+
+  use package <- result.try(
+    json.decode(response.body, using: hexpm.decode_package)
+    |> result.map_error(error.JsonDecodeError),
+  )
+  Ok(package)
+}
+
 pub fn take_fresh_packages(
   packages: List(hexpm.Package),
   limit: DateTime,
@@ -144,12 +176,7 @@ pub fn with_only_fresh_releases(
 }
 
 fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
-  use releases <- try(list.try_map(package.releases, lookup_release(_, state)))
-  let releases =
-    releases
-    |> list.filter(fn(release) {
-      list.contains(release.meta.build_tools, "gleam")
-    })
+  use releases <- try(lookup_gleam_releases(package, secret: state.hex_api_key))
 
   case releases {
     [] -> {
@@ -157,11 +184,44 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
       Ok(state)
     }
     _ -> {
-      use _ <- try(insert_package_and_releases(package, releases, state))
+      use _ <- try(insert_package_and_releases(package, releases, state.db))
       let state = State(..state, last_logged: time.now())
       Ok(state)
     }
   }
+}
+
+fn sync_single_package(
+  db: index.Connection,
+  package: hexpm.Package,
+  secret hex_api_key: String,
+) -> Result(Nil, Error) {
+  use releases <- try(lookup_gleam_releases(package, secret: hex_api_key))
+
+  case releases {
+    [] -> {
+      Ok(Nil)
+    }
+    _ -> {
+      use _ <- try(insert_package_and_releases(package, releases, db))
+      Ok(Nil)
+    }
+  }
+}
+
+fn lookup_gleam_releases(
+  package: hexpm.Package,
+  secret hex_api_key: String,
+) -> Result(List(hexpm.Release), Error) {
+  use releases <- try(list.try_map(
+    package.releases,
+    lookup_release(_, hex_api_key),
+  ))
+  releases
+  |> list.filter(fn(release) {
+    list.contains(release.meta.build_tools, "gleam")
+  })
+  |> Ok
 }
 
 fn log_if_needed(state: State, time: DateTime) -> State {
@@ -180,7 +240,7 @@ fn log_if_needed(state: State, time: DateTime) -> State {
 fn insert_package_and_releases(
   package: hexpm.Package,
   releases: List(hexpm.Release),
-  state: State,
+  db: index.Connection,
 ) -> Result(Nil, Error) {
   let versions =
     releases
@@ -188,17 +248,15 @@ fn insert_package_and_releases(
     |> string.join(", v")
   io.println("Saving " <> package.name <> " v" <> versions)
 
-  use id <- try(index.upsert_package(state.db, package))
+  use id <- try(index.upsert_package(db, package))
 
   releases
-  |> list_extra.try_each(fn(release) {
-    index.upsert_release(state.db, id, release)
-  })
+  |> list_extra.try_each(fn(release) { index.upsert_release(db, id, release) })
 }
 
 fn lookup_release(
   release: hexpm.PackageRelease,
-  state: State,
+  secret hex_api_key: String,
 ) -> Result(hexpm.Release, Error) {
   let assert Ok(url) = uri.parse(release.url)
 
@@ -206,7 +264,7 @@ fn lookup_release(
     request.new()
     |> request.set_host("hex.pm")
     |> request.set_path(url.path)
-    |> request.prepend_header("authorization", state.hex_api_key)
+    |> request.prepend_header("authorization", hex_api_key)
     |> hackney.send
     |> result.map_error(error.HttpClientError),
   )
