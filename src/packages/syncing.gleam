@@ -7,7 +7,6 @@ import gleam/http/request
 import gleam/int
 import gleam/json
 import gleam/list
-import gleam/list_extra
 import gleam/order
 import gleam/result
 import gleam/string
