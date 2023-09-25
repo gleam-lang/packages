@@ -2,8 +2,9 @@
 
 📦 Search for Gleam packages on [Hex](https://hex.pm).
 
-A Gleam application served with the [Mist](https://github.com/rawhat/mist) web
-server, using a SQLite database.
+A Gleam application using the [Wisp](https://lpil.github.io/wisp) web framework,
+served with the [Mist](https://github.com/rawhat/mist) web server, using a
+SQLite database.
 
 The application is deployed on [Fly](https://fly.io) where
 [LiteFS](https://github.com/superfly/litefs) is used to replicate the

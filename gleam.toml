@@ -28,6 +28,7 @@ gleam_otp = "~> 0.5"
 gleam_hexpm = "~> 0.1"
 sqlight = "~> 0.8"
 simplifile = "~> 0.1"
+wisp = "~> 0.5"
 
 [dev-dependencies]
 gleeunit = "~> 0.7"

@@ -1,5 +1,5 @@
 import birl/time.{DateTime}
-import gleam/bit_builder.{BitBuilder}
+import gleam/string_builder.{StringBuilder}
 import gleam/int
 import gleam/list
 import gleam/map
@@ -14,7 +14,7 @@ pub fn packages_list(
   packages: List(PackageSummary),
   total_package_count: Int,
   search_term: String,
-) -> BitBuilder {
+) -> StringBuilder {
   html.main(
     [],
     [
@@ -38,7 +38,6 @@ pub fn packages_list(
   )
   |> layout
   |> nakai.to_string_builder
-  |> bit_builder.from_string_builder
 }
 
 fn search_form(search_term: String) -> Node(t) {
@@ -185,7 +184,7 @@ fn layout(content: Node(t)) -> Node(t) {
         attrs.content("width=device-width, initial-scale=1"),
       ]),
       html.title("Gleam Packages"),
-      html.link([attrs.rel("stylesheet"), attrs.href("/styles.css")]),
+      html.link([attrs.rel("stylesheet"), attrs.href("/static/styles.css")]),
       html.link([
         attrs.rel("icon"),
         attrs.href("https://gleam.run/images/lucy-circle.svg"),
@@ -199,7 +198,11 @@ fn layout(content: Node(t)) -> Node(t) {
         ],
         [],
       ),
-      html.Element("script", [attrs.type_("module"), attrs.src("/main.js")], []),
+      html.Element(
+        "script",
+        [attrs.type_("module"), attrs.src("/static/main.js")],
+        [],
+      ),
     ]),
     content,
     html.footer(

@@ -5,7 +5,6 @@ import gleam/hackney
 import gleam/hexpm
 import gleam/http/request
 import gleam/int
-import gleam/io
 import gleam/json
 import gleam/list
 import gleam/list_extra
@@ -15,6 +14,7 @@ import gleam/string
 import gleam/uri
 import packages/error.{Error}
 import packages/index
+import wisp
 
 pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
   case a {
@@ -40,7 +40,7 @@ pub fn sync_new_gleam_releases(
 ) -> Result(Nil, Error) {
   case index.has_write_permission() {
     True -> {
-      io.println("Syncing new releases from Hex")
+      wisp.log_info("Syncing new releases from Hex")
       use limit <- try(index.get_most_recent_hex_timestamp(db))
       use latest <- try(sync_packages(State(
         page: 1,
@@ -51,12 +51,12 @@ pub fn sync_new_gleam_releases(
         db: db,
       )))
       let latest = index.upsert_most_recent_hex_timestamp(db, latest)
-      io.println("\nUp to date!")
+      wisp.log_info("\nUp to date!")
       latest
     }
 
     False -> {
-      io.println("Node lacks write permission to DB, not syncing")
+      wisp.log_info("Node lacks write permission to DB, not syncing")
       Ok(Nil)
     }
   }
@@ -68,9 +68,9 @@ pub fn fetch_and_sync_package(
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
   use package <- try(get_api_package(package_name, secret: hex_api_key))
-  io.println("Syncing package data from Hex")
+  wisp.log_info("Syncing package data from Hex")
   use _ <- try(sync_single_package(db, package, hex_api_key))
-  io.println("\nDone")
+  wisp.log_info("\nDone")
   Ok(Nil)
 }
 
@@ -230,7 +230,7 @@ fn log_if_needed(state: State, time: DateTime) -> State {
   let not_logged_recently = time.compare(print_deadline, time.now()) == order.Lt
   case not_logged_recently {
     True -> {
-      io.println("Still syncing, up to " <> time.to_iso8601(time))
+      wisp.log_info("Still syncing, up to " <> time.to_iso8601(time))
       State(..state, last_logged: time.now())
     }
     False -> state
@@ -246,12 +246,12 @@ fn insert_package_and_releases(
     releases
     |> list.map(fn(release) { release.version })
     |> string.join(", v")
-  io.println("Saving " <> package.name <> " v" <> versions)
+  wisp.log_info("Saving " <> package.name <> " v" <> versions)
 
   use id <- try(index.upsert_package(db, package))
 
   releases
-  |> list_extra.try_each(fn(release) { index.upsert_release(db, id, release) })
+  |> list.try_each(fn(release) { index.upsert_release(db, id, release) })
 }
 
 fn lookup_release(

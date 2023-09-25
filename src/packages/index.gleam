@@ -1,6 +1,5 @@
 import birl/time.{DateTime}
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
-import gleam/dynamic_extra as dyn_extra
 import gleam/hexpm
 import gleam/json
 import gleam/list
@@ -254,8 +253,8 @@ pub fn decode_package(data: Dynamic) -> Result(Package, List(DecodeError)) {
     dyn.element(1, dyn.optional(dyn.string)),
     dyn.element(2, dyn.optional(dyn.string)),
     dyn.element(3, decode_package_links),
-    dyn.element(4, dyn_extra.unix_timestamp),
-    dyn.element(5, dyn_extra.unix_timestamp),
+    dyn.element(4, unix_timestamp),
+    dyn.element(5, unix_timestamp),
   )(data)
 }
 
@@ -322,8 +321,8 @@ pub fn decode_release(data: Dynamic) -> Result(Release, List(DecodeError)) {
     dyn.element(1, dyn.string),
     dyn.element(2, dyn.optional(hexpm.decode_retirement_reason)),
     dyn.element(3, dyn.optional(dyn.string)),
-    dyn.element(4, dyn_extra.unix_timestamp),
-    dyn.element(5, dyn_extra.unix_timestamp),
+    dyn.element(4, unix_timestamp),
+    dyn.element(5, unix_timestamp),
   )(data)
 }
 
@@ -370,7 +369,7 @@ fn decode_package_summary(
     dyn.element(3, dyn.optional(dyn.string)),
     dyn.element(4, decode_package_links),
     fn(_) { Ok([]) },
-    dyn.element(5, dyn_extra.unix_timestamp),
+    dyn.element(5, unix_timestamp),
   )(data)
 }
 
@@ -392,4 +391,9 @@ pub fn search_packages(
     use versions <- result.try(result)
     Ok(PackageSummary(..package, latest_versions: versions))
   })
+}
+
+fn unix_timestamp(data: Dynamic) -> Result(DateTime, List(DecodeError)) {
+  use i <- result.map(dyn.int(data))
+  time.from_unix(i)
 }
