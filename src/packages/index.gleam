@@ -158,6 +158,8 @@ insert into hidden_packages values
   ('gleam_test'),
   ('gleam_toml'),
   ('gleam_xml'),
+  ('gleam_mongo'),
+  ('gleam_bson'),
   -- Reserved unreleased project names.
   ('glitter'),
   ('sequin')
