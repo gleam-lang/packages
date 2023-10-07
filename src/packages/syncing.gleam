@@ -3,6 +3,7 @@ import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
 import gleam/hexpm
+import gleam/option
 import gleam/http/request
 import gleam/int
 import gleam/json
@@ -218,7 +219,10 @@ fn lookup_gleam_releases(
   ))
   releases
   |> list.filter(fn(release) {
-    list.contains(release.meta.build_tools, "gleam")
+    // Select packages built with gleam, ignore retired releases
+    list.contains(release.meta.build_tools, "gleam") && option.is_none(
+      release.retirement,
+    )
   })
   |> Ok
 }
