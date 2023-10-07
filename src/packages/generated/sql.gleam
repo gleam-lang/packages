@@ -9,21 +9,16 @@ import packages/error.{type Error}
 pub type QueryResult(t) =
   Result(List(t), Error)
 
-pub fn get_most_recent_releases(
+pub fn get_total_package_count(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "select
-  version
+  count(1)
 from
-  releases
-where
-  package_id = $1
-order by
-  inserted_in_hex_at desc
-limit 5;
+  packages;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -65,19 +60,24 @@ returning
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn upsert_most_recent_hex_timestamp(
+pub fn get_package(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "insert into most_recent_hex_timestamp
-  (id, unix_timestamp)
-values
-  (1, $1)
-on conflict (id) do update
-set
-  unix_timestamp = $1;
+    "select
+  name
+, description
+, docs_url
+, links
+, inserted_in_hex_at
+, updated_in_hex_at
+from
+  packages
+where
+  id = $1
+limit 1;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -106,24 +106,19 @@ returning
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn get_package(
+pub fn upsert_most_recent_hex_timestamp(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "select
-  name
-, description
-, docs_url
-, links
-, inserted_in_hex_at
-, updated_in_hex_at
-from
-  packages
-where
-  id = $1
-limit 1;
+    "insert into most_recent_hex_timestamp
+  (id, unix_timestamp)
+values
+  (1, $1)
+on conflict (id) do update
+set
+  unix_timestamp = $1;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -144,16 +139,70 @@ limit 1
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn get_total_package_count(
+pub fn json_dump(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "select
-  count(1)
+  json_agg(row_to_json(packages))
+from packages;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn delete_package(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "delete from packages where name == $1;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn get_most_recent_releases(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  version
 from
-  packages;
+  releases
+where
+  package_id = $1
+order by
+  inserted_in_hex_at desc
+limit 5;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn get_release(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  package_id
+, version
+, retirement_reason
+, retirement_message
+, inserted_in_hex_at
+, updated_in_hex_at
+from
+  releases
+where
+  id = $1
+limit 1;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -193,43 +242,6 @@ group by
 order by
   packages.updated_in_hex_at desc
 limit 1000;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn get_release(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  package_id
-, version
-, retirement_reason
-, retirement_message
-, inserted_in_hex_at
-, updated_in_hex_at
-from
-  releases
-where
-  id = $1
-limit 1;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn json_dump(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  json_agg(row_to_json(packages))
-from packages;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)

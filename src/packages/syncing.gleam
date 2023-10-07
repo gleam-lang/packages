@@ -183,6 +183,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
+      use _ <- try(index.delete_package(state.db, package.name))
       let state = log_if_needed(state, package.updated_at)
       Ok(state)
     }
@@ -203,6 +204,7 @@ fn sync_single_package(
 
   case releases {
     [] -> {
+      use _ <- try(index.delete_package(db, package.name))
       Ok(Nil)
     }
     _ -> {
