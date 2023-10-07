@@ -53,7 +53,7 @@ create table if not exists most_recent_hex_timestamp (
     -- we use a constraint to enforce that the id is always the value `1` so
     -- now this table can only hold one row.
     check (id == 1),
-  
+
   unix_timestamp integer not null
 ) strict;
 
@@ -235,6 +235,16 @@ pub fn upsert_package(
   use returned <- result.then(sql.upsert_package(db.inner, parameters, decoder))
   let assert [id] = returned
   Ok(id)
+}
+
+pub fn delete_package(db: Connection, name: String) -> Result(Nil, Error) {
+  let parameters = [sqlight.text(name)]
+  use _returned <- result.then(sql.delete_package(
+    db.inner,
+    parameters,
+    dyn.dynamic,
+  ))
+  Ok(Nil)
 }
 
 pub type Package {
