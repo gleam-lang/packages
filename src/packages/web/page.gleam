@@ -4,9 +4,9 @@ import gleam/int
 import gleam/list
 import gleam/map
 import gleam/option
-import nakai
-import nakai/html.{Node}
-import nakai/html/attrs
+import lustre/attribute.{attribute}
+import lustre/element.{Element}
+import lustre/element/html
 import packages/index.{PackageSummary}
 import gleam/string
 
@@ -19,39 +19,43 @@ pub fn packages_list(
     [],
     [
       html.header(
-        [attrs.class("site-header")],
+        [attribute.class("site-header")],
         [
           html.nav(
-            [attrs.class("content")],
+            [attribute.class("content")],
             [
-              html.a([attrs.href("/")], [html.h1_text([], "Gleam Packages")]),
+              html.a(
+                [attribute.href("/")],
+                [html.h1([], [element.text("Gleam Packages")])],
+              ),
               search_form(search_term),
             ],
           ),
         ],
       ),
       html.div(
-        [attrs.class("content")],
+        [attribute.class("content")],
         [search_aware_package_list(packages, total_package_count, search_term)],
       ),
     ],
   )
   |> layout
-  |> nakai.to_string_builder
+  |> element.to_string_builder(True)
+  |> string_builder.prepend("<!DOCTYPE html>")
 }
 
-fn search_form(search_term: String) -> Node(t) {
+fn search_form(search_term: String) -> Element(Nil) {
   html.form(
-    [attrs.class("search-form"), attrs.Attr("method", "GET")],
+    [attribute.class("search-form"), attribute("method", "GET")],
     [
       html.input([
-        attrs.data("keybind-focus", "/"),
-        attrs.name("search"),
-        attrs.type_("search"),
-        attrs.value(search_term),
-        attrs.placeholder("Press / to focus"),
+        attribute("data-keybind-focus", "/"),
+        attribute("value", search_term),
+        attribute.name("search"),
+        attribute.type_("search"),
+        attribute.placeholder("Press / to focus"),
       ]),
-      html.input([attrs.type_("submit"), attrs.value("🔎")]),
+      html.input([attribute.type_("submit"), attribute("value", "🔎")]),
     ],
   )
 }
@@ -68,12 +72,12 @@ fn search_aware_package_list(
   packages: List(PackageSummary),
   total_package_count: Int,
   search_term: String,
-) -> Node(t) {
+) -> Element(Nil) {
   case packages, string.is_empty(search_term) {
     [], False ->
-      html.p_text(
-        [attrs.class("package-list-message")],
-        "I couldn't find any package matching your search.",
+      html.p(
+        [attribute.class("package-list-message")],
+        [element.text("I couldn't find any package matching your search.")],
       )
     _, False -> {
       let package_count = list.length(packages)
@@ -81,15 +85,19 @@ fn search_aware_package_list(
       html.div(
         [],
         [
-          html.p_text(
-            [attrs.class("package-list-message")],
+          html.p(
+            [attribute.class("package-list-message")],
             [
-              "I found",
-              int.to_string(package_count),
-              pluralize_package(package_count),
-              "matching your search.",
-            ]
-            |> string.join(" "),
+              element.text(
+                [
+                  "I found",
+                  int.to_string(package_count),
+                  pluralize_package(package_count),
+                  "matching your search.",
+                ]
+                |> string.join(" "),
+              ),
+            ],
           ),
           package_list(packages),
         ],
@@ -99,16 +107,19 @@ fn search_aware_package_list(
       html.div(
         [],
         [
-          html.p_text(
-            [attrs.class("package-list-message")],
+          html.p(
+            [attribute.class("package-list-message")],
             [
-              "There are",
-              total_package_count
-              |> int.to_string,
-              pluralize_package(total_package_count),
-              "available ✨",
-            ]
-            |> string.join(" "),
+              element.text(
+                [
+                  "There are",
+                  int.to_string(total_package_count),
+                  pluralize_package(total_package_count),
+                  "available ✨",
+                ]
+                |> string.join(" "),
+              ),
+            ],
           ),
           package_list(packages),
         ],
@@ -116,11 +127,14 @@ fn search_aware_package_list(
   }
 }
 
-fn package_list(packages: List(PackageSummary)) -> Node(t) {
-  html.ul([attrs.class("package-list")], list.map(packages, package_list_item))
+fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
+  html.ul(
+    [attribute.class("package-list")],
+    list.map(packages, package_list_item),
+  )
 }
 
-fn package_list_item(package: PackageSummary) -> Node(t) {
+fn package_list_item(package: PackageSummary) -> Element(Nil) {
   let url = "https://hex.pm/packages/" <> package.name
 
   let repository_url =
@@ -140,17 +154,20 @@ fn package_list_item(package: PackageSummary) -> Node(t) {
   html.li(
     [],
     [
-      html.div_text(
-        [attrs.class("package-date-time")],
-        format_date(package.updated_in_hex_at),
+      html.div(
+        [attribute.class("package-date-time")],
+        [element.text(format_date(package.updated_in_hex_at))],
       ),
       html.h2([], [external_link_text(url, package.name)]),
-      html.p_text([attrs.class("package-description")], package.description),
+      html.p(
+        [attribute.class("package-description")],
+        [element.text(package.description)],
+      ),
       case links {
-        [] -> html.Nothing
+        [] -> element.text("")
         links ->
           html.nav(
-            [attrs.class("package-links")],
+            [attribute.class("package-links")],
             [
               html.ul(
                 [],
@@ -168,73 +185,89 @@ fn format_date(datetime: DateTime) -> String {
   time.legible_difference(time.now(), datetime)
 }
 
-fn external_link_text(url: String, text: String) -> Node(t) {
-  html.a_text(
-    [attrs.href(url), attrs.rel("noopener noreferrer"), attrs.target("_blank")],
-    text,
+fn external_link_text(url: String, text: String) -> Element(Nil) {
+  html.a(
+    [
+      attribute.href(url),
+      attribute.rel("noopener noreferrer"),
+      attribute.target("_blank"),
+    ],
+    [element.text(text)],
   )
 }
 
-fn layout(content: Node(t)) -> Node(t) {
-  html.Fragment([
-    html.Head([
-      html.meta([attrs.charset("utf-8")]),
-      html.meta([
-        attrs.name("viewport"),
-        attrs.content("width=device-width, initial-scale=1"),
-      ]),
-      html.title("Gleam Packages"),
-      html.link([attrs.rel("stylesheet"), attrs.href("/static/styles.css")]),
-      html.link([
-        attrs.rel("icon"),
-        attrs.href("https://gleam.run/images/lucy-circle.svg"),
-      ]),
-      html.Element(
-        "script",
+fn layout(content: Element(Nil)) -> Element(Nil) {
+  html.html(
+    [attribute("lang", "en")],
+    [
+      html.head(
+        [],
         [
-          attrs.defer(),
-          attrs.src("https://plausible.io/js/plausible.js"),
-          attrs.Attr("data-domain", "packages.gleam.run"),
+          html.meta([attribute("charset", "utf-8")]),
+          html.meta([
+            attribute.name("viewport"),
+            attribute("content", "width=device-width, initial-scale=1"),
+          ]),
+          html.title([], "Gleam Packages"),
+          html.link([
+            attribute.rel("stylesheet"),
+            attribute.href("/static/styles.css"),
+          ]),
+          html.link([
+            attribute.rel("icon"),
+            attribute.href("https://gleam.run/images/lucy-circle.svg"),
+          ]),
+          html.script(
+            [
+              attribute.property("defer", True),
+              attribute.src("https://plausible.io/js/plausible.js"),
+              attribute("data-domain", "packages.gleam.run"),
+            ],
+            "",
+          ),
+          html.script(
+            [attribute.type_("module"), attribute.src("/static/main.js")],
+            "",
+          ),
         ],
-        [],
       ),
-      html.Element(
-        "script",
-        [attrs.type_("module"), attrs.src("/static/main.js")],
+      html.body(
         [],
+        [
+          content,
+          html.footer(
+            [attribute.class("site-footer")],
+            [
+              html.div(
+                [],
+                [
+                  element.text("Special thanks to the "),
+                  external_link_text("https://hex.pm/", "Hex"),
+                  element.text(" team."),
+                ],
+              ),
+              html.div(
+                [],
+                [
+                  element.text("Kindly hosted by "),
+                  external_link_text("https://fly.io/", "Fly"),
+                  element.text("."),
+                ],
+              ),
+              html.div(
+                [],
+                [
+                  external_link_text(
+                    "https://github.com/gleam-lang/packages",
+                    "Source code",
+                  ),
+                  element.text("."),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
-    ]),
-    content,
-    html.footer(
-      [attrs.class("site-footer")],
-      [
-        html.div(
-          [],
-          [
-            html.Text("Special thanks to the "),
-            external_link_text("https://hex.pm/", "Hex"),
-            html.Text(" team."),
-          ],
-        ),
-        html.div(
-          [],
-          [
-            html.Text("Kindly hosted by "),
-            external_link_text("https://fly.io/", "Fly"),
-            html.Text("."),
-          ],
-        ),
-        html.div(
-          [],
-          [
-            external_link_text(
-              "https://github.com/gleam-lang/packages",
-              "Source code",
-            ),
-            html.Text("."),
-          ],
-        ),
-      ],
-    ),
-  ])
+    ],
+  )
 }
