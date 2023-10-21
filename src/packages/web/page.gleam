@@ -119,9 +119,13 @@ fn search_aware_package_list(
                   "There are",
                   int.to_string(total_package_count),
                   pluralize_package(total_package_count),
-                  "available ✨",
+                  "available",
                 ]
                 |> string.join(" "),
+              ),
+              html.span(
+                [attribute("aria-hidden", "true")],
+                [element.text(" ✨")],
               ),
             ],
           ),
