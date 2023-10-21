@@ -55,7 +55,11 @@ fn search_form(search_term: String) -> Element(Nil) {
         attribute.type_("search"),
         attribute.placeholder("Press / to focus"),
       ]),
-      html.input([attribute.type_("submit"), attribute("value", "🔎")]),
+      html.input([
+        attribute.type_("submit"),
+        attribute("value", "🔎"),
+        attribute("aria-label", "search packages"),
+      ]),
     ],
   )
 }
