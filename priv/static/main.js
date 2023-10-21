@@ -4,6 +4,7 @@ function focus(element, event) {
   if (document.activeElement !== element) {
     event.preventDefault();
     element.select();
+    element.scrollIntoView();
   }
 }
 
