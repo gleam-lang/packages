@@ -40,7 +40,7 @@ pub fn packages_list(
     ],
   )
   |> layout
-  |> element.to_string_builder(True)
+  |> element.to_string_builder
   |> string_builder.prepend("<!DOCTYPE html>")
 }
 
