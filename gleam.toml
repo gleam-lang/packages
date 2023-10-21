@@ -29,6 +29,7 @@ sqlight = "~> 0.8"
 simplifile = "~> 0.1"
 wisp = "~> 0.5"
 birl = "~> 0.16"
+lustre = "~> 3.0"
 
 [dev-dependencies]
 gleeunit = "~> 0.7"
