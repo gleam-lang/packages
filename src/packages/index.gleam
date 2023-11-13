@@ -1,4 +1,5 @@
 import birl/time.{DateTime}
+import gleam/string
 import gleam/dynamic.{DecodeError, Dynamic} as dyn
 import gleam/hexpm
 import gleam/json
@@ -380,7 +381,8 @@ pub fn search_packages(
   search_term: String,
 ) -> Result(List(PackageSummary), Error) {
   let db = db.inner
-  let params = [sqlight.text(search_term)]
+  let query = webquery_to_sqlite_fts_query(search_term)
+  let params = [sqlight.text(query)]
   let result = sql.search_packages(db, params, decode_package_summary)
   use packages <- result.try(result)
 
@@ -393,6 +395,16 @@ pub fn search_packages(
     use versions <- result.try(result)
     Ok(PackageSummary(..package, latest_versions: versions))
   })
+}
+
+// The search term here is used with SQLite's full-text-search feature, which
+// expects query terms in a specific format.
+// https://www.sqlite.org/fts5.html#full_text_query_syntax
+//
+// In future it would be good to build more sophisticated queries, but for now
+// we just escape it to avoid syntax errors.
+fn webquery_to_sqlite_fts_query(webquery: String) -> String {
+  "\"" <> string.replace(webquery, "\"", "\"\"") <> "\""
 }
 
 fn unix_timestamp(data: Dynamic) -> Result(DateTime, List(DecodeError)) {
