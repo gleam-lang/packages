@@ -404,7 +404,11 @@ pub fn search_packages(
 // In future it would be good to build more sophisticated queries, but for now
 // we just escape it to avoid syntax errors.
 fn webquery_to_sqlite_fts_query(webquery: String) -> String {
-  "\"" <> string.replace(webquery, "\"", "\"\"") <> "\""
+  let webquery = string.trim(webquery)
+  case webquery {
+    "" -> ""
+    _ -> "\"" <> string.replace(webquery, "\"", "\"\"") <> "\""
+  }
 }
 
 fn unix_timestamp(data: Dynamic) -> Result(DateTime, List(DecodeError)) {
