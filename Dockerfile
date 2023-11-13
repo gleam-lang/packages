@@ -1,4 +1,4 @@
-FROM ghcr.io/gleam-lang/gleam:v0.31.0-rc1-erlang-alpine
+FROM ghcr.io/gleam-lang/gleam:v0.32.4-erlang-alpine
 
 # Add LiteFS binary, to replicate the SQLite database.
 COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
