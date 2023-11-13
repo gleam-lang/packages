@@ -1,4 +1,4 @@
-import birl/time.{DateTime}
+import birl/time.{type DateTime}
 import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
@@ -11,7 +11,7 @@ import gleam/order
 import gleam/result
 import gleam/string
 import gleam/uri
-import packages/error.{Error}
+import packages/error.{type Error}
 import packages/index
 import wisp
 

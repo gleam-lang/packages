@@ -1,13 +1,13 @@
-import birl/time.{DateTime}
-import gleam/string_builder.{StringBuilder}
+import birl/time.{type DateTime}
+import gleam/string_builder.{type StringBuilder}
 import gleam/int
 import gleam/list
 import gleam/map
 import gleam/option
 import lustre/attribute.{attribute}
-import lustre/element.{Element}
+import lustre/element.{type Element}
 import lustre/element/html
-import packages/index.{PackageSummary}
+import packages/index.{type PackageSummary}
 import gleam/string
 
 pub fn packages_list(

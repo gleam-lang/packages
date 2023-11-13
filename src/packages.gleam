@@ -6,7 +6,7 @@ import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/result
 import mist
-import packages/error.{Error}
+import packages/error.{type Error}
 import packages/index
 import packages/periodic
 import packages/syncing

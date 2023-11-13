@@ -1,13 +1,13 @@
-import birl/time.{DateTime}
+import birl/time.{type DateTime}
 import gleam/string
-import gleam/dynamic.{DecodeError, Dynamic} as dyn
+import gleam/dynamic.{type DecodeError, type Dynamic, DecodeError} as dyn
 import gleam/hexpm
 import gleam/json
 import gleam/list
-import gleam/map.{Map}
-import gleam/option.{None, Option, Some}
+import gleam/map.{type Map}
+import gleam/option.{type Option, None, Some}
 import gleam/result.{try}
-import packages/error.{Error}
+import packages/error.{type Error}
 import packages/generated/sql
 import simplifile
 import sqlight
