@@ -26,7 +26,20 @@ pub fn packages_list(
             [
               html.a(
                 [attribute.href("/")],
-                [html.h1([], [element.text("Gleam Packages")])],
+                [
+                  html.h1(
+                    [attribute.class("logo")],
+                    [
+                      html.img([
+                        attribute.src(
+                          "https://gleam.run/images/lucy-charcoal-2.svg",
+                        ),
+                        attribute.alt("Lucy the star, Gleam's mascot"),
+                      ]),
+                      element.text("Gleam Packages"),
+                    ],
+                  ),
+                ],
               ),
               search_form(search_term),
             ],
