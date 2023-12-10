@@ -1,19 +1,19 @@
 @font-face {
-  font-family: "Lexend";
+  font-family: 'Lexend';
   font-display: swap;
   font-weight: 400;
-  src: url("https://gleam.run/fonts/Lexend.woff2") format("woff2");
+  src: url('https://gleam.run/fonts/Lexend.woff2') format('woff2');
 }
 
 @font-face {
-  font-family: "Outfit";
+  font-family: 'Outfit';
   font-display: swap;
-  src: url("https://gleam.run/fonts/Outfit.woff") format("woff");
+  src: url('https://gleam.run/fonts/Outfit.woff') format('woff');
 }
 
 :root {
-  --font-family-normal: "Outfit", sans-serif;
-  --font-family-title: "Lexend", sans-serif;
+  --font-family-normal: 'Outfit', sans-serif;
+  --font-family-title: 'Lexend', sans-serif;
 
   --color-charcoal: #2f2f2f;
   --color-graphite: #545454;
@@ -53,12 +53,7 @@ a:visited {
   text-decoration-color: var(--color-faff-pink);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-title);
   font-weight: normal;
 }
@@ -70,6 +65,7 @@ h6 {
 }
 
 .site-header {
+  width: 100%;
   background-color: var(--color-faff-pink);
   position: sticky;
   top: 0;
@@ -104,7 +100,7 @@ h6 {
   display: flex;
 }
 
-.search-form input[type="search"] {
+.search-form input[type=search] {
   height: 30px;
   border: none;
   padding: 0 var(--gap-s);
@@ -113,7 +109,7 @@ h6 {
   border-radius: 100px 0 0 100px;
 }
 
-.search-form input[type="submit"] {
+.search-form input[type=submit] {
   background: var(--color-white);
   border: none;
   border-radius: 0 100px 100px 0;
