@@ -1,4 +1,4 @@
-import birl/time.{type DateTime}
+import birl.{type Time}
 import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
@@ -25,10 +25,10 @@ pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
 type State {
   State(
     page: Int,
-    limit: DateTime,
-    newest: DateTime,
+    limit: Time,
+    newest: Time,
     hex_api_key: String,
-    last_logged: DateTime,
+    last_logged: Time,
     db: index.Connection,
   )
 }
@@ -41,14 +41,16 @@ pub fn sync_new_gleam_releases(
     True -> {
       wisp.log_info("Syncing new releases from Hex")
       use limit <- try(index.get_most_recent_hex_timestamp(db))
-      use latest <- try(sync_packages(State(
-        page: 1,
-        limit: limit,
-        newest: limit,
-        hex_api_key: hex_api_key,
-        last_logged: time.now(),
-        db: db,
-      )))
+      use latest <- try(
+        sync_packages(State(
+          page: 1,
+          limit: limit,
+          newest: limit,
+          hex_api_key: hex_api_key,
+          last_logged: birl.now(),
+          db: db,
+        )),
+      )
       let latest = index.upsert_most_recent_hex_timestamp(db, latest)
       wisp.log_info("\nUp to date!")
       latest
@@ -73,7 +75,7 @@ pub fn fetch_and_sync_package(
   Ok(Nil)
 }
 
-fn sync_packages(state: State) -> Result(DateTime, Error) {
+fn sync_packages(state: State) -> Result(Time, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
 
@@ -101,11 +103,11 @@ fn sync_packages(state: State) -> Result(DateTime, Error) {
   }
 }
 
-fn first_timestamp(packages: List(hexpm.Package), state: State) -> DateTime {
+fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
   case packages {
     [] -> state.newest
     [package, ..] -> {
-      case time.compare(package.updated_at, state.newest) {
+      case birl.compare(package.updated_at, state.newest) {
         order.Gt -> package.updated_at
         _ -> state.newest
       }
@@ -156,20 +158,20 @@ fn get_api_package(
 
 pub fn take_fresh_packages(
   packages: List(hexpm.Package),
-  limit: DateTime,
+  limit: Time,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
-  time.compare(limit, package.updated_at) == order.Lt
+  birl.compare(limit, package.updated_at) == order.Lt
 }
 
 pub fn with_only_fresh_releases(
   package: hexpm.Package,
-  limit: DateTime,
+  limit: Time,
 ) -> hexpm.Package {
   let releases =
     package.releases
     |> list.take_while(fn(release) {
-      time.compare(limit, release.inserted_at) == order.Lt
+      birl.compare(limit, release.inserted_at) == order.Lt
     })
   hexpm.Package(..package, releases: releases)
 }
@@ -184,7 +186,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
     }
     _ -> {
       use _ <- try(insert_package_and_releases(package, releases, state.db))
-      let state = State(..state, last_logged: time.now())
+      let state = State(..state, last_logged: birl.now())
       Ok(state)
     }
   }
@@ -212,10 +214,9 @@ fn lookup_gleam_releases(
   package: hexpm.Package,
   secret hex_api_key: String,
 ) -> Result(List(hexpm.Release), Error) {
-  use releases <- try(list.try_map(
-    package.releases,
-    lookup_release(_, hex_api_key),
-  ))
+  use releases <- try(
+    list.try_map(package.releases, lookup_release(_, hex_api_key)),
+  )
   releases
   |> list.filter(fn(release) {
     list.contains(release.meta.build_tools, "gleam")
@@ -223,14 +224,14 @@ fn lookup_gleam_releases(
   |> Ok
 }
 
-fn log_if_needed(state: State, time: DateTime) -> State {
+fn log_if_needed(state: State, time: Time) -> State {
   let interval = duration.new([#(5, duration.Second)])
-  let print_deadline = time.add(state.last_logged, interval)
-  let not_logged_recently = time.compare(print_deadline, time.now()) == order.Lt
+  let print_deadline = birl.add(state.last_logged, interval)
+  let not_logged_recently = birl.compare(print_deadline, birl.now()) == order.Lt
   case not_logged_recently {
     True -> {
-      wisp.log_info("Still syncing, up to " <> time.to_iso8601(time))
-      State(..state, last_logged: time.now())
+      wisp.log_info("Still syncing, up to " <> birl.to_iso8601(time))
+      State(..state, last_logged: birl.now())
     }
     False -> state
   }
