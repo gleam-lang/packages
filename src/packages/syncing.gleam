@@ -226,9 +226,8 @@ fn lookup_gleam_releases(
   releases
   |> list.filter(fn(release) {
     // Select packages built with gleam, ignore retired releases
-    list.contains(release.meta.build_tools, "gleam") && option.is_none(
-      release.retirement,
-    )
+    list.contains(release.meta.build_tools, "gleam")
+    && option.is_none(release.retirement)
   })
   |> Ok
 }
