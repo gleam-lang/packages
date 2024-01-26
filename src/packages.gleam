@@ -1,4 +1,3 @@
-import gleam/erlang
 import gleam/erlang/os
 import gleam/erlang/process
 import gleam/io
@@ -6,13 +5,14 @@ import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/result
 import mist
-import packages/error.{Error}
+import packages/error.{type Error}
 import packages/index
 import packages/periodic
 import packages/syncing
 import packages/router
 import packages/web
 import wisp
+import argv
 
 const usage = "Usage:
   gleam run server
@@ -22,7 +22,7 @@ const usage = "Usage:
 pub fn main() {
   wisp.configure_logger()
 
-  case erlang.start_arguments() {
+  case argv.load().arguments {
     ["server"] -> server()
     ["sync", "--name", package_name] -> sync_one(package_name)
     _ -> io.println(usage)

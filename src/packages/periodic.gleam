@@ -1,6 +1,6 @@
-import packages/error.{Error}
+import packages/error.{type Error}
 import gleam/otp/actor
-import gleam/erlang/process.{Subject}
+import gleam/erlang/process.{type Subject}
 import gleam/io
 
 pub opaque type Message {

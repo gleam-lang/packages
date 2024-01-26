@@ -4,7 +4,7 @@
 import sqlight
 import gleam/result
 import gleam/dynamic
-import packages/error.{Error}
+import packages/error.{type Error}
 
 pub type QueryResult(t) =
   Result(List(t), Error)

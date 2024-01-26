@@ -4,9 +4,9 @@ import gleam/list
 import gleam/result
 import gleam/http/request
 import packages/index
-import packages/web.{Context}
+import packages/web.{type Context}
 import packages/web/page
-import wisp.{Request, Response}
+import wisp.{type Request, type Response}
 
 pub fn handle_request(
   request: Request,

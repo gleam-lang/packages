@@ -14,6 +14,7 @@ internal_modules = [
   "packages/internal/*",
   "packages/generated/*",
 ]
+gleam = ">= 0.32.0"
 
 [dependencies]
 gleam_stdlib = "~> 0.23"
@@ -22,13 +23,14 @@ gleam_hackney = "~> 1.0"
 gleam_erlang = "~> 0.18"
 mist = "~> 0.10"
 gleam_http = "~> 3.1"
-nakai = "~> 0.4"
 gleam_otp = "~> 0.5"
-gleam_hexpm = "~> 0.1"
+gleam_hexpm = "~> 1.0"
 sqlight = "~> 0.8"
 simplifile = "~> 0.1"
 wisp = "~> 0.5"
-birl = "~> 0.16"
+birl = "~> 1.0"
+lustre = "~> 3.0"
+argv = "~> 1.0"
 
 [dev-dependencies]
-gleeunit = "~> 0.7"
+gleeunit = "~> 1.0"

@@ -1,4 +1,4 @@
-import gleam/erlang/file
+import simplifile
 import gleam/result
 import gleam/string
 import gleam/list
@@ -12,7 +12,7 @@ const module_header = "// THIS FILE IS GENERATED. DO NOT EDIT.
 
 fn generate_sql_queries_module() -> Nil {
   let module_path = "src/packages/generated/sql.gleam"
-  let assert Ok(files) = file.list_directory("sql")
+  let assert Ok(files) = simplifile.read_directory("sql")
   let assert Ok(functions) = list.try_map(files, generate_sql_function)
 
   let imports = [
@@ -29,13 +29,13 @@ fn generate_sql_queries_module() -> Nil {
       ],
       "\n\n",
     )
-  let assert Ok(_) = file.write(to: module_path, contents: module <> "\n")
+  let assert Ok(_) = simplifile.write(to: module_path, contents: module <> "\n")
   Nil
 }
 
 fn generate_sql_function(file: String) -> Result(String, _) {
   let name = string.replace(file, ".sql", "")
-  use contents <- result.then(file.read("sql/" <> file))
+  use contents <- result.then(simplifile.read("sql/" <> file))
   let escaped =
     contents
     |> string.replace("\\", "\\\\")

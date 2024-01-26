@@ -1,12 +1,13 @@
-import birl/time.{DateTime}
-import gleam/dynamic.{DecodeError, Dynamic} as dyn
+import birl.{type Time}
+import gleam/string
+import gleam/dynamic.{type DecodeError, type Dynamic, DecodeError} as dyn
 import gleam/hexpm
 import gleam/json
 import gleam/list
-import gleam/map.{Map}
-import gleam/option.{None, Option, Some}
+import gleam/dict.{type Dict}
+import gleam/option.{type Option, None, Some}
 import gleam/result.{try}
-import packages/error.{Error}
+import packages/error.{type Error}
 import packages/generated/sql
 import simplifile
 import sqlight
@@ -186,16 +187,16 @@ pub fn exec(db: Connection, sql: String) -> Result(Nil, Error) {
 /// Insert or replace the most recent Hex timestamp in the database.
 pub fn upsert_most_recent_hex_timestamp(
   db: Connection,
-  time: DateTime,
+  time: Time,
 ) -> Result(Nil, Error) {
-  let unix = time.to_unix(time)
+  let unix = birl.to_unix(time)
   sql.upsert_most_recent_hex_timestamp(db.inner, [sqlight.int(unix)], Ok)
   |> result.replace(Nil)
 }
 
 /// Get the most recent Hex timestamp from the database, returning the Unix
 /// epoch if there is no previous timestamp in the database.
-pub fn get_most_recent_hex_timestamp(db: Connection) -> Result(DateTime, Error) {
+pub fn get_most_recent_hex_timestamp(db: Connection) -> Result(Time, Error) {
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.map(sql.get_most_recent_hex_timestamp(
     db.inner,
@@ -203,8 +204,8 @@ pub fn get_most_recent_hex_timestamp(db: Connection) -> Result(DateTime, Error) 
     decoder,
   ))
   case returned {
-    [unix] -> time.from_unix(unix)
-    _ -> time.from_unix(0)
+    [unix] -> birl.from_unix(unix)
+    _ -> birl.from_unix(0)
   }
 }
 
@@ -215,7 +216,7 @@ pub fn upsert_package(
 ) -> Result(Int, Error) {
   let links_json =
     package.meta.links
-    |> map.to_list
+    |> dict.to_list
     |> list.map(fn(pair) {
       let #(name, url) = pair
       #(name, json.string(url))
@@ -228,8 +229,8 @@ pub fn upsert_package(
     sqlight.nullable(sqlight.text, package.meta.description),
     sqlight.nullable(sqlight.text, package.docs_html_url),
     sqlight.text(links_json),
-    sqlight.int(time.to_unix(package.inserted_at)),
-    sqlight.int(time.to_unix(package.updated_at)),
+    sqlight.int(birl.to_unix(package.inserted_at)),
+    sqlight.int(birl.to_unix(package.updated_at)),
   ]
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.then(sql.upsert_package(db.inner, parameters, decoder))
@@ -252,9 +253,9 @@ pub type Package {
     name: String,
     description: Option(String),
     docs_url: Option(String),
-    links: Map(String, String),
-    inserted_in_hex_at: DateTime,
-    updated_in_hex_at: DateTime,
+    links: Dict(String, String),
+    inserted_in_hex_at: Time,
+    updated_in_hex_at: Time,
   )
 }
 
@@ -306,8 +307,8 @@ pub fn upsert_release(
     sqlight.text(release.version),
     sqlight.nullable(sqlight.text, retirement_reason),
     sqlight.nullable(sqlight.text, retirement_message),
-    sqlight.int(time.to_unix(release.inserted_at)),
-    sqlight.int(time.to_unix(release.updated_at)),
+    sqlight.int(birl.to_unix(release.inserted_at)),
+    sqlight.int(birl.to_unix(release.updated_at)),
   ]
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.then(sql.upsert_release(db.inner, parameters, decoder))
@@ -321,8 +322,8 @@ pub type Release {
     version: String,
     retirement_reason: Option(hexpm.RetirementReason),
     retirement_message: Option(String),
-    inserted_in_hex_at: DateTime,
-    updated_in_hex_at: DateTime,
+    inserted_in_hex_at: Time,
+    updated_in_hex_at: Time,
   )
 }
 
@@ -353,18 +354,18 @@ pub type PackageSummary {
     name: String,
     description: String,
     docs_url: Option(String),
-    links: Map(String, String),
+    links: Dict(String, String),
     latest_versions: List(String),
-    updated_in_hex_at: DateTime,
+    updated_in_hex_at: Time,
   )
 }
 
 fn decode_package_links(
   data: Dynamic,
-) -> Result(Map(String, String), List(DecodeError)) {
+) -> Result(Dict(String, String), List(DecodeError)) {
   use json_data <- try(dyn.string(data))
 
-  json.decode(json_data, using: dyn.map(of: dyn.string, to: dyn.string))
+  json.decode(json_data, using: dyn.dict(of: dyn.string, to: dyn.string))
   |> result.map_error(fn(_) {
     [DecodeError(expected: "Map(String, String)", found: json_data, path: [])]
   })
@@ -390,7 +391,8 @@ pub fn search_packages(
   search_term: String,
 ) -> Result(List(PackageSummary), Error) {
   let db = db.inner
-  let params = [sqlight.text(search_term)]
+  let query = webquery_to_sqlite_fts_query(search_term)
+  let params = [sqlight.text(query)]
   let result = sql.search_packages(db, params, decode_package_summary)
   use packages <- result.try(result)
 
@@ -405,7 +407,21 @@ pub fn search_packages(
   })
 }
 
-fn unix_timestamp(data: Dynamic) -> Result(DateTime, List(DecodeError)) {
+// The search term here is used with SQLite's full-text-search feature, which
+// expects query terms in a specific format.
+// https://www.sqlite.org/fts5.html#full_text_query_syntax
+//
+// In future it would be good to build more sophisticated queries, but for now
+// we just escape it to avoid syntax errors.
+fn webquery_to_sqlite_fts_query(webquery: String) -> String {
+  let webquery = string.trim(webquery)
+  case webquery {
+    "" -> ""
+    _ -> "\"" <> string.replace(webquery, "\"", "\"\"") <> "\""
+  }
+}
+
+fn unix_timestamp(data: Dynamic) -> Result(Time, List(DecodeError)) {
   use i <- result.map(dyn.int(data))
-  time.from_unix(i)
+  birl.from_unix(i)
 }
