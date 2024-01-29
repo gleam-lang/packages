@@ -1,14 +1,19 @@
 with
   retired_package_ids as (
-    select r.package_id from releases r where exists (
+    -- A package is retired if its latest release is retired
+    select package_id from (
       select
-        1
+        package_id
+        , retirement_reason
       from
         releases
-      where
-        r.package_id = package_id
-        and retirement_message is not null
+      group by
+        package_id
+      having
+        max(inserted_in_hex_at)
     )
+    where
+      retirement_reason is not null
   )
 select
   name

@@ -1,5 +1,6 @@
 import packages/index.{Package, Release}
 import gleam/hexpm
+import gleam/list
 import gleam/option.{None, Some}
 import gleam/dict
 import gleeunit/should
@@ -209,6 +210,91 @@ pub fn search_packages_empty_test() {
   |> should.equal([])
   // No results because all releases of gleam_stdlib are retired
   // TODO: include latest versions
+}
+
+pub fn search_packages_hide_retired_test() {
+  use db <- tests.with_database
+
+  let assert Ok(package_id) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+        html_url: Some("https://hex.pm/packages/gleam_stdlib"),
+        meta: hexpm.PackageMeta(
+          description: Some("Standard library for Gleam"),
+          licenses: ["Apache-2.0"],
+          links: dict.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
+        ),
+        name: "gleam_stdlib",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+    )
+
+  let base_release =
+    hexpm.Release(
+      version: "0.0.3",
+      checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
+      url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
+      downloads: 0,
+      meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
+      publisher: Some(hexpm.PackageOwner(
+        username: "harryet",
+        email: None,
+        url: "https://hex.pm/api/users/harryet",
+      )),
+      retirement: None,
+      updated_at: birl.from_unix(1000),
+      inserted_at: birl.from_unix(2000),
+    )
+
+  // A package's first release is published, it should be visible
+  let assert Ok(_) = index.upsert_release(db, package_id, base_release)
+  let assert Ok(packages) = index.search_packages(db, "gleam_stdlib")
+  list.length(packages)
+  |> should.equal(1)
+
+  // The release is retired, the package should now be hidden
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        ..base_release,
+        retirement: Some(hexpm.ReleaseRetirement(
+          reason: hexpm.Security,
+          message: Some("Retired due to security concerns"),
+        )),
+        updated_at: birl.from_unix(1001),
+        inserted_at: birl.from_unix(2001),
+      ),
+    )
+  let assert Ok(packages) = index.search_packages(db, "gleam_stdlib")
+  list.length(packages)
+  |> should.equal(0)
+
+  // A new release is published, the package should be visible again
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        ..base_release,
+        version: "0.0.4",
+        updated_at: birl.from_unix(1002),
+        inserted_at: birl.from_unix(2002),
+      ),
+    )
+  let assert Ok(packages) = index.search_packages(db, "gleam_stdlib")
+  list.length(packages)
+  |> should.equal(1)
 }
 
 pub fn search_packages_query_escaping_test() {
