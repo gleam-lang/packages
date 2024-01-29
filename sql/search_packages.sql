@@ -1,3 +1,15 @@
+with
+  retired_package_ids as (
+    select r.package_id from releases r where exists (
+      select
+        1
+      from
+        releases
+      where
+        r.package_id = package_id
+        and retirement_message is not null
+    )
+  )
 select
   id
 , name
@@ -21,6 +33,7 @@ where
     from hidden_packages
     where hidden_packages.name = packages.name
   )
+  and id not in retired_package_ids
 group by
   packages.id
 order by

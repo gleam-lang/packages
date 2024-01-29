@@ -206,20 +206,8 @@ pub fn search_packages_empty_test() {
 
   let assert Ok(packages) = index.search_packages(db, "library")
   packages
-  |> should.equal([
-    index.PackageSummary(
-      id: package_id,
-      name: "gleam_stdlib",
-      description: "Standard library for Gleam",
-      docs_url: Some("https://hexdocs.pm/gleam_stdlib/"),
-      links: dict.from_list([
-        #("Website", "https://gleam.run/"),
-        #("Repository", "https://github.com/gleam-lang/stdlib"),
-      ]),
-      latest_versions: ["0.0.4", "0.0.3"],
-      updated_in_hex_at: birl.from_unix(2000),
-    ),
-  ])
+  |> should.equal([])
+  // No results because all releases of gleam_stdlib are retired
   // TODO: include latest versions
 }
 
