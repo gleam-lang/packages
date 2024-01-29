@@ -238,16 +238,6 @@ pub fn upsert_package(
   Ok(id)
 }
 
-pub fn delete_package(db: Connection, name: String) -> Result(Nil, Error) {
-  let parameters = [sqlight.text(name)]
-  use _returned <- result.then(sql.delete_package(
-    db.inner,
-    parameters,
-    dyn.dynamic,
-  ))
-  Ok(Nil)
-}
-
 pub type Package {
   Package(
     name: String,

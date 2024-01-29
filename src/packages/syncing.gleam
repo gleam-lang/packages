@@ -3,7 +3,6 @@ import birl/duration
 import gleam/dynamic as dyn
 import gleam/hackney
 import gleam/hexpm
-import gleam/option
 import gleam/http/request
 import gleam/int
 import gleam/json
@@ -183,8 +182,6 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
-      // Delete the package in case it was present in the index but all its releases have been retired.
-      use _ <- try(index.delete_package(state.db, package.name))
       let state = log_if_needed(state, package.updated_at)
       Ok(state)
     }
@@ -205,8 +202,6 @@ fn sync_single_package(
 
   case releases {
     [] -> {
-      // Delete the package in case it was present in the index but all its releases have been retired.
-      use _ <- try(index.delete_package(db, package.name))
       Ok(Nil)
     }
     _ -> {
@@ -225,9 +220,7 @@ fn lookup_gleam_releases(
   )
   releases
   |> list.filter(fn(release) {
-    // Select packages built with gleam, ignore retired releases
     list.contains(release.meta.build_tools, "gleam")
-    && option.is_none(release.retirement)
   })
   |> Ok
 }

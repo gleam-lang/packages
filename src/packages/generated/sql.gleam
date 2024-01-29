@@ -1,4 +1,4 @@
-// THIS FILE IS GENERATED. DO NOT EDIT. 
+// THIS FILE IS GENERATED. DO NOT EDIT.
 // Regenerate with `gleam run -m codegen`
 
 import sqlight
@@ -148,18 +148,6 @@ pub fn json_dump(
     "select
   json_agg(row_to_json(packages))
 from packages;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn delete_package(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "delete from packages where name == $1;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
