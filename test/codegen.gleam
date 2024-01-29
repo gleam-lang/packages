@@ -7,7 +7,7 @@ pub fn main() {
   let Nil = generate_sql_queries_module()
 }
 
-const module_header = "// THIS FILE IS GENERATED. DO NOT EDIT. 
+const module_header = "// THIS FILE IS GENERATED. DO NOT EDIT.
 // Regenerate with `gleam run -m codegen`"
 
 fn generate_sql_queries_module() -> Nil {
