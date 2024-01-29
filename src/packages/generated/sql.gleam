@@ -15,10 +15,24 @@ pub fn get_total_package_count(
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "select
+    "with
+  retired_package_ids as (
+    select r.package_id from releases r where exists (
+      select
+        1
+      from
+        releases
+      where
+        r.package_id = package_id
+        and retirement_message is not null
+    )
+  )
+select
   count(1)
 from
-  packages;
+  packages
+where
+  id not in retired_package_ids;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -66,7 +80,19 @@ pub fn get_package(
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "select
+    "with
+  retired_package_ids as (
+    select r.package_id from releases r where exists (
+      select
+        1
+      from
+        releases
+      where
+        r.package_id = package_id
+        and retirement_message is not null
+    )
+  )
+select
   name
 , description
 , docs_url
@@ -77,6 +103,7 @@ from
   packages
 where
   id = $1
+  and id not in retired_package_ids
 limit 1;
 "
   sqlight.query(query, db, arguments, decoder)
@@ -202,7 +229,19 @@ pub fn search_packages(
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "select
+    "with
+  retired_package_ids as (
+    select r.package_id from releases r where exists (
+      select
+        1
+      from
+        releases
+      where
+        r.package_id = package_id
+        and retirement_message is not null
+    )
+  )
+select
   id
 , name
 , description
@@ -225,6 +264,7 @@ where
     from hidden_packages
     where hidden_packages.name = packages.name
   )
+  and id not in retired_package_ids
 group by
   packages.id
 order by
