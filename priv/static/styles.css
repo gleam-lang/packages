@@ -19,6 +19,7 @@
   --color-graphite: #545454;
   --color-black: #1e1e1e;
   --color-blacker: #151515;
+  --color-blackest: #000000;
   --color-white: #fefefc;
   --color-faff-pink: #ffaff3;
   --color-aged-plastic-yellow: #fffbe8;
@@ -34,6 +35,36 @@
   --gap-l: calc(var(--gap) * 2);
 }
 
+@media (prefers-color-scheme: light) {
+    :root {
+        --color-background: var(--color-white);
+        --color-link: var(--color-blackest);
+        --color-link-decoration: var(--color-faff-pink);
+        --color-link-secondary: var(--color-unexpected-aubergine);
+        --color-header-background: var(--color-faff-pink);
+        --color-header-input-background: var(--color-white);
+        --color-header-text: var(--color-blackest);
+        --color-text: var(--color-blackest);
+        --color-text-secondary: var(--color-graphite);
+        color-scheme: light;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: var(--color-charcoal);
+        --color-link: var(--color-faff-pink);
+        --color-link-decoration: var(--color-unexpected-aubergine);
+        --color-link-secondary: var(--color-aged-plastic-yellow);
+        --color-header-background: var(--color-faff-pink);
+        --color-header-input-background: var(--color-white);
+        --color-header-text: var(--color-blackest);
+        --color-text: var(--color-white);
+        --color-text-secondary: var(--color-aged-plastic-yellow);
+        color-scheme: dark;
+    }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -41,16 +72,17 @@
 body {
   padding: 0;
   margin: 0;
-  background: var(--color-white);
+  background: var(--color-background);
   font-family: var(--font-family-normal);
-  background-color: var(--color-white);
+  background-color: var(--color-background);
   font-size: var(--font-size);
+  color: var(--color-text);
 }
 
 a,
 a:visited {
-  color: unset;
-  text-decoration-color: var(--color-faff-pink);
+  color: var(--color-link);
+  text-decoration-color: var(--color-link-decoration);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -65,12 +97,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .site-header {
+  color-scheme: light;
   width: 100%;
-  background-color: var(--color-faff-pink);
+  background-color: var(--color-header-background);
 }
 
 .site-header a {
-  color: black;
+  color: var(--color-header-text);
+  text-decoration: none;
 }
 
 .site-header h1 {
@@ -97,7 +131,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .search-form input[type=submit] {
-  background: var(--color-white);
+  background: var(--color-header-input-background);
   border: none;
   border-radius: 0 100px 100px 0;
   height: 30px;
@@ -129,7 +163,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .package-date-time {
   float: right;
-  color: var(--color-graphite);
+  color: var(--color-text-secondary);
   margin-top: 0.3rem;
 }
 
@@ -153,7 +187,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .package-links a {
   margin-right: var(--gap);
-  color: var(--color-unexpected-aubergine);
+  color: var(--color-link-secondary);
   font-size: var(--font-size-small);
   text-decoration: none;
 }
