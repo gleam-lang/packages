@@ -35,7 +35,7 @@
   --gap-l: calc(var(--gap) * 2);
 }
 
-body.theme-light {
+html.theme-light {
   --color-background: var(--color-white);
   --color-link: var(--color-blackest);
   --color-link-decoration: var(--color-faff-pink);
@@ -49,7 +49,7 @@ body.theme-light {
   color-scheme: light;
 }
 
-body.theme-dark {
+html.theme-dark {
   --color-background: var(--color-charcoal);
   --color-link: var(--color-faff-pink);
   --color-link-decoration: var(--color-unexpected-aubergine);
@@ -125,11 +125,11 @@ h1, h2, h3, h4, h5, h6 {
   gap: var(--gap);
 }
 
-body.theme-dark .theme-button.-dark {
+html.theme-dark .theme-button.-dark {
   display: none;
 }
 
-body.theme-light .theme-button.-light {
+html.theme-light .theme-button.-light {
   display: none;
 }
 

@@ -196,7 +196,7 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
 }
 
 fn layout(content: Element(Nil)) -> Element(Nil) {
-  html.html([attribute("lang", "en")], [
+  html.html([attribute("lang", "en"), attribute.class("theme-light")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
       html.meta([
@@ -204,6 +204,8 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         attribute("content", "width=device-width, initial-scale=1"),
       ]),
       html.title([], "Gleam Packages"),
+      // Initialize theme before CSS is loaded to avoid FOUC
+      html.script([], theme_picker_js),
       html.link([
         attribute.rel("stylesheet"),
         attribute.href("/static/styles.css"),
@@ -225,9 +227,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         "",
       ),
     ]),
-    html.body([attribute.class("theme-light")], [
-      // Initialize theme as soon as <body> is created to avoid FOUC
-      html.script([], theme_picker_js),
+    html.body([], [
       content,
       html.footer([attribute.class("site-footer")], [
         html.div([], [
@@ -254,14 +254,14 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
 
 const theme_picker_js = "
 window.setDarkTheme = function() {
-  document.body.classList.add('theme-dark')
-  document.body.classList.remove('theme-light')
+  document.documentElement.classList.add('theme-dark')
+  document.documentElement.classList.remove('theme-light')
   localStorage.setItem('theme', 'dark')
 };
 
 window.setLightTheme = function() {
-  document.body.classList.add('theme-light')
-  document.body.classList.remove('theme-dark')
+  document.documentElement.classList.add('theme-light')
+  document.documentElement.classList.remove('theme-dark')
   localStorage.setItem('theme', 'light')
 };
 
