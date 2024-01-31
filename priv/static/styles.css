@@ -35,34 +35,30 @@
   --gap-l: calc(var(--gap) * 2);
 }
 
-@media (prefers-color-scheme: light) {
-    :root {
-        --color-background: var(--color-white);
-        --color-link: var(--color-blackest);
-        --color-link-decoration: var(--color-faff-pink);
-        --color-link-secondary: var(--color-unexpected-aubergine);
-        --color-header-background: var(--color-faff-pink);
-        --color-header-input-background: var(--color-white);
-        --color-header-text: var(--color-blackest);
-        --color-text: var(--color-blackest);
-        --color-text-secondary: var(--color-graphite);
-        color-scheme: light;
-    }
+body.theme-light {
+  --color-background: var(--color-white);
+  --color-link: var(--color-blackest);
+  --color-link-decoration: var(--color-faff-pink);
+  --color-link-secondary: var(--color-unexpected-aubergine);
+  --color-header-background: var(--color-faff-pink);
+  --color-header-input-background: var(--color-white);
+  --color-header-text: var(--color-blackest);
+  --color-text: var(--color-blackest);
+  --color-text-secondary: var(--color-graphite);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --color-background: var(--color-charcoal);
-        --color-link: var(--color-faff-pink);
-        --color-link-decoration: var(--color-unexpected-aubergine);
-        --color-link-secondary: var(--color-aged-plastic-yellow);
-        --color-header-background: var(--color-faff-pink);
-        --color-header-input-background: var(--color-white);
-        --color-header-text: var(--color-blackest);
-        --color-text: var(--color-white);
-        --color-text-secondary: var(--color-aged-plastic-yellow);
-        color-scheme: dark;
-    }
+body.theme-dark {
+  --color-background: var(--color-charcoal);
+  --color-link: var(--color-faff-pink);
+  --color-link-decoration: var(--color-unexpected-aubergine);
+  --color-link-secondary: var(--color-aged-plastic-yellow);
+  --color-header-background: var(--color-faff-pink);
+  --color-header-input-background: var(--color-white);
+  --color-header-text: var(--color-blackest);
+  --color-text: var(--color-white);
+  --color-text-secondary: var(--color-aged-plastic-yellow);
+  color-scheme: dark;
 }
 
 * {

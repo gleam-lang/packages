@@ -196,7 +196,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         "",
       ),
     ]),
-    html.body([], [
+    html.body([attribute.class("theme-dark")], [
       content,
       html.footer([attribute.class("site-footer")], [
         html.div([], [
