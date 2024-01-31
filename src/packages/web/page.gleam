@@ -45,6 +45,7 @@ fn theme_picker() -> Element(Nil) {
         attribute.type_("button"),
         attribute.alt("Switch to light mode"),
         attribute.attribute("title", "Switch to light mode"),
+        attribute.attribute("onclick", "setLightTheme()"),
       ],
       [icons.icon_moon(), icons.icon_toggle_left()],
     ),
@@ -54,6 +55,7 @@ fn theme_picker() -> Element(Nil) {
         attribute.type_("button"),
         attribute.alt("Switch to dark mode"),
         attribute.attribute("title", "Switch to dark mode"),
+        attribute.attribute("onclick", "setDarkTheme()"),
       ],
       [icons.icon_sun(), icons.icon_toggle_right()],
     ),
@@ -223,7 +225,9 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         "",
       ),
     ]),
-    html.body([attribute.class("theme-dark")], [
+    html.body([attribute.class("theme-light")], [
+      // Initialize theme as soon as <body> is created to avoid FOUC
+      html.script([], theme_picker_js),
       content,
       html.footer([attribute.class("site-footer")], [
         html.div([], [
@@ -247,3 +251,26 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
     ]),
   ])
 }
+
+const theme_picker_js = "
+window.setDarkTheme = function() {
+  document.body.classList.add('theme-dark')
+  document.body.classList.remove('theme-light')
+  localStorage.setItem('theme', 'dark')
+};
+
+window.setLightTheme = function() {
+  document.body.classList.add('theme-light')
+  document.body.classList.remove('theme-dark')
+  localStorage.setItem('theme', 'light')
+};
+
+(function initTheme() {
+  const theme = localStorage.getItem('theme') || 'light'
+  if (theme == 'dark') {
+    window.setDarkTheme()
+  } else {
+    window.setLightTheme()
+  }
+})();
+"
