@@ -42,7 +42,8 @@ body.theme-light {
   --color-link-secondary: var(--color-unexpected-aubergine);
   --color-header-background: var(--color-faff-pink);
   --color-header-input-background: var(--color-white);
-  --color-header-text: var(--color-blackest);
+  --color-header-link: var(--color-blackest);
+  --color-header-text: var(--color-charcoal);
   --color-text: var(--color-blackest);
   --color-text-secondary: var(--color-graphite);
   color-scheme: light;
@@ -55,7 +56,8 @@ body.theme-dark {
   --color-link-secondary: var(--color-aged-plastic-yellow);
   --color-header-background: var(--color-faff-pink);
   --color-header-input-background: var(--color-white);
-  --color-header-text: var(--color-blackest);
+  --color-header-link: var(--color-blackest);
+  --color-header-text: var(--color-charcoal);
   --color-text: var(--color-white);
   --color-text-secondary: var(--color-aged-plastic-yellow);
   color-scheme: dark;
@@ -96,10 +98,11 @@ h1, h2, h3, h4, h5, h6 {
   color-scheme: light;
   width: 100%;
   background-color: var(--color-header-background);
+  color: var(--color-header-text);
 }
 
 .site-header a {
-  color: var(--color-header-text);
+  color: var(--color-header-link);
   text-decoration: none;
 }
 
@@ -136,6 +139,7 @@ body.theme-light .theme-button.-light {
   border: 0;
   padding: 0;
   background: none;
+  color: inherit;
   display: flex;
   gap: 0.25em;
   font-size: var(--font-size-normal);
