@@ -111,6 +111,39 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--gap);
+}
+
+.site-header .nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
+body.theme-dark .theme-button.-dark {
+  display: none;
+}
+
+body.theme-light .theme-button.-light {
+  display: none;
+}
+
+.theme-button {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  display: flex;
+  gap: 0.25em;
+  font-size: var(--font-size-normal);
+}
+
+.theme-button svg {
+  display: inline-block;
+  fill: currentColor;
+  height: 1em;
+  width: 1em;
 }
 
 .search-form {

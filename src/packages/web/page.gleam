@@ -8,6 +8,7 @@ import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
 import packages/index.{type PackageSummary}
+import packages/web/icons
 import gleam/string
 
 pub fn packages_list(
@@ -21,7 +22,10 @@ pub fn packages_list(
         html.a([attribute.href("/")], [
           html.h1([], [element.text("Gleam Packages")]),
         ]),
-        search_form(search_term),
+        html.div([attribute.class("nav-right")], [
+          theme_picker(),
+          search_form(search_term),
+        ]),
       ]),
     ]),
     html.div([attribute.class("content")], [
@@ -31,6 +35,29 @@ pub fn packages_list(
   |> layout
   |> element.to_string_builder
   |> string_builder.prepend("<!DOCTYPE html>")
+}
+
+fn theme_picker() -> Element(Nil) {
+  html.div([attribute.class("theme-picker")], [
+    html.button(
+      [
+        attribute.class("theme-button -light"),
+        attribute.type_("button"),
+        attribute.alt("Switch to light mode"),
+        attribute.attribute("title", "Switch to light mode"),
+      ],
+      [icons.icon_moon(), icons.icon_toggle_left()],
+    ),
+    html.button(
+      [
+        attribute.class("theme-button -dark"),
+        attribute.type_("button"),
+        attribute.alt("Switch to dark mode"),
+        attribute.attribute("title", "Switch to dark mode"),
+      ],
+      [icons.icon_sun(), icons.icon_toggle_right()],
+    ),
+  ])
 }
 
 fn search_form(search_term: String) -> Element(Nil) {
