@@ -1,9 +1,11 @@
 import birl.{type Time}
+import birl/duration
 import gleam/string_builder.{type StringBuilder}
 import gleam/int
 import gleam/list
 import gleam/dict
 import gleam/option
+import gleam/order
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -152,7 +154,12 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
 }
 
 fn format_date(datetime: Time) -> String {
-  birl.legible_difference(birl.now(), datetime)
+  let now = birl.now()
+  let one_hour_ago = birl.subtract(now, duration.hours(1))
+  case birl.compare(datetime, one_hour_ago) {
+    order.Gt -> "Just now!"
+    _ -> birl.legible_difference(now, datetime)
+  }
 }
 
 fn external_link_text(url: String, text: String) -> Element(Nil) {
