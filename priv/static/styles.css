@@ -88,6 +88,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   background-color: var(--color-header-background);
   color: var(--color-header-text);
+  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.1)
 }
 
 .site-header a {
