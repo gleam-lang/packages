@@ -26,27 +26,29 @@ html.theme-light {
   --color-background: var(--col-baby-powder);
   --color-link: var(--col-black);
   --color-link-decoration: var(--col-faff-pink);
-  --color-link-secondary: var(--col-english-violet);
+  --color-link-secondary: var(--col-dark-charcoal);
+  --color-link-secondary-decoration: var(--color-link-decoration);
   --color-header-background: var(--col-faff-pink);
   --color-header-input-background: var(--col-baby-powder);
   --color-header-link: var(--col-black);
-  --color-header-text: var(--col-dark-charcoal);
+  --color-header-text: var(--col-black);
   --color-text: var(--col-black);
   --color-text-secondary: var(--col-dark-charcoal);
   color-scheme: light;
 }
 
 html.theme-dark {
-  --color-background: var(--col-dark-charcoal);
+  --color-background: var(--col-gunmetal);
   --color-link: var(--col-faff-pink);
   --color-link-decoration: var(--col-english-violet);
-  --color-link-secondary: var(--col-cosmic-latte);
+  --color-link-secondary: var(--col-bone);
+  --color-link-secondary-decoration: var(--col-khaki);
   --color-header-background: var(--col-faff-pink);
   --color-header-input-background: var(--col-baby-powder);
   --color-header-link: var(--col-black);
-  --color-header-text: var(--col-dark-charcoal);
-  --color-text: var(--col-baby-powder);
-  --color-text-secondary: var(--col-cosmic-latte);
+  --color-header-text: var(--col-gunmetal);
+  --color-text: var(--col-bone);
+  --color-text-secondary: var(--col-khaki);
   color-scheme: dark;
 }
 
@@ -144,6 +146,7 @@ html.theme-light .theme-button.-light {
 }
 
 .search-form input[type=search] {
+  background: var(--color-header-input-background);
   height: 30px;
   border: none;
   padding: 0 var(--gap-s);
@@ -210,8 +213,8 @@ html.theme-light .theme-button.-light {
 .package-links a {
   margin-right: var(--gap);
   color: var(--color-link-secondary);
+  text-decoration-color: var(--color-link-secondary-decoration);
   font-size: var(--font-size-small);
-  text-decoration: none;
 }
 
 .package-list h2 {
