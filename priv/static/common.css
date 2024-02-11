@@ -1,0 +1,24 @@
+/* This file contains design tokens used in core Gleam projects */
+:root {
+  /* Grays */
+  --col-black: #000000;
+  --col-chinese-black: #151515;
+  --col-eerie-black: #1e1e1e;
+  --col-gunmetal: #292d3e;
+  --col-dark-charcoal: #2f2f2f;
+  --col-english-violet: #584355;
+  --col-purple-navy: #51597b;
+  --col-gray: #7e818b;
+  --col-dark-vanilla: #cac0a9;
+  --col-cosmic-latte: #fffbe8;
+  --col-baby-powder: #fefefc;
+  /* Colors */
+  --col-faff-pink: #ffaff3;
+  --col-pastel-red: #ff6262;
+  --col-deep-saffron: #ff9d35;
+  --col-caramel: #ffd596;
+  --col-khaki: #b1a894;
+  --col-bone: #e3d8be;
+  --col-menthol: #c8ffa7;
+  --col-waterspout: #a6f0fc;
+}
