@@ -208,6 +208,10 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
       html.script([], theme_picker_js),
       html.link([
         attribute.rel("stylesheet"),
+        attribute.href("/static/common.css"),
+      ]),
+      html.link([
+        attribute.rel("stylesheet"),
         attribute.href("/static/styles.css"),
       ]),
       html.link([

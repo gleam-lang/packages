@@ -14,21 +14,8 @@
 :root {
   --font-family-normal: 'Outfit', sans-serif;
   --font-family-title: 'Lexend', sans-serif;
-
-  --color-charcoal: #2f2f2f;
-  --color-graphite: #545454;
-  --color-black: #1e1e1e;
-  --color-blacker: #151515;
-  --color-blackest: #000000;
-  --color-white: #fefefc;
-  --color-faff-pink: #ffaff3;
-  --color-aged-plastic-yellow: #fffbe8;
-  --color-unnamed-blue: #a6f0fc;
-  --color-unexpected-aubergine: #584355;
-
   --font-size-normal: 18px;
   --font-size-small: 14px;
-
   --content-width: 960px;
   --gap: 1rem;
   --gap-s: calc(var(--gap) * 0.5);
@@ -36,30 +23,30 @@
 }
 
 html.theme-light {
-  --color-background: var(--color-white);
-  --color-link: var(--color-blackest);
-  --color-link-decoration: var(--color-faff-pink);
-  --color-link-secondary: var(--color-unexpected-aubergine);
-  --color-header-background: var(--color-faff-pink);
-  --color-header-input-background: var(--color-white);
-  --color-header-link: var(--color-blackest);
-  --color-header-text: var(--color-charcoal);
-  --color-text: var(--color-blackest);
-  --color-text-secondary: var(--color-graphite);
+  --color-background: var(--col-baby-powder);
+  --color-link: var(--col-black);
+  --color-link-decoration: var(--col-faff-pink);
+  --color-link-secondary: var(--col-english-violet);
+  --color-header-background: var(--col-faff-pink);
+  --color-header-input-background: var(--col-baby-powder);
+  --color-header-link: var(--col-black);
+  --color-header-text: var(--col-dark-charcoal);
+  --color-text: var(--col-black);
+  --color-text-secondary: var(--col-dark-charcoal);
   color-scheme: light;
 }
 
 html.theme-dark {
-  --color-background: var(--color-charcoal);
-  --color-link: var(--color-faff-pink);
-  --color-link-decoration: var(--color-unexpected-aubergine);
-  --color-link-secondary: var(--color-aged-plastic-yellow);
-  --color-header-background: var(--color-faff-pink);
-  --color-header-input-background: var(--color-white);
-  --color-header-link: var(--color-blackest);
-  --color-header-text: var(--color-charcoal);
-  --color-text: var(--color-white);
-  --color-text-secondary: var(--color-aged-plastic-yellow);
+  --color-background: var(--col-dark-charcoal);
+  --color-link: var(--col-faff-pink);
+  --color-link-decoration: var(--col-english-violet);
+  --color-link-secondary: var(--col-cosmic-latte);
+  --color-header-background: var(--col-faff-pink);
+  --color-header-input-background: var(--col-baby-powder);
+  --color-header-link: var(--col-black);
+  --color-header-text: var(--col-dark-charcoal);
+  --color-text: var(--col-baby-powder);
+  --color-text-secondary: var(--col-cosmic-latte);
   color-scheme: dark;
 }
 
