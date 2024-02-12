@@ -215,6 +215,7 @@ pub fn search_packages_empty_test() {
 pub fn search_packages_hide_retired_test() {
   use db <- tests.with_database
 
+  // Prepare test data
   let assert Ok(package_id) =
     index.upsert_package(
       db,
