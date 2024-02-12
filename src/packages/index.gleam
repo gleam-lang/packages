@@ -150,7 +150,6 @@ create view if not exists non_retired_packages as
   , p.docs_url
   , p.links
   , p.updated_in_hex_at
-  , r1.retirement_reason
   from
     packages p
   inner join releases r1
