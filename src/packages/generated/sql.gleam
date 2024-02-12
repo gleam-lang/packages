@@ -18,9 +18,7 @@ pub fn get_total_package_count(
     "select
   count(1)
 from
-  packages
-where
-  id not in retired_package_ids;
+  non_retired_packages;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -212,11 +210,11 @@ pub fn search_packages(
 , links
 , updated_in_hex_at
 from
-  packages
+  non_retired_packages p
 where
   (
     $1 = ''
-    or rowid in (
+    or id in (
       select rowid
       from packages_fts
       where packages_fts match $1
@@ -225,13 +223,12 @@ where
   and not exists (
     select 1
     from hidden_packages
-    where hidden_packages.name = packages.name
+    where hidden_packages.name = p.name
   )
-  and id not in retired_package_ids
 group by
-  packages.id
+  p.id
 order by
-  packages.updated_in_hex_at desc
+  p.updated_in_hex_at desc
 limit 1000;
 "
   sqlight.query(query, db, arguments, decoder)
