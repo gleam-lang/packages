@@ -23,32 +23,32 @@
 }
 
 html.theme-light {
-  --color-background: var(--col-sepia-050);
-  --color-link: var(--col-black);
-  --color-link-decoration: var(--col-magenta-300);
-  --color-link-secondary: var(--col-neutral-800);
+  --color-background: var(--light-theme-background);
+  --color-link: var(--light-theme-text);
+  --color-link-decoration: var(--brand-primary);
+  --color-link-secondary: var(--light-theme-text-secondary);
   --color-link-secondary-decoration: var(--color-link-decoration);
-  --color-header-background: var(--col-magenta-300);
-  --color-header-input-background: var(--col-sepia-050);
-  --color-header-link: var(--col-black);
-  --color-header-text: var(--col-black);
-  --color-text: var(--col-black);
-  --color-text-secondary: var(--col-neutral-800);
+  --color-header-background: var(--brand-primary);
+  --color-header-input-background: var(--light-theme-background);
+  --color-header-link: var(--light-theme-text);
+  --color-header-text: var(--light-theme-text);
+  --color-text: var(--light-theme-text);
+  --color-text-secondary: var(--light-theme-text-secondary);
   color-scheme: light;
 }
 
 html.theme-dark {
-  --color-background: var(--col-azure-800);
-  --color-link: var(--col-magenta-300);
+  --color-background: var(--dark-theme-background);
+  --color-link: var(--brand-primary);
   --color-link-decoration: var(--col-magenta-800);
-  --color-link-secondary: var(--col-sepia-300);
-  --color-link-secondary-decoration: var(--col-sepia-450);
-  --color-header-background: var(--col-magenta-300);
-  --color-header-input-background: var(--col-sepia-050);
+  --color-link-secondary: var(--dark-theme-text);
+  --color-link-secondary-decoration: var(--dark-theme-text-secondary);
+  --color-header-background: var(--brand-primary);
+  --color-header-input-background: var(--light-theme-background);
   --color-header-link: var(--col-black);
-  --color-header-text: var(--col-azure-800);
-  --color-text: var(--col-sepia-300);
-  --color-text-secondary: var(--col-sepia-450);
+  --color-header-text: var(--dark-theme-background);
+  --color-text: var(--dark-theme-text);
+  --color-text-secondary: var(--dark-theme-text-secondary);
   color-scheme: dark;
 }
 
