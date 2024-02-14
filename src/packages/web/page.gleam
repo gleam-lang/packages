@@ -1,9 +1,11 @@
-import birl/time.{type DateTime}
+import birl.{type Time}
+import birl/duration
 import gleam/string_builder.{type StringBuilder}
 import gleam/int
 import gleam/list
-import gleam/map
+import gleam/dict
 import gleam/option
+import gleam/order
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -15,62 +17,44 @@ pub fn packages_list(
   total_package_count: Int,
   search_term: String,
 ) -> StringBuilder {
-  html.main(
-    [],
-    [
-      html.header(
-        [attribute.class("site-header")],
-        [
-          html.nav(
-            [attribute.class("content")],
-            [
-              html.a(
-                [attribute.href("/")],
-                [
-                  html.img([
-                    attribute.class("logo"),
-                    attribute.src(
-                      "https://gleam.run/images/lucy-charcoal-2.svg",
-                    ),
-                    attribute.alt("Lucy the star, Gleam's mascot"),
-                  ]),
-                  html.h1([], [element.text("Gleam Packages")]),
-                ],
-              ),
-              search_form(search_term),
-            ],
-          ),
-        ],
-      ),
-      html.div(
-        [attribute.class("content")],
-        [search_aware_package_list(packages, total_package_count, search_term)],
-      ),
-    ],
-  )
+  html.main([], [
+    html.header([attribute.class("site-header")], [
+      html.nav([attribute.class("content")], [
+        html.a([attribute.href("/")], [
+          html.img([
+            attribute.class("logo"),
+            attribute.src("https://gleam.run/images/lucy-charcoal-2.svg"),
+            attribute.alt("Lucy the star, Gleam's mascot"),
+          ]),
+          html.h1([], [element.text("Gleam Packages")]),
+        ]),
+        search_form(search_term),
+      ]),
+    ]),
+    html.div([attribute.class("content")], [
+      search_aware_package_list(packages, total_package_count, search_term),
+    ]),
+  ])
   |> layout
   |> element.to_string_builder
   |> string_builder.prepend("<!DOCTYPE html>")
 }
 
 fn search_form(search_term: String) -> Element(Nil) {
-  html.form(
-    [attribute.class("search-form"), attribute("method", "GET")],
-    [
-      html.input([
-        attribute("data-keybind-focus", "/"),
-        attribute("value", search_term),
-        attribute.name("search"),
-        attribute.type_("search"),
-        attribute.placeholder("Press / to focus"),
-      ]),
-      html.input([
-        attribute.type_("submit"),
-        attribute("value", "🔎"),
-        attribute("aria-label", "search packages"),
-      ]),
-    ],
-  )
+  html.form([attribute.class("search-form"), attribute("method", "GET")], [
+    html.input([
+      attribute("data-keybind-focus", "/"),
+      attribute("value", search_term),
+      attribute.name("search"),
+      attribute.type_("search"),
+      attribute.placeholder("Press / to focus"),
+    ]),
+    html.input([
+      attribute.type_("submit"),
+      attribute("value", "🔎"),
+      attribute("aria-label", "search packages"),
+    ]),
+  ])
 }
 
 /// Pluralizes the word "package" based on the number we're referring to.
@@ -88,59 +72,43 @@ fn search_aware_package_list(
 ) -> Element(Nil) {
   case packages, string.is_empty(search_term) {
     [], False ->
-      html.p(
-        [attribute.class("package-list-message")],
-        [element.text("I couldn't find any package matching your search.")],
-      )
+      html.p([attribute.class("package-list-message")], [
+        element.text("I couldn't find any package matching your search."),
+      ])
     _, False -> {
       let package_count = list.length(packages)
 
-      html.div(
-        [],
-        [
-          html.p(
-            [attribute.class("package-list-message")],
+      html.div([], [
+        html.p([attribute.class("package-list-message")], [
+          element.text(
             [
-              element.text(
-                [
-                  "I found",
-                  int.to_string(package_count),
-                  pluralize_package(package_count),
-                  "matching your search.",
-                ]
-                |> string.join(" "),
-              ),
-            ],
+              "I found",
+              int.to_string(package_count),
+              pluralize_package(package_count),
+              "matching your search.",
+            ]
+            |> string.join(" "),
           ),
-          package_list(packages),
-        ],
-      )
+        ]),
+        package_list(packages),
+      ])
     }
     _, _ ->
-      html.div(
-        [],
-        [
-          html.p(
-            [attribute.class("package-list-message")],
+      html.div([], [
+        html.p([attribute.class("package-list-message")], [
+          element.text(
             [
-              element.text(
-                [
-                  "There are",
-                  int.to_string(total_package_count),
-                  pluralize_package(total_package_count),
-                  "available",
-                ]
-                |> string.join(" "),
-              ),
-              html.span(
-                [attribute("aria-hidden", "true")],
-                [element.text(" ✨")],
-              ),
-            ],
+              "There are",
+              int.to_string(total_package_count),
+              pluralize_package(total_package_count),
+              "available",
+            ]
+            |> string.join(" "),
           ),
-          package_list(packages),
-        ],
-      )
+          html.span([attribute("aria-hidden", "true")], [element.text(" ✨")]),
+        ]),
+        package_list(packages),
+      ])
   }
 }
 
@@ -156,50 +124,47 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
 
   let repository_url =
     package.links
-    |> map.get("Repository")
+    |> dict.get("Repository")
     |> option.from_result
 
   let links =
     [
       package.docs_url
-      |> option.map(external_link_text(_, "Documentation")),
+        |> option.map(external_link_text(_, "Documentation")),
       repository_url
-      |> option.map(external_link_text(_, "Repository")),
+        |> option.map(external_link_text(_, "Repository")),
     ]
     |> list.filter_map(option.to_result(_, Nil))
 
-  html.li(
-    [],
-    [
-      html.div(
-        [attribute.class("package-date-time")],
-        [element.text(format_date(package.updated_in_hex_at))],
-      ),
-      html.h2([], [external_link_text(url, package.name)]),
-      html.p(
-        [attribute.class("package-description")],
-        [element.text(package.description)],
-      ),
-      case links {
-        [] -> element.text("")
-        links ->
-          html.nav(
-            [attribute.class("package-links")],
-            [
-              html.ul(
-                [],
-                links
-                |> list.map(fn(link) { html.li([], [link]) }),
-              ),
-            ],
-          )
-      },
-    ],
-  )
+  html.li([], [
+    html.div([attribute.class("package-date-time")], [
+      element.text(format_date(package.updated_in_hex_at)),
+    ]),
+    html.h2([], [external_link_text(url, package.name)]),
+    html.p([attribute.class("package-description")], [
+      element.text(package.description),
+    ]),
+    case links {
+      [] -> element.text("")
+      links ->
+        html.nav([attribute.class("package-links")], [
+          html.ul(
+            [],
+            links
+              |> list.map(fn(link) { html.li([], [link]) }),
+          ),
+        ])
+    },
+  ])
 }
 
-fn format_date(datetime: DateTime) -> String {
-  time.legible_difference(time.now(), datetime)
+fn format_date(datetime: Time) -> String {
+  let now = birl.now()
+  let one_hour_ago = birl.subtract(now, duration.hours(1))
+  case birl.compare(datetime, one_hour_ago) {
+    order.Gt -> "Just now!"
+    _ -> birl.legible_difference(now, datetime)
+  }
 }
 
 fn external_link_text(url: String, text: String) -> Element(Nil) {
@@ -214,77 +179,56 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
 }
 
 fn layout(content: Element(Nil)) -> Element(Nil) {
-  html.html(
-    [attribute("lang", "en")],
-    [
-      html.head(
-        [],
+  html.html([attribute("lang", "en")], [
+    html.head([], [
+      html.meta([attribute("charset", "utf-8")]),
+      html.meta([
+        attribute.name("viewport"),
+        attribute("content", "width=device-width, initial-scale=1"),
+      ]),
+      html.title([], "Gleam Packages"),
+      html.link([
+        attribute.rel("stylesheet"),
+        attribute.href("/static/styles.css"),
+      ]),
+      html.link([
+        attribute.rel("icon"),
+        attribute.href("https://gleam.run/images/lucy-circle.svg"),
+      ]),
+      html.script(
         [
-          html.meta([attribute("charset", "utf-8")]),
-          html.meta([
-            attribute.name("viewport"),
-            attribute("content", "width=device-width, initial-scale=1"),
-          ]),
-          html.title([], "Gleam Packages"),
-          html.link([
-            attribute.rel("stylesheet"),
-            attribute.href("/static/styles.css"),
-          ]),
-          html.link([
-            attribute.rel("icon"),
-            attribute.href("https://gleam.run/images/lucy-circle.svg"),
-          ]),
-          html.script(
-            [
-              attribute.property("defer", True),
-              attribute.src("https://plausible.io/js/plausible.js"),
-              attribute("data-domain", "packages.gleam.run"),
-            ],
-            "",
-          ),
-          html.script(
-            [attribute.type_("module"), attribute.src("/static/main.js")],
-            "",
-          ),
+          attribute.property("defer", True),
+          attribute.src("https://plausible.io/js/plausible.js"),
+          attribute("data-domain", "packages.gleam.run"),
         ],
+        "",
       ),
-      html.body(
-        [],
-        [
-          content,
-          html.footer(
-            [attribute.class("site-footer")],
-            [
-              html.div(
-                [],
-                [
-                  element.text("Special thanks to the "),
-                  external_link_text("https://hex.pm/", "Hex"),
-                  element.text(" team."),
-                ],
-              ),
-              html.div(
-                [],
-                [
-                  element.text("Kindly hosted by "),
-                  external_link_text("https://fly.io/", "Fly"),
-                  element.text("."),
-                ],
-              ),
-              html.div(
-                [],
-                [
-                  external_link_text(
-                    "https://github.com/gleam-lang/packages",
-                    "Source code",
-                  ),
-                  element.text("."),
-                ],
-              ),
-            ],
+      html.script(
+        [attribute.type_("module"), attribute.src("/static/main.js")],
+        "",
+      ),
+    ]),
+    html.body([], [
+      content,
+      html.footer([attribute.class("site-footer")], [
+        html.div([], [
+          element.text("Special thanks to the "),
+          external_link_text("https://hex.pm/", "Hex"),
+          element.text(" team."),
+        ]),
+        html.div([], [
+          element.text("Kindly hosted by "),
+          external_link_text("https://fly.io/", "Fly"),
+          element.text("."),
+        ]),
+        html.div([], [
+          external_link_text(
+            "https://github.com/gleam-lang/packages",
+            "Source code",
           ),
-        ],
-      ),
-    ],
-  )
+          element.text("."),
+        ]),
+      ]),
+    ]),
+  ])
 }
