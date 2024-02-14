@@ -40,7 +40,7 @@ html.theme-light {
 html.theme-dark {
   --color-background: var(--dark-theme-background);
   --color-link: var(--brand-primary);
-  --color-link-decoration: var(--col-magenta-800);
+  --color-link-decoration: var(--brand-primary-dim);
   --color-link-secondary: var(--dark-theme-text);
   --color-link-secondary-decoration: var(--dark-theme-text-secondary);
   --color-header-background: var(--brand-primary);
