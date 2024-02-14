@@ -2,23 +2,23 @@
 :root {
   /* Grays */
   --col-black: #000000;
-  --col-chinese-black: #151515;
-  --col-eerie-black: #1e1e1e;
-  --col-gunmetal: #292d3e;
-  --col-dark-charcoal: #2f2f2f;
-  --col-english-violet: #584355;
-  --col-purple-navy: #51597b;
-  --col-gray: #7e818b;
-  --col-dark-vanilla: #cac0a9;
-  --col-cosmic-latte: #fffbe8;
-  --col-baby-powder: #fefefc;
+  --col-neutral-950: #151515;
+  --col-neutral-900: #1e1e1e;
+  --col-neutral-800: #2f2f2f;
+  --col-zinc-500: #7e818b;
+  --col-sepia-450: #b1a894;
+  --col-sepia-400: #cac0a9;
+  --col-sepia-300: #e3d8be;
+  --col-sepia-100: #fffbe8;
+  --col-sepia-050: #fefefc;
   /* Colors */
-  --col-faff-pink: #ffaff3;
-  --col-pastel-red: #ff6262;
-  --col-deep-saffron: #ff9d35;
-  --col-caramel: #ffd596;
-  --col-khaki: #b1a894;
-  --col-bone: #e3d8be;
-  --col-menthol: #c8ffa7;
-  --col-waterspout: #a6f0fc;
+  --col-magenta-800: #584355;
+  --col-magenta-300: #ffaff3;
+  --col-azure-800: #292d3e;
+  --col-azure-600: #51597b;
+  --col-cyan-200: #a6f0fc;
+  --col-green-200: #c8ffa7;
+  --col-yellow-300: #ffd596;
+  --col-orange-400: #ff9d35;
+  --col-red-400: #ff6262;
 }

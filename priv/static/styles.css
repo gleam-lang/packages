@@ -23,32 +23,32 @@
 }
 
 html.theme-light {
-  --color-background: var(--col-baby-powder);
+  --color-background: var(--col-sepia-050);
   --color-link: var(--col-black);
-  --color-link-decoration: var(--col-faff-pink);
-  --color-link-secondary: var(--col-dark-charcoal);
+  --color-link-decoration: var(--col-magenta-300);
+  --color-link-secondary: var(--col-neutral-800);
   --color-link-secondary-decoration: var(--color-link-decoration);
-  --color-header-background: var(--col-faff-pink);
-  --color-header-input-background: var(--col-baby-powder);
+  --color-header-background: var(--col-magenta-300);
+  --color-header-input-background: var(--col-sepia-050);
   --color-header-link: var(--col-black);
   --color-header-text: var(--col-black);
   --color-text: var(--col-black);
-  --color-text-secondary: var(--col-dark-charcoal);
+  --color-text-secondary: var(--col-neutral-800);
   color-scheme: light;
 }
 
 html.theme-dark {
-  --color-background: var(--col-gunmetal);
-  --color-link: var(--col-faff-pink);
-  --color-link-decoration: var(--col-english-violet);
-  --color-link-secondary: var(--col-bone);
-  --color-link-secondary-decoration: var(--col-khaki);
-  --color-header-background: var(--col-faff-pink);
-  --color-header-input-background: var(--col-baby-powder);
+  --color-background: var(--col-azure-800);
+  --color-link: var(--col-magenta-300);
+  --color-link-decoration: var(--col-magenta-800);
+  --color-link-secondary: var(--col-sepia-300);
+  --color-link-secondary-decoration: var(--col-sepia-450);
+  --color-header-background: var(--col-magenta-300);
+  --color-header-input-background: var(--col-sepia-050);
   --color-header-link: var(--col-black);
-  --color-header-text: var(--col-gunmetal);
-  --color-text: var(--col-bone);
-  --color-text-secondary: var(--col-khaki);
+  --color-header-text: var(--col-azure-800);
+  --color-text: var(--col-sepia-300);
+  --color-text-secondary: var(--col-sepia-450);
   color-scheme: dark;
 }
 
