@@ -95,7 +95,8 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   case list.length(all_packages) == list.length(new_packages) {
     // If there were no packages or some packages where not new then we have
     // reached the end of the new releases and can stop.
-    _ if all_packages == [] -> Ok(state.newest)
+    _ if all_packages == []
+    -> Ok(state.newest)
     False -> Ok(state.newest)
 
     // If all the releases were new then there may be more on the next page.

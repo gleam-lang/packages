@@ -1,9 +1,11 @@
 import birl.{type Time}
+import birl/duration
 import gleam/string_builder.{type StringBuilder}
 import gleam/int
 import gleam/list
 import gleam/dict
 import gleam/option
+import gleam/order
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -20,6 +22,11 @@ pub fn packages_list(
     html.header([attribute.class("site-header")], [
       html.nav([attribute.class("content")], [
         html.a([attribute.href("/")], [
+          html.img([
+            attribute.class("logo"),
+            attribute.src("https://gleam.run/images/lucy-charcoal-2.svg"),
+            attribute.alt("Lucy the star, Gleam's mascot"),
+          ]),
           html.h1([], [element.text("Gleam Packages")]),
         ]),
         html.div([attribute.class("nav-right")], [
@@ -152,9 +159,9 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
   let links =
     [
       package.docs_url
-      |> option.map(external_link_text(_, "Documentation")),
+        |> option.map(external_link_text(_, "Documentation")),
       repository_url
-      |> option.map(external_link_text(_, "Repository")),
+        |> option.map(external_link_text(_, "Repository")),
     ]
     |> list.filter_map(option.to_result(_, Nil))
 
@@ -173,7 +180,7 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
           html.ul(
             [],
             links
-            |> list.map(fn(link) { html.li([], [link]) }),
+              |> list.map(fn(link) { html.li([], [link]) }),
           ),
         ])
     },
@@ -181,7 +188,12 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
 }
 
 fn format_date(datetime: Time) -> String {
-  birl.legible_difference(birl.now(), datetime)
+  let now = birl.now()
+  let one_hour_ago = birl.subtract(now, duration.hours(1))
+  case birl.compare(datetime, one_hour_ago) {
+    order.Gt -> "Just now!"
+    _ -> birl.legible_difference(now, datetime)
+  }
 }
 
 fn external_link_text(url: String, text: String) -> Element(Nil) {

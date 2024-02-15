@@ -1,20 +1,21 @@
 @font-face {
-  font-family: 'Lexend';
+  font-family: "Lexend";
   font-display: swap;
   font-weight: 400;
-  src: url('https://gleam.run/fonts/Lexend.woff2') format('woff2');
+  src: url("https://gleam.run/fonts/Lexend.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: 'Outfit';
+  font-family: "Outfit";
   font-display: swap;
-  src: url('https://gleam.run/fonts/Outfit.woff') format('woff');
+  src: url("https://gleam.run/fonts/Outfit.woff") format("woff");
 }
 
 :root {
-  --font-family-normal: 'Outfit', sans-serif;
-  --font-family-title: 'Lexend', sans-serif;
-  --font-size-normal: 18px;
+  --font-family-normal: "Outfit", sans-serif;
+  --font-family-title: "Lexend", sans-serif;
+
+  --font-size-normal: 16px;
   --font-size-small: 14px;
   --content-width: 960px;
   --gap: 1rem;
@@ -63,6 +64,7 @@ body {
   font-family: var(--font-family-normal);
   background-color: var(--color-background);
   font-size: var(--font-size);
+  font-size: var(--font-size-normal);
   color: var(--color-text);
 }
 
@@ -72,7 +74,12 @@ a:visited {
   text-decoration-color: var(--color-link-decoration);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-family-title);
   font-weight: normal;
 }
@@ -94,10 +101,17 @@ h1, h2, h3, h4, h5, h6 {
 .site-header a {
   color: var(--color-header-link);
   text-decoration: none;
+  color: black;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  margin-bottom: var(--gap-s);
 }
 
-.site-header h1 {
-  margin: 0;
+.site-header a img {
+  display: inline-block;
+  height: 1.3em;
+  margin-right: 0.25em;
 }
 
 .site-header nav {
@@ -146,17 +160,18 @@ html.theme-light .theme-button.-light {
   display: flex;
 }
 
-.search-form input[type=search] {
+.search-form input[type="search"] {
   background: var(--color-header-input-background);
   height: 30px;
   border: none;
+  flex-grow: 1;
   padding: 0 var(--gap-s);
   border-radius: 3px;
   padding-left: var(--gap);
   border-radius: 100px 0 0 100px;
 }
 
-.search-form input[type=submit] {
+.search-form input[type="submit"] {
   background: var(--color-header-input-background);
   border: none;
   border-radius: 0 100px 100px 0;
@@ -164,6 +179,38 @@ html.theme-light .theme-button.-light {
   padding: 0 var(--gap-s);
   appearance: none;
   -webkit-appearance: none;
+}
+
+.search-form {
+  flex-grow: 1;
+}
+
+.site-header h1 {
+  margin: 0;
+}
+
+@media (min-width: 600px) {
+  .search-form {
+    flex-grow: initial;
+  }
+
+  .search-form input[type="search"] {
+    flex-grow: initial;
+  }
+
+  .site-header a {
+    margin: 0;
+  }
+
+  .site-header h1 {
+    display: inline-block;
+  }
+
+  .site-header nav {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
 }
 
 .site-footer {
