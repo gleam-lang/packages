@@ -17,6 +17,7 @@
 
   --font-size-normal: 16px;
   --font-size-small: 14px;
+
   --content-width: 960px;
   --gap: 1rem;
   --gap-s: calc(var(--gap) * 0.5);
@@ -25,7 +26,7 @@
 
 html.theme-light {
   --color-background: var(--light-theme-background);
-  --color-link: var(--light-theme-text);
+  --color-link: unset;
   --color-link-decoration: var(--brand-primary);
   --color-link-secondary: var(--light-theme-text-secondary);
   --color-link-secondary-decoration: var(--color-link-decoration);
@@ -60,9 +61,8 @@ html.theme-dark {
 body {
   padding: 0;
   margin: 0;
-  background: var(--color-background);
-  font-family: var(--font-family-normal);
   background-color: var(--color-background);
+  font-family: var(--font-family-normal);
   font-size: var(--font-size);
   font-size: var(--font-size-normal);
   color: var(--color-text);
@@ -105,7 +105,6 @@ h6 {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  margin-bottom: var(--gap-s);
 }
 
 .site-header a img {
@@ -116,17 +115,18 @@ h6 {
 
 .site-header nav {
   display: flex;
+  gap: var(--gap-s);
   justify-content: space-between;
   align-items: center;
-  gap: var(--gap);
+  flex-wrap: wrap;
 }
 
 .site-header .nav-right {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap-reverse;
   gap: var(--gap);
+  align-items: center;
+  flex-grow: 1;
+  justify-content: flex-end;
 }
 
 html.theme-dark .theme-button.-dark {
