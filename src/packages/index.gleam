@@ -142,23 +142,14 @@ create table if not exists hidden_packages (
 ) strict;
 
 create view if not exists non_retired_packages as
-  -- A package is retired if its latest release is retired
-  select
-    p.id
-  , p.name
-  , p.description
-  , p.docs_url
-  , p.links
-  , p.updated_in_hex_at
-  from
-    packages p
-  inner join releases r1
-      on p.id = r1.package_id
-  left outer join releases r2
-      on (p.id = r2.package_id and r1.id < r2.id)
-  where
-      r2.id is null
-      and r1.retirement_reason is null;
+  -- A package is retired if all its releases are retired
+  select p.*
+  from packages p
+  where p.id in (
+    select distinct r.package_id
+    from releases r
+    where r.id is null or r.retirement_reason is null
+  );
 
 -- These packages are placeholders or otherwise not useful.
 insert into hidden_packages values
