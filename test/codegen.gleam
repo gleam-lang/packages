@@ -13,6 +13,7 @@ const module_header = "// THIS FILE IS GENERATED. DO NOT EDIT.
 fn generate_sql_queries_module() -> Nil {
   let module_path = "src/packages/generated/sql.gleam"
   let assert Ok(files) = simplifile.read_directory("sql")
+  let files = list.sort(files, string.compare)
   let assert Ok(functions) = list.try_map(files, generate_sql_function)
 
   let imports = [

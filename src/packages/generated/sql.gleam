@@ -9,52 +9,36 @@ import packages/error.{type Error}
 pub type QueryResult(t) =
   Result(List(t), Error)
 
-pub fn get_total_package_count(
+pub fn get_most_recent_hex_timestamp(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
     "select
-  count(1)
-from
-  non_retired_packages;
+  unix_timestamp
+from most_recent_hex_timestamp
+limit 1
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn upsert_release(
+pub fn get_most_recent_releases(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
   decoder: dynamic.Decoder(a),
 ) -> QueryResult(a) {
   let query =
-    "insert into releases
-  ( package_id
-  , version
-  , retirement_reason
-  , retirement_message
-  , inserted_in_hex_at
-  , updated_in_hex_at
-  )
-values
-  ( $1
-  , $2
-  , $3
-  , $4
-  , $5
-  , $6
-  )
-on conflict (package_id, version) do update
-set
-  version = excluded.version
-, retirement_reason = excluded.retirement_reason
-, retirement_message = excluded.retirement_message
-, inserted_in_hex_at = excluded.inserted_in_hex_at
-, updated_in_hex_at = excluded.updated_in_hex_at
-returning
-  id
+    "select
+  version
+from
+  releases
+where
+  package_id = $1
+order by
+  inserted_in_hex_at desc
+limit 5;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -78,6 +62,97 @@ from
 where
   id = $1
 limit 1;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn get_release(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  package_id
+, version
+, retirement_reason
+, retirement_message
+, inserted_in_hex_at
+, updated_in_hex_at
+from
+  releases
+where
+  id = $1
+limit 1;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn get_total_package_count(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  count(1)
+from
+  non_retired_packages;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn json_dump(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  json_agg(row_to_json(packages))
+from packages;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn search_packages(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  id
+, name
+, description
+, docs_url
+, links
+, updated_in_hex_at
+from
+  non_retired_packages p
+where
+  (
+    $1 = ''
+    or id in (
+      select rowid
+      from packages_fts
+      where packages_fts match $1
+    )
+  )
+  and not exists (
+    select 1
+    from hidden_packages
+    where hidden_packages.name = p.name
+  )
+group by
+  p.id
+order by
+  p.updated_in_hex_at desc
+limit 1000;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
@@ -124,117 +199,6 @@ set
   |> result.map_error(error.DatabaseError)
 }
 
-pub fn get_most_recent_hex_timestamp(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  unix_timestamp
-from most_recent_hex_timestamp
-limit 1
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn json_dump(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  json_agg(row_to_json(packages))
-from packages;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn get_most_recent_releases(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  version
-from
-  releases
-where
-  package_id = $1
-order by
-  inserted_in_hex_at desc
-limit 5;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn get_release(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  package_id
-, version
-, retirement_reason
-, retirement_message
-, inserted_in_hex_at
-, updated_in_hex_at
-from
-  releases
-where
-  id = $1
-limit 1;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
-pub fn search_packages(
-  db: sqlight.Connection,
-  arguments: List(sqlight.Value),
-  decoder: dynamic.Decoder(a),
-) -> QueryResult(a) {
-  let query =
-    "select
-  id
-, name
-, description
-, docs_url
-, links
-, updated_in_hex_at
-from
-  non_retired_packages p
-where
-  (
-    $1 = ''
-    or id in (
-      select rowid
-      from packages_fts
-      where packages_fts match $1
-    )
-  )
-  and not exists (
-    select 1
-    from hidden_packages
-    where hidden_packages.name = p.name
-  )
-group by
-  p.id
-order by
-  p.updated_in_hex_at desc
-limit 1000;
-"
-  sqlight.query(query, db, arguments, decoder)
-  |> result.map_error(error.DatabaseError)
-}
-
 pub fn upsert_package(
   db: sqlight.Connection,
   arguments: List(sqlight.Value),
@@ -264,6 +228,42 @@ set
 , description = excluded.description
 , docs_url = excluded.docs_url
 , links = excluded.links
+returning
+  id
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn upsert_release(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "insert into releases
+  ( package_id
+  , version
+  , retirement_reason
+  , retirement_message
+  , inserted_in_hex_at
+  , updated_in_hex_at
+  )
+values
+  ( $1
+  , $2
+  , $3
+  , $4
+  , $5
+  , $6
+  )
+on conflict (package_id, version) do update
+set
+  version = excluded.version
+, retirement_reason = excluded.retirement_reason
+, retirement_message = excluded.retirement_message
+, inserted_in_hex_at = excluded.inserted_in_hex_at
+, updated_in_hex_at = excluded.updated_in_hex_at
 returning
   id
 "

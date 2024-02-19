@@ -27,7 +27,7 @@ pub opaque type Connection {
 ///
 pub fn has_write_permission() -> Bool {
   case os.get_env("LITEFS_PRIMARY_FILE") {
-    Ok(path) -> !simplifile.is_file(path)
+    Ok(path) -> simplifile.verify_is_file(path) == Ok(True)
     Error(_) -> True
   }
 }
