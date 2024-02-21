@@ -24,16 +24,19 @@
   --gap-l: calc(var(--gap) * 2);
 }
 
+:root {
+  --color-header-background: var(--brand-primary);
+  --color-header-input-background: var(--light-theme-background);
+  --color-header-link: var(--light-theme-text);
+  --color-header-text: var(--light-theme-text);
+}
+
 html.theme-light {
   --color-background: var(--light-theme-background);
   --color-link: unset;
   --color-link-decoration: var(--brand-primary);
   --color-link-secondary: var(--light-theme-text-secondary);
   --color-link-secondary-decoration: var(--color-link-decoration);
-  --color-header-background: var(--brand-primary);
-  --color-header-input-background: var(--light-theme-background);
-  --color-header-link: var(--light-theme-text);
-  --color-header-text: var(--light-theme-text);
   --color-text: var(--light-theme-text);
   --color-text-secondary: var(--light-theme-text-secondary);
   color-scheme: light;
@@ -45,10 +48,6 @@ html.theme-dark {
   --color-link-decoration: var(--brand-primary-dim);
   --color-link-secondary: var(--dark-theme-text);
   --color-link-secondary-decoration: var(--dark-theme-text-secondary);
-  --color-header-background: var(--brand-primary);
-  --color-header-input-background: var(--light-theme-background);
-  --color-header-link: var(--col-black);
-  --color-header-text: var(--dark-theme-background);
   --color-text: var(--dark-theme-text);
   --color-text-secondary: var(--dark-theme-text-secondary);
   color-scheme: dark;
