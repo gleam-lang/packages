@@ -48,21 +48,19 @@ fn theme_picker() -> Element(Nil) {
   html.div([attribute.class("theme-picker")], [
     html.button(
       [
-        attribute.class("theme-button -light"),
+        attribute.class("theme-button -light js-theme-button-light"),
         attribute.type_("button"),
         attribute.alt("Switch to light mode"),
         attribute.attribute("title", "Switch to light mode"),
-        attribute.attribute("onclick", "setLightTheme()"),
       ],
       [icons.icon_moon(), icons.icon_toggle_left()],
     ),
     html.button(
       [
-        attribute.class("theme-button -dark"),
+        attribute.class("theme-button -dark js-theme-button-dark"),
         attribute.type_("button"),
         attribute.alt("Switch to dark mode"),
         attribute.attribute("title", "Switch to dark mode"),
-        attribute.attribute("onclick", "setDarkTheme()"),
       ],
       [icons.icon_sun(), icons.icon_toggle_right()],
     ),
@@ -216,8 +214,6 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         attribute("content", "width=device-width, initial-scale=1"),
       ]),
       html.title([], "Gleam Packages"),
-      // Initialize theme before CSS is loaded to avoid FOUC
-      html.script([], theme_picker_js),
       html.link([
         attribute.rel("stylesheet"),
         attribute.href("/static/common.css"),
@@ -230,6 +226,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         attribute.rel("icon"),
         attribute.href("https://gleam.run/images/lucy-circle.svg"),
       ]),
+      html.script([attribute.type_("module")], theme_picker_js),
       html.script(
         [
           attribute.property("defer", True),
@@ -268,25 +265,33 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
   ])
 }
 
+// This script is inlined in the response to avoid FOUC when applying the theme
 const theme_picker_js = "
-window.setDarkTheme = function() {
+function setDarkTheme() {
   document.documentElement.classList.add('theme-dark')
   document.documentElement.classList.remove('theme-light')
   localStorage.setItem('theme', 'dark')
 };
 
-window.setLightTheme = function() {
+function setLightTheme() {
   document.documentElement.classList.add('theme-light')
   document.documentElement.classList.remove('theme-dark')
   localStorage.setItem('theme', 'light')
 };
 
-(function initTheme() {
-  const theme = localStorage.getItem('theme') || 'light'
-  if (theme == 'dark') {
-    window.setDarkTheme()
-  } else {
-    window.setLightTheme()
-  }
-})();
+// Add handlers for theme selection buttons
+document.querySelector('.js-theme-button-light').addEventListener('click', (e) => {
+  setLightTheme()
+})
+document.querySelector('.js-theme-button-dark').addEventListener('click', (e) => {
+  setDarkTheme()
+})
+
+// Apply the preferred theme
+const theme = localStorage.getItem('theme') || 'light'
+if (theme == 'dark') {
+  setDarkTheme()
+} else {
+  setLightTheme()
+}
 "
