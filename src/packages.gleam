@@ -30,6 +30,8 @@ pub fn main() {
 }
 
 fn server() {
+  wisp.configure_logger()
+
   let assert Ok(key) = os.get_env("HEX_API_KEY")
   let assert Ok(priv) = wisp.priv_directory("packages")
   let static_directory = priv <> "/static"
