@@ -22,12 +22,12 @@ pub opaque type Connection {
 }
 
 /// The application is considered to have write permissions if the
-/// `DATABASE_LOCK_PATH` environment variable is not set, or if it is set and a
-/// file exists at that path.
+/// `DATABASE_LOCK_PATH` environment variable is not set, or if it is set and
+/// no file exists at that path.
 ///
 pub fn has_write_permission() -> Bool {
   case os.get_env("LITEFS_PRIMARY_FILE") {
-    Ok(path) -> simplifile.verify_is_file(path) == Ok(True)
+    Ok(path) -> simplifile.verify_is_file(path) == Ok(False)
     Error(_) -> True
   }
 }
