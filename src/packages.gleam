@@ -104,7 +104,7 @@ fn start_database_exporter(database_name: String) -> Result(_, _) {
   supervise(fn() {
     periodic.periodically(
       do: fn() { export_database(database_name) },
-      waiting: 60 * 60 * 1000,
+      waiting: 5 * 60 * 1000,
     )
   })
   |> result.nil_error
