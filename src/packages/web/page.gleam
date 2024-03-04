@@ -48,8 +48,9 @@ fn theme_picker() -> Element(Nil) {
   html.div([attribute.class("theme-picker")], [
     html.button(
       [
-        attribute.class("theme-button -light js-theme-button-light"),
         attribute.type_("button"),
+        attribute.class("theme-button -light"),
+        attribute.attribute("data-light-theme-toggle", ""),
         attribute.alt("Switch to light mode"),
         attribute.attribute("title", "Switch to light mode"),
       ],
@@ -57,8 +58,9 @@ fn theme_picker() -> Element(Nil) {
     ),
     html.button(
       [
-        attribute.class("theme-button -dark js-theme-button-dark"),
         attribute.type_("button"),
+        attribute.class("theme-button -dark"),
+        attribute.attribute("data-dark-theme-toggle", ""),
         attribute.alt("Switch to dark mode"),
         attribute.attribute("title", "Switch to dark mode"),
       ],
@@ -228,7 +230,6 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         attribute.rel("icon"),
         attribute.href("https://gleam.run/images/lucy-circle.svg"),
       ]),
-      html.script([attribute.type_("module")], theme_picker_js),
       html.script(
         [
           attribute.property("defer", True),
@@ -241,6 +242,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         [attribute.type_("module"), attribute.src("/static/main.js")],
         "",
       ),
+      html.script([attribute.type_("module")], theme_picker_js),
     ]),
     html.body([], [
       content,
@@ -269,31 +271,46 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
 
 // This script is inlined in the response to avoid FOUC when applying the theme
 const theme_picker_js = "
-function setDarkTheme() {
-  document.documentElement.classList.add('theme-dark')
-  document.documentElement.classList.remove('theme-light')
-  localStorage.setItem('theme', 'dark')
-};
+const mediaPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
-function setLightTheme() {
-  document.documentElement.classList.add('theme-light')
-  document.documentElement.classList.remove('theme-dark')
-  localStorage.setItem('theme', 'light')
-};
-
-// Add handlers for theme selection buttons
-document.querySelector('.js-theme-button-light').addEventListener('click', (e) => {
-  setLightTheme()
-})
-document.querySelector('.js-theme-button-dark').addEventListener('click', (e) => {
-  setDarkTheme()
-})
-
-// Apply the preferred theme
-const theme = localStorage.getItem('theme') || 'light'
-if (theme == 'dark') {
-  setDarkTheme()
-} else {
-  setLightTheme()
+function selectTheme(selectedTheme) {
+  // Apply and remember the specified theme.
+  applyTheme(selectedTheme)
+  if ((selectedTheme === 'dark') === mediaPrefersDarkTheme.matches) {
+    // Selected theme is the same as the device's preferred theme, so we can forget this setting.
+    localStorage.removeItem('theme')
+  } else {
+    // Remember the selected theme to apply it on the next visit
+    localStorage.setItem('theme', selectedTheme)
+  }
 }
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('theme-dark', theme === 'dark')
+  document.documentElement.classList.toggle('theme-light', theme !== 'dark')
+}
+
+// If user had selected a theme, load it. Otherwise, use device's preferred theme
+const selectedTheme = localStorage.getItem('theme')
+if (selectedTheme) {
+  applyTheme(selectedTheme)
+} else {
+  applyTheme(mediaPrefersDarkTheme.matches ? 'dark' : 'light')
+}
+
+// Watch the device's preferred theme and update theme if user did not select a theme
+mediaPrefersDarkTheme.addEventListener('change', () => {
+  const selectedTheme = localStorage.getItem('theme')
+  if (!selectedTheme) {
+    applyTheme(mediaPrefersDarkTheme.matches ? 'dark' : 'light')
+  }
+})
+
+// Add handlers for theme selection buttons.
+document.querySelector('[data-light-theme-toggle]').addEventListener('click', () => {
+  selectTheme('light')
+})
+document.querySelector('[data-dark-theme-toggle]').addEventListener('click', () => {
+  selectTheme('dark')
+})
 "
