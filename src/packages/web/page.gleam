@@ -167,7 +167,9 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
     html.div([attribute.class("package-date-time")], [
       element.text(format_date(package.updated_in_hex_at)),
     ]),
-    html.h2([], [external_link_text(url, package.name)]),
+    html.h2([attribute.class("package-name")], [
+      external_link_text(url, package.name),
+    ]),
     html.p([attribute.class("package-description")], [
       element.text(package.description),
     ]),
