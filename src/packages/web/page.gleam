@@ -23,7 +23,7 @@ pub fn packages_list(
         html.a([attribute.href("/")], [
           html.img([
             attribute.class("logo"),
-            attribute.src("https://gleam.run/images/lucy-charcoal-2.svg"),
+            attribute.src("https://gleam.run/images/lucy/lucy.svg"),
             attribute.alt("Lucy the star, Gleam's mascot"),
           ]),
           html.h1([], [element.text("Gleam Packages")]),
@@ -193,7 +193,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
       ]),
       html.link([
         attribute.rel("icon"),
-        attribute.href("https://gleam.run/images/lucy-circle.svg"),
+        attribute.href("https://gleam.run/images/lucy/lucy.svg"),
       ]),
       html.script(
         [
