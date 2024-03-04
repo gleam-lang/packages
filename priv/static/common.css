@@ -13,8 +13,6 @@
 
   /* Other greys */
   --underwater-blue-dark: #202431;
-  --aged-plastic-yellow-darker: #b1a894;
-  --aged-plastic-yellow-dark: #e3d8be;
   --off-white: #f5f5f5;
 
   /* Other colors */
@@ -38,8 +36,7 @@
   /* Dark theme */
   --dark-theme-background: var(--underwater-blue);
   --dark-theme-background-dim: var(--underwater-blue-dark);
-  --dark-theme-background-alt: var(--charcoal);
-  --dark-theme-text: var(--aged-plastic-yellow-dark);
-  --dark-theme-text-secondary: var(--aged-plastic-yellow-darker);
+  --dark-theme-text: var(--white);
+  --dark-theme-text-secondary: var(--aged-plastic-yellow);
   --dark-theme-code: var(--deep-saffron);
 }
