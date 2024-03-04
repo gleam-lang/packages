@@ -83,10 +83,11 @@ h6 {
   margin-bottom: var(--gap-s);
 }
 
-.site-header a img {
+.site-header .logo {
   display: inline-block;
-  height: 1.3em;
-  margin-right: 0.25em;
+  height: 2em;
+  transform: rotate(-10deg);
+  margin-right: 0.5em;
 }
 
 .site-header nav {
