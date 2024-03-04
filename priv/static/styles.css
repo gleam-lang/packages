@@ -33,23 +33,23 @@
 
 html.theme-light {
   --color-background: var(--light-theme-background);
-  --color-package-name: var(--color-text);
-  --color-package-name-decoration: var(--faff-pink);
-  --color-link: var(--color-text);
-  --color-link-decoration: var(--faff-pink);
   --color-text: var(--light-theme-text);
   --color-text-secondary: var(--light-theme-text-secondary);
+  --color-link: var(--color-text);
+  --color-link-decoration: var(--faff-pink);
+  --color-package-name: var(--color-text);
+  --color-package-name-decoration: var(--faff-pink);
   color-scheme: light;
 }
 
 html.theme-dark {
   --color-background: var(--dark-theme-background);
-  --color-package-name: var(--faff-pink);
-  --color-package-name-decoration: var(--unexpected-aubergine);
-  --color-link: var(--dark-theme-text);
-  --color-link-decoration: var(--faff-pink);
   --color-text: var(--dark-theme-text);
   --color-text-secondary: var(--dark-theme-text-secondary);
+  --color-link: var(--dark-theme-text);
+  --color-link-decoration: var(--faff-pink);
+  --color-package-name: var(--faff-pink);
+  --color-package-name-decoration: var(--unexpected-aubergine);
   color-scheme: dark;
 }
 
