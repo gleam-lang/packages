@@ -10,6 +10,7 @@ import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
 import packages/index.{type PackageSummary}
+import packages/web/icons
 import gleam/string
 
 pub fn packages_list(
@@ -28,7 +29,10 @@ pub fn packages_list(
           ]),
           html.h1([], [element.text("Gleam Packages")]),
         ]),
-        search_form(search_term),
+        html.div([attribute.class("nav-right")], [
+          theme_picker(),
+          search_form(search_term),
+        ]),
       ]),
     ]),
     html.div([attribute.class("content")], [
@@ -38,6 +42,31 @@ pub fn packages_list(
   |> layout
   |> element.to_string_builder
   |> string_builder.prepend("<!DOCTYPE html>")
+}
+
+fn theme_picker() -> Element(Nil) {
+  html.div([attribute.class("theme-picker")], [
+    html.button(
+      [
+        attribute.type_("button"),
+        attribute.class("theme-button -light"),
+        attribute.attribute("data-light-theme-toggle", ""),
+        attribute.alt("Switch to light mode"),
+        attribute.attribute("title", "Switch to light mode"),
+      ],
+      [icons.icon_moon(), icons.icon_toggle_left()],
+    ),
+    html.button(
+      [
+        attribute.type_("button"),
+        attribute.class("theme-button -dark"),
+        attribute.attribute("data-dark-theme-toggle", ""),
+        attribute.alt("Switch to dark mode"),
+        attribute.attribute("title", "Switch to dark mode"),
+      ],
+      [icons.icon_sun(), icons.icon_toggle_right()],
+    ),
+  ])
 }
 
 fn search_form(search_term: String) -> Element(Nil) {
@@ -140,7 +169,9 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
     html.div([attribute.class("package-date-time")], [
       element.text(format_date(package.updated_in_hex_at)),
     ]),
-    html.h2([], [external_link_text(url, package.name)]),
+    html.h2([attribute.class("package-name")], [
+      external_link_text(url, package.name),
+    ]),
     html.p([attribute.class("package-description")], [
       element.text(package.description),
     ]),
@@ -179,7 +210,7 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
 }
 
 fn layout(content: Element(Nil)) -> Element(Nil) {
-  html.html([attribute("lang", "en")], [
+  html.html([attribute("lang", "en"), attribute.class("theme-light")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
       html.meta([
@@ -187,6 +218,10 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         attribute("content", "width=device-width, initial-scale=1"),
       ]),
       html.title([], "Gleam Packages"),
+      html.link([
+        attribute.rel("stylesheet"),
+        attribute.href("/static/common.css"),
+      ]),
       html.link([
         attribute.rel("stylesheet"),
         attribute.href("/static/styles.css"),
@@ -207,6 +242,7 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
         [attribute.type_("module"), attribute.src("/static/main.js")],
         "",
       ),
+      html.script([attribute.type_("module")], theme_picker_js),
     ]),
     html.body([], [
       content,
@@ -232,3 +268,49 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
     ]),
   ])
 }
+
+// This script is inlined in the response to avoid FOUC when applying the theme
+const theme_picker_js = "
+const mediaPrefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+function selectTheme(selectedTheme) {
+  // Apply and remember the specified theme.
+  applyTheme(selectedTheme)
+  if ((selectedTheme === 'dark') === mediaPrefersDarkTheme.matches) {
+    // Selected theme is the same as the device's preferred theme, so we can forget this setting.
+    localStorage.removeItem('theme')
+  } else {
+    // Remember the selected theme to apply it on the next visit
+    localStorage.setItem('theme', selectedTheme)
+  }
+}
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('theme-dark', theme === 'dark')
+  document.documentElement.classList.toggle('theme-light', theme !== 'dark')
+}
+
+// If user had selected a theme, load it. Otherwise, use device's preferred theme
+const selectedTheme = localStorage.getItem('theme')
+if (selectedTheme) {
+  applyTheme(selectedTheme)
+} else {
+  applyTheme(mediaPrefersDarkTheme.matches ? 'dark' : 'light')
+}
+
+// Watch the device's preferred theme and update theme if user did not select a theme
+mediaPrefersDarkTheme.addEventListener('change', () => {
+  const selectedTheme = localStorage.getItem('theme')
+  if (!selectedTheme) {
+    applyTheme(mediaPrefersDarkTheme.matches ? 'dark' : 'light')
+  }
+})
+
+// Add handlers for theme selection buttons.
+document.querySelector('[data-light-theme-toggle]').addEventListener('click', () => {
+  selectTheme('light')
+})
+document.querySelector('[data-dark-theme-toggle]').addEventListener('click', () => {
+  selectTheme('dark')
+})
+"

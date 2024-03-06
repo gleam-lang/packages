@@ -15,16 +15,6 @@
   --font-family-normal: "Outfit", sans-serif;
   --font-family-title: "Lexend", sans-serif;
 
-  --color-charcoal: #2f2f2f;
-  --color-graphite: #545454;
-  --color-black: #1e1e1e;
-  --color-blacker: #151515;
-  --color-white: #fefefc;
-  --color-faff-pink: #ffaff3;
-  --color-aged-plastic-yellow: #fffbe8;
-  --color-unnamed-blue: #a6f0fc;
-  --color-unexpected-aubergine: #584355;
-
   --font-size-normal: 16px;
   --font-size-small: 14px;
 
@@ -34,6 +24,35 @@
   --gap-l: calc(var(--gap) * 2);
 }
 
+:root {
+  --color-header-background: var(--faff-pink);
+  --color-header-input-background: var(--light-theme-background);
+  --color-header-link: var(--light-theme-text);
+  --color-header-text: var(--light-theme-text);
+}
+
+html.theme-light {
+  --color-background: var(--light-theme-background);
+  --color-text: var(--light-theme-text);
+  --color-text-secondary: var(--light-theme-text-secondary);
+  --color-link: var(--color-text);
+  --color-link-decoration: var(--faff-pink);
+  --color-package-name: var(--color-text);
+  --color-package-name-decoration: var(--faff-pink);
+  color-scheme: light;
+}
+
+html.theme-dark {
+  --color-background: var(--dark-theme-background);
+  --color-text: var(--dark-theme-text);
+  --color-text-secondary: var(--dark-theme-text-secondary);
+  --color-link: var(--dark-theme-text);
+  --color-link-decoration: var(--faff-pink);
+  --color-package-name: var(--faff-pink);
+  --color-package-name-decoration: var(--unexpected-aubergine);
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -41,16 +60,17 @@
 body {
   padding: 0;
   margin: 0;
-  background: var(--color-white);
+  background-color: var(--color-background);
   font-family: var(--font-family-normal);
-  background-color: var(--color-white);
+  font-size: var(--font-size);
   font-size: var(--font-size-normal);
+  color: var(--color-text);
 }
 
 a,
 a:visited {
-  color: unset;
-  text-decoration-color: var(--color-faff-pink);
+  color: var(--color-link);
+  text-decoration-color: var(--color-link-decoration);
 }
 
 h1,
@@ -70,17 +90,20 @@ h6 {
 }
 
 .site-header {
-  background-color: var(--color-faff-pink);
-  top: 0;
+  color-scheme: light;
   width: 100%;
+  background-color: var(--color-header-background);
+  color: var(--color-header-text);
+  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.1)
 }
 
 .site-header a {
+  color: var(--color-header-link);
+  text-decoration: none;
   color: black;
   display: flex;
   align-items: center;
   white-space: nowrap;
-  margin-bottom: var(--gap-s);
 }
 
 .site-header .logo {
@@ -91,7 +114,46 @@ h6 {
 }
 
 .site-header nav {
-  display: block;
+  display: flex;
+  gap: var(--gap-s);
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.site-header .nav-right {
+  display: flex;
+  gap: var(--gap);
+  align-items: center;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+html.theme-dark .theme-button.-dark {
+  display: none;
+}
+
+html.theme-light .theme-button.-light {
+  display: none;
+}
+
+.theme-button {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  display: flex;
+  gap: 0.25em;
+  font-size: var(--font-size-normal);
+}
+
+.theme-button svg {
+  display: inline-block;
+  fill: currentColor;
+  height: 1em;
+  width: 1em;
 }
 
 .search-form {
@@ -99,6 +161,7 @@ h6 {
 }
 
 .search-form input[type="search"] {
+  background: var(--color-header-input-background);
   height: 30px;
   border: none;
   flex-grow: 1;
@@ -109,7 +172,7 @@ h6 {
 }
 
 .search-form input[type="submit"] {
-  background: var(--color-white);
+  background: var(--color-header-input-background);
   border: none;
   border-radius: 0 100px 100px 0;
   height: 30px;
@@ -173,7 +236,7 @@ h6 {
 
 .package-date-time {
   float: right;
-  color: var(--color-graphite);
+  color: var(--color-text-secondary);
   margin-top: 0.3rem;
 }
 
@@ -197,11 +260,14 @@ h6 {
 
 .package-links a {
   margin-right: var(--gap);
-  color: var(--color-unexpected-aubergine);
   font-size: var(--font-size-small);
-  text-decoration: none;
 }
 
-.package-list h2 {
+.package-list .package-name {
   margin: 0 var(--gap) var(--gap-s) 0;
+}
+
+.package-list .package-name > a {
+  color: var(--color-package-name);
+  text-decoration-color: var(--color-package-name-decoration);
 }
