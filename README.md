@@ -2,7 +2,7 @@
 
 📦 Search for Gleam packages on [Hex](https://hex.pm).
 
-A Gleam application using the [Wisp](https://lpil.github.io/wisp) web framework,
+A Gleam application using the [Wisp](https://gleam-wisp.github.io/wisp) web framework,
 served with the [Mist](https://github.com/rawhat/mist) web server, using a
 SQLite database.
 
