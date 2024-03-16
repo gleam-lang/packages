@@ -264,6 +264,7 @@ html.theme-light .theme-button.-light {
 }
 
 .package-list .package-name {
+  overflow-wrap: break-word;
   margin: 0 var(--gap) var(--gap-s) 0;
 }
 
