@@ -1,7 +1,7 @@
+import gleam/hackney
+import gleam/json
 import simplifile
 import sqlight
-import gleam/json
-import gleam/hackney
 
 pub type Error {
   FileError(simplifile.FileError)

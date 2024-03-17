@@ -1,17 +1,17 @@
 import birl.{type Time}
 import birl/duration
-import gleam/string_builder.{type StringBuilder}
+import gleam/dict
 import gleam/int
 import gleam/list
-import gleam/dict
 import gleam/option
 import gleam/order
+import gleam/string
+import gleam/string_builder.{type StringBuilder}
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
 import packages/index.{type PackageSummary}
 import packages/web/icons
-import gleam/string
 
 pub fn packages_list(
   packages: List(PackageSummary),

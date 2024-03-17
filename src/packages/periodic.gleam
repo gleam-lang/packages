@@ -1,7 +1,7 @@
-import packages/error.{type Error}
-import gleam/otp/actor
 import gleam/erlang/process.{type Subject}
 import gleam/io
+import gleam/otp/actor
+import packages/error.{type Error}
 
 pub opaque type Message {
   Rerun

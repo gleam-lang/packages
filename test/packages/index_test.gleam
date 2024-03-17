@@ -1,10 +1,10 @@
-import packages/index.{Package, Release}
+import birl
+import gleam/dict
 import gleam/hexpm
 import gleam/list
 import gleam/option.{None, Some}
-import gleam/dict
 import gleeunit/should
-import birl
+import packages/index.{Package, Release}
 import tests
 
 pub fn most_recent_hex_timestamp_test() {

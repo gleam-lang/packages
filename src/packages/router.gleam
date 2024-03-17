@@ -1,8 +1,8 @@
-import gleam/uri
-import gleam/option
-import gleam/list
-import gleam/result
 import gleam/http/request
+import gleam/list
+import gleam/option
+import gleam/result
+import gleam/uri
 import packages/index
 import packages/web.{type Context}
 import packages/web/page
