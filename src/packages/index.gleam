@@ -1,17 +1,17 @@
 import birl.{type Time}
-import gleam/string
+import gleam/dict.{type Dict}
 import gleam/dynamic.{type DecodeError, type Dynamic, DecodeError} as dyn
+import gleam/erlang/os
 import gleam/hexpm
 import gleam/json
 import gleam/list
-import gleam/dict.{type Dict}
 import gleam/option.{type Option, None, Some}
 import gleam/result.{try}
+import gleam/string
 import packages/error.{type Error}
 import packages/generated/sql
 import simplifile
 import sqlight
-import gleam/erlang/os
 
 pub const export_path = "/tmp/packages-export.sqlite"
 
@@ -141,7 +141,9 @@ create table if not exists hidden_packages (
   name text primary key
 ) strict;
 
-create view if not exists non_retired_packages as
+drop view if exists non_retired_packages;
+
+create view if not exists visible_packages as
   -- A package is retired if all its releases are retired
   select p.*
   from packages p
@@ -149,6 +151,11 @@ create view if not exists non_retired_packages as
     select distinct r.package_id
     from releases r
     where r.id is null or r.retirement_reason is null
+  )
+  and not exists (
+    select 1
+    from hidden_packages
+    where hidden_packages.name = p.name
   );
 
 -- These packages are placeholders or otherwise not useful.

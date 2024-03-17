@@ -1,3 +1,4 @@
+import argv
 import gleam/erlang/os
 import gleam/erlang/process
 import gleam/io
@@ -8,11 +9,10 @@ import mist
 import packages/error.{type Error}
 import packages/index
 import packages/periodic
-import packages/syncing
 import packages/router
+import packages/syncing
 import packages/web
 import wisp
-import argv
 
 const usage = "Usage:
   gleam run server

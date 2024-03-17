@@ -31,6 +31,7 @@ Install Gleam! See `./Dockerfile` for which version is used in production.
 
 ```shell
 # Download a recent copy of the database
+rm -f database.sqlite*
 curl -o database.sqlite https://packages.gleam.run/packages.sqlite
 
 gleam test        # Run the tests
