@@ -401,8 +401,7 @@ pub fn search_packages(
   let query = webquery_to_sqlite_fts_query(search_term)
   let params = [
     sqlight.text(query),
-    string.lowercase(search_term)
-      |> sqlight.text,
+    sqlight.text(search_term),
   ]
   let result = sql.search_packages(db, params, decode_package_summary)
   use packages <- result.try(result)
