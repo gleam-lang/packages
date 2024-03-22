@@ -17,6 +17,7 @@ pub fn handle_request(
 
   case request.path_segments(request) {
     [] -> search(request, context)
+    ["internet-points"] -> internet_points(context)
     ["packages.sqlite"] -> download_database()
     _ -> wisp.redirect(to: "/")
   }
@@ -44,6 +45,15 @@ fn download_database() -> Response {
     "attachment; filename=packages.sqlite",
   )
   |> wisp.set_body(wisp.File(index.export_path))
+}
+
+fn internet_points(context: Context) -> Response {
+  let assert Ok(package_counts) = index.new_package_count_per_day(context.db)
+  let assert Ok(release_counts) = index.new_release_count_per_day(context.db)
+  let stats =
+    page.Stats(package_counts: package_counts, release_counts: release_counts)
+  page.internet_points(stats)
+  |> wisp.html_response(200)
 }
 
 fn search(request: Request, context: Context) -> Response {

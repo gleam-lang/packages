@@ -432,3 +432,17 @@ fn unix_timestamp(data: Dynamic) -> Result(Time, List(DecodeError)) {
   use i <- result.map(dyn.int(data))
   birl.from_unix(i)
 }
+
+pub fn new_package_count_per_day(
+  db: Connection,
+) -> Result(List(#(String, Int)), Error) {
+  let decoder = dyn.tuple2(dyn.string, dyn.int)
+  sql.new_package_count_per_day(db.inner, [], decoder)
+}
+
+pub fn new_release_count_per_day(
+  db: Connection,
+) -> Result(List(#(String, Int)), Error) {
+  let decoder = dyn.tuple2(dyn.string, dyn.int)
+  sql.new_release_count_per_day(db.inner, [], decoder)
+}

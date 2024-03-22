@@ -2,6 +2,7 @@ import birl.{type Time}
 import birl/duration
 import gleam/dict
 import gleam/int
+import gleam/json
 import gleam/list
 import gleam/option
 import gleam/order
@@ -18,30 +19,53 @@ pub fn packages_list(
   total_package_count: Int,
   search_term: String,
 ) -> StringBuilder {
-  html.main([], [
-    html.header([attribute.class("site-header")], [
-      html.nav([attribute.class("content")], [
-        html.a([attribute.href("/")], [
-          html.img([
-            attribute.class("logo"),
-            attribute.src("https://gleam.run/images/lucy/lucy.svg"),
-            attribute.alt("Lucy the star, Gleam's mascot"),
-          ]),
-          html.h1([], [element.text("Gleam Packages")]),
-        ]),
-        html.div([attribute.class("nav-right")], [
-          theme_picker(),
-          search_form(search_term),
-        ]),
-      ]),
-    ]),
-    html.div([attribute.class("content")], [
-      search_aware_package_list(packages, total_package_count, search_term),
-    ]),
+  html.div([attribute.class("content")], [
+    search_aware_package_list(packages, total_package_count, search_term),
   ])
-  |> layout
-  |> element.to_string_builder
-  |> string_builder.prepend("<!DOCTYPE html>")
+  |> layout(search_term)
+}
+
+pub type Stats {
+  Stats(
+    package_counts: List(#(String, Int)),
+    release_counts: List(#(String, Int)),
+  )
+}
+
+pub fn internet_points(stats: Stats) -> StringBuilder {
+  html.div([], [
+    html.script([attribute.src("https://cdn.plot.ly/plotly-2.30.0.min.js")], ""),
+    line_chart("Package count", stats.package_counts),
+    line_chart("Release count", stats.release_counts),
+  ])
+  |> layout(search_term: "")
+}
+
+fn line_chart(name: String, data: List(#(String, Int))) -> Element(Nil) {
+  let id = "chart-" <> name
+  let json_x =
+    json.array(data, fn(pair) { json.string(pair.0) })
+    |> json.to_string
+  let json_y =
+    data
+    |> list.scan(0, fn(total, new) { total + new.1 })
+    |> json.array(fn(total) { json.int(total) })
+    |> json.to_string
+
+  let javascript = "
+var trace = {
+  x: " <> json_x <> ",
+  y: " <> json_y <> ",
+  type: 'scatter',
+  line: { color: '#ffaff3', width: 2 }
+};
+
+Plotly.newPlot('" <> id <> "', [trace], {
+  title: { text: '" <> name <> "' }
+});
+  "
+
+  html.div([], [html.div([attribute.id(id)], []), html.script([], javascript)])
 }
 
 fn theme_picker() -> Element(Nil) {
@@ -209,7 +233,10 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
   )
 }
 
-fn layout(content: Element(Nil)) -> Element(Nil) {
+fn layout(
+  content: Element(Nil),
+  search_term search_term: String,
+) -> StringBuilder {
   html.html([attribute("lang", "en"), attribute.class("theme-light")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
@@ -245,7 +272,25 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
       html.script([attribute.type_("module")], theme_picker_js),
     ]),
     html.body([], [
-      content,
+      html.main([], [
+        html.header([attribute.class("site-header")], [
+          html.nav([attribute.class("content")], [
+            html.a([attribute.href("/")], [
+              html.img([
+                attribute.class("logo"),
+                attribute.src("https://gleam.run/images/lucy/lucy.svg"),
+                attribute.alt("Lucy the star, Gleam's mascot"),
+              ]),
+              html.h1([], [element.text("Gleam Packages")]),
+            ]),
+            html.div([attribute.class("nav-right")], [
+              theme_picker(),
+              search_form(search_term),
+            ]),
+          ]),
+        ]),
+        content,
+      ]),
       html.footer([attribute.class("site-footer")], [
         html.div([], [
           element.text("Special thanks to the "),
@@ -267,6 +312,8 @@ fn layout(content: Element(Nil)) -> Element(Nil) {
       ]),
     ]),
   ])
+  |> element.to_string_builder
+  |> string_builder.prepend("<!DOCTYPE html>")
 }
 
 // This script is inlined in the response to avoid FOUC when applying the theme

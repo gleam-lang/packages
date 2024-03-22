@@ -1,8 +1,9 @@
 // THIS FILE IS GENERATED. DO NOT EDIT.
 // Regenerate with `gleam run -m codegen`
+
 import sqlight
-import gleam/dynamic
 import gleam/result
+import gleam/dynamic
 import packages/error.{type Error}
 
 pub type QueryResult(t) =
@@ -113,6 +114,46 @@ pub fn json_dump(
     "select
   json_agg(row_to_json(packages))
 from packages;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn new_package_count_per_day(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  strftime('%Y-%m-%d', datetime(inserted_in_hex_at, 'unixepoch')) as creation_date
+, count(*) as count
+from
+  packages
+group by
+  creation_date
+order by 
+  inserted_in_hex_at asc;
+"
+  sqlight.query(query, db, arguments, decoder)
+  |> result.map_error(error.DatabaseError)
+}
+
+pub fn new_release_count_per_day(
+  db: sqlight.Connection,
+  arguments: List(sqlight.Value),
+  decoder: dynamic.Decoder(a),
+) -> QueryResult(a) {
+  let query =
+    "select
+  strftime('%Y-%m-%d', datetime(inserted_in_hex_at, 'unixepoch')) as creation_date
+, count(*) as count
+from
+  releases
+group by
+  creation_date
+order by 
+  inserted_in_hex_at asc;
 "
   sqlight.query(query, db, arguments, decoder)
   |> result.map_error(error.DatabaseError)
