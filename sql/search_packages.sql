@@ -10,8 +10,8 @@ from
 where
   (
     $1 = ''
-    or instr(lower(name), $2) > 0
-    or instr(lower(description), $2) > 0
+    or instr(lower(name), lower($2)) > 0
+    or instr(lower(description), lower($2)) > 0
     or id in (
       select rowid
       from packages_fts
