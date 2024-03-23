@@ -352,3 +352,55 @@ pub fn search_packages_query_escaping_test() {
   packages
   |> should.equal([])
 }
+
+pub fn search_packages_substring_test() {
+  use db <- tests.with_database
+
+  let assert Ok(package_id) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_pgo/"),
+        html_url: Some("https://hex.pm/packages/gleam_pgo"),
+        meta: hexpm.PackageMeta(
+          description: Some("Gleam bindings to the PGO PostgreSQL client"),
+          licenses: ["Apache-2.0"],
+          links: dict.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-experiments/pgo"),
+          ]),
+        ),
+        name: "gleam_pgo",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "0.6.1",
+        checksum: "18a4940471ba798aa1fb85cd6e6d035a7403f66c4a2f19cdd471e0da450c3633",
+        url: "https://hex.pm/apik/packages/gleam_pgo/releases/0.6.1",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("gleam_pgo"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "lpil",
+          email: None,
+          url: "https://hex.pm/users/lpil",
+        )),
+        retirement: None,
+        updated_at: birl.from_unix(1001),
+        inserted_at: birl.from_unix(2001),
+      ),
+    )
+
+  let assert Ok(packages) = index.search_packages(db, "sql")
+  list.length(packages)
+  |> should.equal(1)
+}
