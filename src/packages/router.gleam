@@ -2,6 +2,7 @@ import gleam/http/request
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/string
 import gleam/uri
 import packages/index
 import packages/web.{type Context}
@@ -56,9 +57,18 @@ fn internet_points(context: Context) -> Response {
   |> wisp.html_response(200)
 }
 
+fn remove_extra_spaces(input: String) -> String {
+  input
+  |> string.trim
+  |> string.split(" ")
+  |> list.filter(fn(part) { !string.is_empty(part) })
+  |> string.join(" ")
+}
+
 fn search(request: Request, context: Context) -> Response {
   let search_term = get_search_parameter(request)
-  let assert Ok(packages) = index.search_packages(context.db, search_term)
+  let assert Ok(packages) =
+    index.search_packages(context.db, remove_extra_spaces(search_term))
   let assert Ok(total_package_count) = index.get_total_package_count(context.db)
 
   page.packages_list(packages, total_package_count, search_term)
