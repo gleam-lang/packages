@@ -393,13 +393,24 @@ fn decode_package_summary(
   )(data)
 }
 
+pub fn remove_extra_spaces(input: String) -> String {
+  input
+  |> string.trim
+  |> string.split(" ")
+  |> list.filter(fn(part) { !string.is_empty(part) })
+  |> string.join(" ")
+}
+
 pub fn search_packages(
   db: Connection,
   search_term: String,
 ) -> Result(List(PackageSummary), Error) {
   let db = db.inner
-  let query = webquery_to_sqlite_fts_query(search_term)
-  let params = [sqlight.text(query), sqlight.text(search_term)]
+
+  let trimmed_query = remove_extra_spaces(search_term)
+
+  let query = webquery_to_sqlite_fts_query(trimmed_query)
+  let params = [sqlight.text(query), sqlight.text(trimmed_query)]
   let result = sql.search_packages(db, params, decode_package_summary)
   use packages <- result.try(result)
 
