@@ -57,7 +57,7 @@ fn internet_points(context: Context) -> Response {
   |> wisp.html_response(200)
 }
 
-fn remove_extra_spaces(input: String) -> String {
+pub fn remove_extra_spaces(input: String) -> String {
   input
   |> string.trim
   |> string.split(" ")
