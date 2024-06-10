@@ -407,10 +407,10 @@ pub fn search_packages(
 ) -> Result(List(PackageSummary), Error) {
   let db = db.inner
 
-  let trimmed_query = remove_extra_spaces(search_term)
+  let trimmed_search_term = remove_extra_spaces(search_term)
 
-  let query = webquery_to_sqlite_fts_query(trimmed_query)
-  let params = [sqlight.text(query), sqlight.text(trimmed_query)]
+  let query = webquery_to_sqlite_fts_query(trimmed_search_term)
+  let params = [sqlight.text(query), sqlight.text(trimmed_search_term)]
   let result = sql.search_packages(db, params, decode_package_summary)
   use packages <- result.try(result)
 
