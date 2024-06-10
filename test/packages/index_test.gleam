@@ -441,3 +441,90 @@ pub fn remove_extra_spaces_test() {
       |> string.join(" "),
     )
 }
+
+pub fn search_packages_with_spaces_test() {
+  use db <- tests.with_database
+
+  let assert Ok(package_id) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/httpp/"),
+        html_url: Some("https://hex.pm/packages/httpp"),
+        meta: hexpm.PackageMeta(
+          description: Some(
+            "an http client for gleam which supports streaming, based on hackney",
+          ),
+          licenses: ["Apache-2.0"],
+          links: dict.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/VioletBuse/httpp"),
+          ]),
+        ),
+        name: "httpp",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+    )
+
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id,
+      hexpm.Release(
+        version: "1.0.1",
+        checksum: "68f8fcdffd226e6065819b5c6d6c812c6b1c199e170a40b374aba79f6cacb528",
+        url: "https://hex.pm/apik/packages/httpp/releases/1.0.1",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("httpp"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "violetbuse",
+          email: None,
+          url: "https://hex.pm/users/violetbuse",
+        )),
+        retirement: None,
+        updated_at: birl.from_unix(1001),
+        inserted_at: birl.from_unix(2001),
+      ),
+    )
+
+  let assert Ok(packages) = index.search_packages(db, "http")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "    http")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "http   ")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "  http   ")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "http client")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "    http client")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "http client    ")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) = index.search_packages(db, "http      client")
+  list.length(packages)
+  |> should.equal(1)
+
+  let assert Ok(packages) =
+    index.search_packages(db, "    http     client     ")
+  list.length(packages)
+  |> should.equal(1)
+}
