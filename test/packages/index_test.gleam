@@ -1,10 +1,8 @@
 import birl
 import gleam/dict
 import gleam/hexpm
-import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
-import gleam/string
 import gleeunit/should
 import packages/index.{Package, Release}
 import tests
@@ -405,41 +403,6 @@ pub fn search_packages_substring_test() {
   let assert Ok(packages) = index.search_packages(db, "sql")
   list.length(packages)
   |> should.equal(1)
-}
-
-pub fn remove_extra_spaces_test() {
-  let assert "" = index.remove_extra_spaces("")
-
-  let assert "gleam" = index.remove_extra_spaces("gleam")
-
-  let assert "gleam packages" = index.remove_extra_spaces("gleam packages")
-
-  let assert "gleam packages" =
-    index.remove_extra_spaces("        gleam packages")
-
-  let assert "gleam packages" =
-    index.remove_extra_spaces("gleam packages           ")
-
-  let assert "gleam packages" =
-    index.remove_extra_spaces("           gleam packages       ")
-
-  let assert "gleam packages" =
-    index.remove_extra_spaces("gleam        packages")
-
-  let assert "gleam packages" =
-    index.remove_extra_spaces("    gleam        packages      ")
-
-  let assert "there should be no extra spaces" =
-    index.remove_extra_spaces(
-      "              there    should     be    no  extra    spaces      ",
-    )
-
-  let assert "there should be no extra spaces" =
-    index.remove_extra_spaces(
-      ["there", "should", "be", "no", "extra", "spaces"]
-      |> list.map(fn(s) { string.pad_left(s, int.max(1, int.random(10)), " ") })
-      |> string.join(" "),
-    )
 }
 
 pub fn search_packages_with_spaces_test() {

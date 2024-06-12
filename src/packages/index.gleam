@@ -393,7 +393,7 @@ fn decode_package_summary(
   )(data)
 }
 
-pub fn remove_extra_spaces(input: String) -> String {
+fn remove_extra_spaces(input: String) -> String {
   input
   |> string.trim
   |> string.split(" ")
