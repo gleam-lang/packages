@@ -454,40 +454,85 @@ pub fn search_packages_with_spaces_test() {
       ),
     )
 
-  let assert Ok(packages) = index.search_packages(db, "http")
-  list.length(packages)
-  |> should.equal(1)
+  {
+    let assert Ok(packages) = index.search_packages(db, "http")
+    list.length(packages)
+    |> should.equal(1)
 
-  let assert Ok(packages) = index.search_packages(db, "    http")
-  list.length(packages)
-  |> should.equal(1)
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
 
-  let assert Ok(packages) = index.search_packages(db, "http   ")
-  list.length(packages)
-  |> should.equal(1)
+  {
+    let assert Ok(packages) = index.search_packages(db, "    http")
+    list.length(packages)
+    |> should.equal(1)
 
-  let assert Ok(packages) = index.search_packages(db, "  http   ")
-  list.length(packages)
-  |> should.equal(1)
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
 
-  let assert Ok(packages) = index.search_packages(db, "http client")
-  list.length(packages)
-  |> should.equal(1)
+  {
+    let assert Ok(packages) = index.search_packages(db, "http   ")
+    list.length(packages)
+    |> should.equal(1)
 
-  let assert Ok(packages) = index.search_packages(db, "    http client")
-  list.length(packages)
-  |> should.equal(1)
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
 
-  let assert Ok(packages) = index.search_packages(db, "http client    ")
-  list.length(packages)
-  |> should.equal(1)
+  {
+    let assert Ok(packages) = index.search_packages(db, "  http   ")
+    list.length(packages)
+    |> should.equal(1)
 
-  let assert Ok(packages) = index.search_packages(db, "http      client")
-  list.length(packages)
-  |> should.equal(1)
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
 
-  let assert Ok(packages) =
-    index.search_packages(db, "    http     client     ")
-  list.length(packages)
-  |> should.equal(1)
+  {
+    let assert Ok(packages) = index.search_packages(db, "http client")
+    list.length(packages)
+    |> should.equal(1)
+
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
+
+  {
+    let assert Ok(packages) = index.search_packages(db, "    http client")
+    list.length(packages)
+    |> should.equal(1)
+
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
+
+  {
+    let assert Ok(packages) = index.search_packages(db, "http client    ")
+    list.length(packages)
+    |> should.equal(1)
+
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
+
+  {
+    let assert Ok(packages) = index.search_packages(db, "http      client")
+    list.length(packages)
+    |> should.equal(1)
+
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
+
+  {
+    let assert Ok(packages) =
+      index.search_packages(db, "    http     client     ")
+    list.length(packages)
+    |> should.equal(1)
+
+    let assert Ok(package) = list.first(packages)
+    should.equal(package.id, package_id)
+  }
 }
