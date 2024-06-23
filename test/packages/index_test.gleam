@@ -454,6 +454,92 @@ pub fn search_packages_with_spaces_test() {
       ),
     )
 
+  let assert Ok(package_id2) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gluple/"),
+        html_url: Some("https://hex.pm/packages/gluple"),
+        meta: hexpm.PackageMeta(
+          description: Some("Tuple methods for Gleam"),
+          licenses: ["MIT"],
+          links: dict.from_list([
+            #("Website", "https://hexdocs.pm/gluple"),
+            #("Repository", "https://github.com/darky/gluple"),
+          ]),
+        ),
+        name: "gluple",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+    )
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id2,
+      hexpm.Release(
+        version: "1.0.1",
+        checksum: "68f8fcdffd226e6065819b5c6d6c812c6b1c199e170a40b374aba79f6cacb521",
+        url: "https://hex.pm/apik/packages/gluple/releases/2.0.0",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("gluple"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "darky",
+          email: None,
+          url: "https://hex.pm/users/darky",
+        )),
+        retirement: None,
+        updated_at: birl.from_unix(1001),
+        inserted_at: birl.from_unix(2001),
+      ),
+    )
+
+  let assert Ok(package_id3) =
+    index.upsert_package(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/commonmark/"),
+        html_url: Some("https://hex.pm/packages/commonmark"),
+        meta: hexpm.PackageMeta(
+          description: Some("Tuple methods for Gleam"),
+          licenses: ["MIT"],
+          links: dict.from_list([
+            #("Website", "https://hexdocs.pm/commonmark"),
+            #("Repository", "https://github.com/mscharley/gleam-commonmark"),
+          ]),
+        ),
+        name: "commonmark",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+    )
+  let assert Ok(_) =
+    index.upsert_release(
+      db,
+      package_id3,
+      hexpm.Release(
+        version: "1.0.1",
+        checksum: "68f8fcdffd226e6065819b5c6d6c812c6b1c199e170a40b374aba79f6cacb520",
+        url: "https://hex.pm/apik/packages/commonmark/releases/0.1.7",
+        downloads: 0,
+        meta: hexpm.ReleaseMeta(app: Some("commonmark"), build_tools: ["gleam"]),
+        publisher: Some(hexpm.PackageOwner(
+          username: "mscharley",
+          email: None,
+          url: "https://hex.pm/users/mscharley",
+        )),
+        retirement: None,
+        updated_at: birl.from_unix(1001),
+        inserted_at: birl.from_unix(2001),
+      ),
+    )
+
   {
     let assert Ok(packages) = index.search_packages(db, "http")
     list.length(packages)
