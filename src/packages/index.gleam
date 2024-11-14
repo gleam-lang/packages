@@ -27,7 +27,7 @@ pub opaque type Connection {
 ///
 pub fn has_write_permission() -> Bool {
   case os.get_env("LITEFS_PRIMARY_FILE") {
-    Ok(path) -> simplifile.verify_is_file(path) == Ok(False)
+    Ok(path) -> simplifile.is_file(path) == Ok(False)
     Error(_) -> True
   }
 }
@@ -41,7 +41,7 @@ pub fn export(conn: Connection) -> Result(Nil, Error) {
     |> result.replace(Nil)
     |> result.map_error(error.DatabaseError),
   )
-  simplifile.rename_file(at: export_path_tmp, to: export_path)
+  simplifile.rename(at: export_path_tmp, to: export_path)
   |> result.map_error(error.FileError)
 }
 

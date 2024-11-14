@@ -13,6 +13,7 @@ import packages/router
 import packages/syncing
 import packages/web
 import wisp
+import wisp/wisp_mist
 
 const usage = "Usage:
   gleam run server
@@ -50,7 +51,7 @@ fn server() {
   // Start the web server
   let assert Ok(_) =
     router.handle_request(_, make_context)
-    |> wisp.mist_handler(secret_key_base)
+    |> wisp_mist.handler(secret_key_base)
     |> mist.new
     |> mist.port(3000)
     |> mist.start_http
