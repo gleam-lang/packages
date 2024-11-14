@@ -1,5 +1,5 @@
 name = "packages"
-version = "0.1.0"
+version = "0.2.0"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
@@ -14,23 +14,23 @@ internal_modules = [
   "packages/internal/*",
   "packages/generated/*",
 ]
-gleam = ">= 0.32.0"
+gleam = ">= 1.5.0"
 
 [dependencies]
 gleam_stdlib = "~> 0.23"
-gleam_json = "~> 0.5"
+gleam_json = ">= 2.0.0 and < 3.0.0"
 gleam_hackney = "~> 1.0"
 gleam_erlang = "~> 0.18"
-mist = "~> 0.10"
+mist = ">= 3.0.0 and < 4.0.0"
 gleam_http = "~> 3.1"
 gleam_otp = "~> 0.5"
 gleam_hexpm = "~> 1.0"
-sqlight = "~> 0.8"
-simplifile = "~> 1.4"
-wisp = "~> 0.11"
+sqlight = ">= 0.9.1 and < 1.0.0"
+simplifile = ">= 2.2.0 and < 3.0.0"
 birl = "~> 1.0"
-lustre = "~> 3.0"
+lustre = "~> 4.6.1"
 argv = "~> 1.0"
+wisp = ">= 1.2.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = "~> 1.0"
