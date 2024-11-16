@@ -9,34 +9,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:14
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: gleam_packages_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      PGHOST: localhost
-      PGPORT: 5432
-      PGUSER: postgres
-      PGPASSWORD: postgres
-
+    
     steps:
       - uses: actions/checkout@v3
-      - uses: erlef/setup-beam@v1
+      - uses: erlef/setup-beam@v1.18.2
         with:
-          otp-version: "26.0.2"
-          gleam-version: "1.0.0"
+          otp-version: "OTP-27.0.1"
+          gleam-version: "1.5.0"
           rebar3-version: "3"
       - run: gleam format --check src test
       - run: gleam test
