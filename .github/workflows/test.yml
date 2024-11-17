@@ -12,10 +12,10 @@ jobs:
     
     steps:
       - uses: actions/checkout@v3
-      - uses: erlef/setup-beam@v1.18.2
+      - uses: erlef/setup-beam@v1
         with:
-          otp-version: "OTP-27.0.1"
-          gleam-version: "1.5.0"
+          otp-version: "27.1.2"
+          gleam-version: "1.5.1"
           rebar3-version: "3"
       - run: gleam format --check src test
       - run: gleam test
