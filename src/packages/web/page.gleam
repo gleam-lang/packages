@@ -6,6 +6,7 @@ import gleam/json
 import gleam/list
 import gleam/option
 import gleam/order
+import gleam/result
 import gleam/string
 import gleam/string_builder.{type StringBuilder}
 import lustre/attribute.{attribute}
@@ -180,6 +181,11 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
     |> dict.get("Repository")
     |> option.from_result
 
+  let latest_version_string = case package.latest_versions |> list.last {
+    Ok(version) -> " @ v" <> version
+    Error(_) -> ""
+  }
+
   let links =
     [
       package.docs_url
@@ -195,6 +201,7 @@ fn package_list_item(package: PackageSummary) -> Element(Nil) {
     ]),
     html.h2([attribute.class("package-name")], [
       external_link_text(url, package.name),
+      html.small([], [element.text(latest_version_string)]),
     ]),
     html.p([attribute.class("package-description")], [
       element.text(package.description),
