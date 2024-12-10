@@ -70,6 +70,10 @@ create table if not exists packages (
   inserted_in_hex_at integer not null,
   updated_in_hex_at integer not null,
   docs_url text,
+  downloads_all integer not null default 0,
+  downloads_recent integer not null default 0,
+  downloads_week integer not null default 0,
+  downloads_day integer not null default 0,
 
   links text not null default '{}'
     check (json(links) not null)
@@ -187,6 +191,17 @@ on conflict do nothing;
 pub fn connect(database: String) -> Connection {
   let assert Ok(db) = sqlight.open(database)
   let assert Ok(_) = sqlight.exec(schema, db)
+
+  let _ =
+    sqlight.exec(
+      "
+      alter table packages add downloads_all integer not null default 0;
+      alter table packages add downloads_recent integer not null default 0;
+      alter table packages add downloads_week integer not null default 0;
+      alter table packages add downloads_day integer not null default 0;
+      ",
+      db,
+    )
   Connection(db)
 }
 
@@ -248,6 +263,10 @@ pub fn upsert_package(
     sqlight.text(links_json),
     sqlight.int(birl.to_unix(package.inserted_at)),
     sqlight.int(birl.to_unix(package.updated_at)),
+    sqlight.int(package.downloads |> dict.get("all") |> result.unwrap(0)),
+    sqlight.int(package.downloads |> dict.get("recent") |> result.unwrap(0)),
+    sqlight.int(package.downloads |> dict.get("week") |> result.unwrap(0)),
+    sqlight.int(package.downloads |> dict.get("day") |> result.unwrap(0)),
   ]
   let decoder = dyn.element(0, dyn.int)
   use returned <- result.then(sql.upsert_package(db.inner, parameters, decoder))

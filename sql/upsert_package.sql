@@ -6,6 +6,10 @@ insert into packages
   , links
   , inserted_in_hex_at
   , updated_in_hex_at
+  , downloads_all
+  , downloads_recent
+  , downloads_week
+  , downloads_day
   )
 values
   ( $1
@@ -14,6 +18,10 @@ values
   , $4
   , $5
   , $6
+  , $7
+  , $8
+  , $9
+  , $10
   )
 on conflict (name) do update
 set
@@ -21,5 +29,9 @@ set
 , description = excluded.description
 , docs_url = excluded.docs_url
 , links = excluded.links
+, downloads_all = excluded.downloads_all
+, downloads_recent = excluded.downloads_recent
+, downloads_week = excluded.downloads_week
+, downloads_day = excluded.downloads_day
 returning
   id
