@@ -7,7 +7,7 @@ import gleam/list
 import gleam/option
 import gleam/order
 import gleam/string
-import gleam/string_builder.{type StringBuilder}
+import gleam/string_tree.{type StringTree}
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -18,7 +18,7 @@ pub fn packages_list(
   packages: List(PackageSummary),
   total_package_count: Int,
   search_term: String,
-) -> StringBuilder {
+) -> StringTree {
   html.div([attribute.class("content")], [
     search_aware_package_list(packages, total_package_count, search_term),
   ])
@@ -32,7 +32,7 @@ pub type Stats {
   )
 }
 
-pub fn internet_points(stats: Stats) -> StringBuilder {
+pub fn internet_points(stats: Stats) -> StringTree {
   html.div([], [
     html.script([attribute.src("https://cdn.plot.ly/plotly-2.30.0.min.js")], ""),
     line_chart("Package count", stats.package_counts),
@@ -233,10 +233,7 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
   )
 }
 
-fn layout(
-  content: Element(Nil),
-  search_term search_term: String,
-) -> StringBuilder {
+fn layout(content: Element(Nil), search_term search_term: String) -> StringTree {
   html.html([attribute("lang", "en"), attribute.class("theme-light")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
@@ -313,7 +310,7 @@ fn layout(
     ]),
   ])
   |> element.to_string_builder
-  |> string_builder.prepend("<!DOCTYPE html>")
+  |> string_tree.prepend("<!DOCTYPE html>")
 }
 
 // This script is inlined in the response to avoid FOUC when applying the theme

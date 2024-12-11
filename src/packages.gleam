@@ -1,5 +1,5 @@
 import argv
-import gleam/erlang/os
+import envoy
 import gleam/erlang/process
 import gleam/io
 import gleam/otp/actor
@@ -33,7 +33,7 @@ pub fn main() {
 fn server() {
   wisp.configure_logger()
 
-  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(priv) = wisp.priv_directory("packages")
   let static_directory = priv <> "/static"
   let database_name = database_name()
@@ -81,7 +81,7 @@ fn export_database(name: String) -> Result(Nil, Error) {
 }
 
 fn database_name() {
-  case os.get_env("DATABASE_PATH") {
+  case envoy.get("DATABASE_PATH") {
     Ok(path) -> path
     Error(Nil) -> "./database.sqlite"
   }
@@ -100,7 +100,7 @@ fn start_hex_syncer(database_name: String, api_key: String) -> Result(_, _) {
 fn start_database_exporter(database_name: String) -> Result(_, _) {
   use _ <- result.try(
     export_database(database_name)
-    |> result.nil_error,
+    |> result.replace_error(Nil),
   )
   supervise(fn() {
     periodic.periodically(
@@ -108,12 +108,12 @@ fn start_database_exporter(database_name: String) -> Result(_, _) {
       waiting: 5 * 60 * 1000,
     )
   })
-  |> result.nil_error
+  |> result.replace_error(Nil)
 }
 
 fn sync_one(package_name: String) -> Nil {
   let db = index.connect(database_name())
-  let assert Ok(key) = os.get_env("HEX_API_KEY")
+  let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(Nil) =
     syncing.fetch_and_sync_package(db, package_name, secret: key)
   Nil
