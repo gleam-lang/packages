@@ -31,6 +31,9 @@ birl = "~> 1.0"
 lustre = "~> 4.6.1"
 argv = "~> 1.0"
 wisp = ">= 1.2.0 and < 2.0.0"
+storail = ">= 2.1.0 and < 3.0.0"
+decode = ">= 0.5.0 and < 1.0.0"
+envoy = ">= 1.0.2 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = "~> 1.0"
