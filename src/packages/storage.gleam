@@ -63,6 +63,18 @@ pub const hidden_packages = [
 
 const gleam_package_epoch = 1_635_092_380
 
+pub type PackageSummary {
+  PackageSummary(
+    id: Int,
+    name: String,
+    description: String,
+    docs_url: Option(String),
+    links: Dict(String, String),
+    latest_versions: List(String),
+    updated_in_hex_at: Time,
+  )
+}
+
 pub type Package {
   Package(
     name: String,
@@ -75,6 +87,7 @@ pub type Package {
     downloads_week: Int,
     downloads_day: Int,
     links: Dict(String, String),
+    latest_version: String,
   )
 }
 
@@ -110,6 +123,7 @@ fn package_decoder() -> zero.Decoder(Package) {
   use downloads_week <- zero.field("downloads_week", zero.int)
   use downloads_day <- zero.field("downloads_day", zero.int)
   use links <- zero.field("links", zero.dict(zero.string, zero.string))
+  use latest_version <- zero.field("latest_version", zero.string)
   zero.success(Package(
     name:,
     description:,
@@ -121,6 +135,7 @@ fn package_decoder() -> zero.Decoder(Package) {
     downloads_week:,
     downloads_day:,
     links:,
+    latest_version:,
   ))
 }
 
@@ -193,7 +208,10 @@ pub fn get_most_recent_hex_timestamp(database: Database) -> Result(Time, Error) 
   |> result.map_error(error.StorageError)
 }
 
-fn hex_package_to_storage_package(package: hexpm.Package) -> Package {
+fn hex_package_to_storage_package(
+  package: hexpm.Package,
+  latest_version latest_version: String,
+) -> Package {
   let downloads_count = fn(period) {
     package.downloads |> dict.get(period) |> result.unwrap(0)
   }
@@ -208,6 +226,7 @@ fn hex_package_to_storage_package(package: hexpm.Package) -> Package {
     downloads_week: downloads_count("week"),
     downloads_day: downloads_count("day"),
     links: package.meta.links,
+    latest_version:,
   )
 }
 
@@ -231,10 +250,11 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
 pub fn upsert_package_from_hex(
   database: Database,
   package: hexpm.Package,
+  latest_version latest_version: String,
 ) -> Result(Nil, Error) {
   database.packages
   |> storail.key(package.name)
-  |> storail.write(hex_package_to_storage_package(package))
+  |> storail.write(hex_package_to_storage_package(package, latest_version))
   |> result.map_error(error.StorageError)
 }
 
@@ -277,53 +297,6 @@ pub fn get_release(
   |> storail.optional_read
   |> result.map_error(error.StorageError)
 }
-//
-// pub type PackageSummary {
-//   PackageSummary(
-//     id: Int,
-//     name: String,
-//     description: String,
-//     docs_url: Option(String),
-//     links: Dict(String, String),
-//     latest_versions: List(String),
-//     updated_in_hex_at: Time,
-//   )
-// }
-//
-// fn decode_package_links(
-//   data: Dynamic,
-// ) -> Result(Dict(String, String), List(DecodeError)) {
-//   use json_data <- try(dyn.string(data))
-//
-//   json.decode(json_data, using: dyn.dict(of: dyn.string, to: dyn.string))
-//   |> result.map_error(fn(_) {
-//     [DecodeError(expected: "Map(String, String)", found: json_data, path: [])]
-//   })
-// }
-//
-// fn decode_package_summary(
-//   data: Dynamic,
-// ) -> Result(PackageSummary, List(DecodeError)) {
-//   dyn.decode7(
-//     PackageSummary,
-//     dyn.element(0, dyn.int),
-//     dyn.element(1, dyn.string),
-//     dyn.element(2, dyn.string),
-//     dyn.element(3, dyn.optional(dyn.string)),
-//     dyn.element(4, decode_package_links),
-//     fn(_) { Ok([]) },
-//     dyn.element(5, unix_timestamp),
-//   )(data)
-// }
-//
-// fn remove_extra_spaces(input: String) -> String {
-//   input
-//   |> string.trim
-//   |> string.split(" ")
-//   |> list.filter(fn(part) { !string.is_empty(part) })
-//   |> string.join(" ")
-// }
-//
 // pub fn search_packages(
 //   db: Connection,
 //   search_term: String,
