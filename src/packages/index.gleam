@@ -1,7 +1,7 @@
 import birl.{type Time}
+import envoy
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type DecodeError, type Dynamic, DecodeError} as dyn
-import gleam/erlang/os
 import gleam/hexpm
 import gleam/json
 import gleam/list
@@ -26,7 +26,7 @@ pub opaque type Connection {
 /// no file exists at that path.
 ///
 pub fn has_write_permission() -> Bool {
-  case os.get_env("LITEFS_PRIMARY_FILE") {
+  case envoy.get("LITEFS_PRIMARY_FILE") {
     Ok(path) -> simplifile.is_file(path) == Ok(False)
     Error(_) -> True
   }
