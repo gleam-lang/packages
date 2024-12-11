@@ -10,4 +10,5 @@ pub type Error {
   HttpClientError(hackney.Error)
   JsonDecodeError(json.DecodeError)
   StorageError(storail.StorailError)
+  EtsTableError
 }
