@@ -2,15 +2,13 @@ import birl.{type Time}
 import decode/zero
 import gleam/dict.{type Dict}
 import gleam/hexpm
+import gleam/int
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option}
 import gleam/result
 import packages/error.{type Error}
 import storail.{type Collection}
-
-// text search index thing
-//   name, description
 
 pub opaque type Database {
   Database(
@@ -65,12 +63,11 @@ const gleam_package_epoch = 1_635_092_380
 
 pub type PackageSummary {
   PackageSummary(
-    id: Int,
     name: String,
     description: String,
-    docs_url: Option(String),
-    links: Dict(String, String),
-    latest_versions: List(String),
+    docs_url: String,
+    repository_url: Option(String),
+    latest_version: String,
     updated_in_hex_at: Time,
   )
 }
@@ -258,7 +255,14 @@ pub fn upsert_package_from_hex(
   |> result.map_error(error.StorageError)
 }
 
-pub fn get_package(
+pub fn get_package(database: Database, name: String) -> Result(Package, Error) {
+  database.packages
+  |> storail.key(name)
+  |> storail.read
+  |> result.map_error(error.StorageError)
+}
+
+pub fn get_optional_package(
   database: Database,
   name: String,
 ) -> Result(Option(Package), Error) {
@@ -291,65 +295,98 @@ pub fn get_release(
   database: Database,
   package: String,
   version: String,
-) -> Result(Option(Release), Error) {
+) -> Result(Release, Error) {
   database.releases
   |> storail.namespaced_key([package], version)
-  |> storail.optional_read
+  |> storail.read
   |> result.map_error(error.StorageError)
 }
-// pub fn search_packages(
-//   db: Connection,
-//   search_term: String,
-// ) -> Result(List(PackageSummary), Error) {
-//   let db = db.inner
-//
-//   let trimmed_search_term = remove_extra_spaces(search_term)
-//
-//   let query = webquery_to_sqlite_fts_query(trimmed_search_term)
-//   let params = [sqlight.text(query), sqlight.text(trimmed_search_term)]
-//   let result = sql.search_packages(db, params, decode_package_summary)
-//   use packages <- result.try(result)
-//
-//   // Look up the latest versions for each package
-//   packages
-//   |> list.try_map(fn(package) {
-//     let params = [sqlight.int(package.id)]
-//     let decoder = dyn.element(0, dyn.string)
-//     let result = sql.get_most_recent_releases(db, params, decoder)
-//     use versions <- result.try(result)
-//     Ok(PackageSummary(..package, latest_versions: versions))
-//   })
-// }
-//
-// // The search term here is used with SQLite's full-text-search feature, which
-// // expects query terms in a specific format.
-// // https://www.sqlite.org/fts5.html#full_text_query_syntax
-// //
-// // In future it would be good to build more sophisticated queries, but for now
-// // we just escape it to avoid syntax errors.
-// fn webquery_to_sqlite_fts_query(webquery: String) -> String {
-//   let webquery = string.trim(webquery)
-//   case webquery {
-//     "" -> ""
-//     _ -> "\"" <> string.replace(webquery, "\"", "\"\"") <> "\""
-//   }
-// }
-//
-// fn unix_timestamp(data: Dynamic) -> Result(Time, List(DecodeError)) {
-//   use i <- result.map(dyn.int(data))
-//   birl.from_unix(i)
-// }
-//
-// pub fn new_package_count_per_day(
-//   db: Connection,
-// ) -> Result(List(#(String, Int)), Error) {
-//   let decoder = dyn.tuple2(dyn.string, dyn.int)
-//   sql.new_package_count_per_day(db.inner, [], decoder)
-// }
-//
-// pub fn new_release_count_per_day(
-//   db: Connection,
-// ) -> Result(List(#(String, Int)), Error) {
-//   let decoder = dyn.tuple2(dyn.string, dyn.int)
-//   sql.new_release_count_per_day(db.inner, [], decoder)
-// }
+
+pub fn list_releases(
+  database: Database,
+  package: String,
+) -> Result(List(String), Error) {
+  storail.list(database.releases, [package])
+  |> result.map_error(error.StorageError)
+}
+
+pub fn list_packages(database: Database) -> Result(List(String), Error) {
+  storail.list(database.packages, [])
+  |> result.map_error(error.StorageError)
+}
+
+pub fn package_summaries(
+  database: Database,
+  packages: List(String),
+) -> Result(List(PackageSummary), Error) {
+  use name <- list.try_map(packages)
+  use package <- result.try(get_package(database, name))
+  Ok(PackageSummary(
+    name:,
+    description: package.description,
+    docs_url: package.docs_url,
+    repository_url: dict.get(package.links, "Repository") |> option.from_result,
+    latest_version: package.latest_version,
+    updated_in_hex_at: birl.from_unix(package.updated_in_hex_at),
+  ))
+}
+
+fn try_fold_packages(
+  database: Database,
+  initial: acc,
+  folder: fn(acc, Package) -> Result(acc, Error),
+) -> Result(acc, Error) {
+  use packages <- result.try(list_packages(database))
+  list.try_fold(packages, initial, fn(acc, name) {
+    use package <- result.try(get_package(database, name))
+    folder(acc, package)
+  })
+}
+
+fn try_fold_releases(
+  database: Database,
+  initial: acc,
+  folder: fn(acc, Package) -> Result(acc, Error),
+) -> Result(acc, Error) {
+  try_fold_packages(database, initial, fn(acc, package) {
+    use packages <- result.try(list_releases(database, package.name))
+    list.try_fold(packages, acc, fn(acc, name) {
+      use package <- result.try(get_package(database, name))
+      folder(acc, package)
+    })
+  })
+}
+
+pub fn new_package_count_per_day(
+  database: Database,
+) -> Result(List(#(String, Int)), Error) {
+  use packages <- result.try(
+    try_fold_packages(database, dict.new(), fn(counts, package) {
+      birl.from_unix(package.inserted_in_hex_at)
+      |> birl.to_date_string
+      |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
+      |> Ok
+    }),
+  )
+  packages
+  |> dict.to_list
+  |> list.sort(fn(a, b) { int.compare(a.1, b.1) })
+  |> Ok
+}
+
+pub fn new_release_count_per_day(
+  database: Database,
+) -> Result(List(#(String, Int)), Error) {
+  use releases <- result.try(
+    try_fold_releases(database, dict.new(), fn(counts, release) {
+      birl.from_unix(release.inserted_in_hex_at)
+      |> birl.to_date_string
+      |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
+      |> Ok
+    }),
+  )
+  releases
+  |> dict.to_list
+  |> list.sort(fn(a, b) { int.compare(a.1, b.1) })
+  |> Ok
+}
