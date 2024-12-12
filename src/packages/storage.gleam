@@ -332,7 +332,7 @@ pub fn package_summaries(
   ))
 }
 
-fn try_fold_packages(
+pub fn try_fold_packages(
   database: Database,
   initial: acc,
   folder: fn(acc, Package) -> Result(acc, Error),
@@ -347,13 +347,13 @@ fn try_fold_packages(
 fn try_fold_releases(
   database: Database,
   initial: acc,
-  folder: fn(acc, Package) -> Result(acc, Error),
+  folder: fn(acc, Release) -> Result(acc, Error),
 ) -> Result(acc, Error) {
   try_fold_packages(database, initial, fn(acc, package) {
-    use packages <- result.try(list_releases(database, package.name))
-    list.try_fold(packages, acc, fn(acc, name) {
-      use package <- result.try(get_package(database, name))
-      folder(acc, package)
+    use releases <- result.try(list_releases(database, package.name))
+    list.try_fold(releases, acc, fn(acc, version) {
+      use release <- result.try(get_release(database, package.name, version))
+      folder(acc, release)
     })
   })
 }

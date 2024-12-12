@@ -41,7 +41,7 @@ pub fn update(
 pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
-) -> Result(List(String), Nil) {
+) -> Result(List(String), Error) {
   stem_words(phrase)
   |> list.try_map(ethos.get(index.table, _))
   |> result.map(fn(names) {
@@ -54,6 +54,7 @@ pub fn lookup(
     |> list.sort(fn(a, b) { int.compare(b.1, a.1) })
     |> list.map(fn(pair) { pair.0 })
   })
+  |> result.replace_error(error.EtsTableError)
 }
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {

@@ -37,6 +37,8 @@ fn server() {
   let assert Ok(priv) = wisp.priv_directory("packages")
   let static_directory = priv <> "/static"
   let database = storage.initialise(database_path())
+  let index = text_search.new()
+  let assert Ok(_) = seed_index(index, database)
 
   // We don't use any signing in this application so the secret key can be
   // generated anew each time
@@ -46,7 +48,7 @@ fn server() {
   let make_context = fn() {
     web.Context(
       db: database,
-      search_index: text_search.new(),
+      search_index: index,
       static_directory: static_directory,
     )
   }
@@ -64,6 +66,18 @@ fn server() {
 
   // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
+}
+
+fn seed_index(
+  index: text_search.TextSearchIndex,
+  database: storage.Database,
+) -> Result(Nil, Error) {
+  use _, package <- storage.try_fold_packages(database, Nil)
+  text_search.insert(
+    index,
+    package.name,
+    package.name <> " " <> package.description,
+  )
 }
 
 fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {

@@ -1,5 +1,5 @@
 name = "packages"
-version = "0.2.0"
+version = "1.0.0"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
@@ -9,12 +9,7 @@ version = "0.2.0"
 # repository = { type = "github", user = "username", repo = "project" }
 # links = [{ title = "Website", href = "https://gleam.run" }]
 
-internal_modules = [
-  "packages/internal",
-  "packages/internal/*",
-  "packages/generated/*",
-]
-gleam = ">= 1.5.0"
+gleam = ">= 1.6.0"
 
 [dependencies]
 gleam_stdlib = "~> 0.23"
