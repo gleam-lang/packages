@@ -1,6 +1,6 @@
 pub type BagTable(k, v)
 
-@external(erlang, "ethos_ffi", "bag_get")
+@external(erlang, "ethos_ffi", "bag_new")
 pub fn new() -> BagTable(k, v)
 
 @external(erlang, "ethos_ffi", "bag_get")

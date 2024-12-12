@@ -25,7 +25,8 @@ pub fn insert(
   |> string.append(" ")
   |> string.append(description)
   |> stem_words
-  |> list.try_each(fn(word) { insert(index, word, name) })
+  |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
+  |> result.replace_error(error.EtsTableError)
 }
 
 pub fn update(
@@ -41,16 +42,18 @@ pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
 ) -> Result(List(String), Nil) {
-  let words = stem_words(phrase)
-  use names <- result.map(list.try_map(words, ethos.get(index.table, _)))
-  names
-  |> list.flatten
-  |> list.fold(dict.new(), fn(counters, name) {
-    dict.upsert(counters, name, fn(x) { option.unwrap(x, 0) + 1 })
+  stem_words(phrase)
+  |> list.try_map(ethos.get(index.table, _))
+  |> result.map(fn(names) {
+    names
+    |> list.flatten
+    |> list.fold(dict.new(), fn(counters, name) {
+      dict.upsert(counters, name, fn(x) { option.unwrap(x, 0) + 1 })
+    })
+    |> dict.to_list
+    |> list.sort(fn(a, b) { int.compare(b.1, a.1) })
+    |> list.map(fn(pair) { pair.0 })
   })
-  |> dict.to_list
-  |> list.sort(fn(a, b) { int.compare(a.1, b.1) })
-  |> list.map(fn(pair) { pair.0 })
 }
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
