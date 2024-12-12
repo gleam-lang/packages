@@ -1,6 +1,5 @@
 import birl.{type Time}
 import birl/duration
-import gleam/dict
 import gleam/int
 import gleam/json
 import gleam/list

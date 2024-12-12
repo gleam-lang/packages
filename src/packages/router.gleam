@@ -1,4 +1,6 @@
+import birl
 import gleam/http/request
+import gleam/int
 import gleam/list
 import gleam/option
 import gleam/result
@@ -60,9 +62,18 @@ fn internet_points(context: Context) -> Response {
 
 fn search(request: Request, context: Context) -> Response {
   let search_term = get_search_parameter(request)
-  let assert Ok(packages) =
-    text_search.lookup(context.search_index, search_term)
+  let assert Ok(packages) = case search_term {
+    "" -> storage.list_packages(context.db)
+    _ -> text_search.lookup(context.search_index, search_term)
+  }
   let assert Ok(packages) = storage.package_summaries(context.db, packages)
+  let packages = case search_term {
+    "" ->
+      list.sort(packages, fn(a, b) {
+        birl.compare(b.updated_in_hex_at, a.updated_in_hex_at)
+      })
+    _ -> packages
+  }
   let assert Ok(total_package_count) =
     storage.get_total_package_count(context.db)
 
