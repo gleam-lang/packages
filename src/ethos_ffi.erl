@@ -9,7 +9,7 @@ bag_new() ->
 
 bag_get(Bag, Key) ->
     Items1 = ets:lookup(Bag, Key),
-    Items2 = lists:map(fun(Elem) -> element(1, Elem) end, Items1),
+    Items2 = lists:map(fun(Elem) -> element(2, Elem) end, Items1),
     {ok, Items2}.
 
 bag_insert(Bag, Key, Value) ->

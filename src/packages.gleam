@@ -4,13 +4,13 @@ import gleam/erlang/process
 import gleam/io
 import gleam/otp/actor
 import gleam/otp/supervisor
-import gleam/result
 import mist
 import packages/error.{type Error}
 import packages/periodic
 import packages/router
 import packages/storage
 import packages/syncing
+import packages/text_search
 import packages/web
 import wisp
 import wisp/wisp_mist
@@ -42,18 +42,22 @@ fn server() {
   // generated anew each time
   let secret_key_base = wisp.random_string(64)
 
-  // // Initialisation that is run per-request
-  // let make_context = fn() {
-  //   web.Context(db: database, static_directory: static_directory)
-  // }
-  //
-  // // Start the web server
-  // let assert Ok(_) =
-  //   router.handle_request(_, make_context)
-  //   |> wisp_mist.handler(secret_key_base)
-  //   |> mist.new
-  //   |> mist.port(3000)
-  //   |> mist.start_http
+  // Initialisation that is run per-request
+  let make_context = fn() {
+    web.Context(
+      db: database,
+      search_index: text_search.new(),
+      static_directory: static_directory,
+    )
+  }
+
+  // Start the web server
+  let assert Ok(_) =
+    router.handle_request(_, make_context)
+    |> wisp_mist.handler(secret_key_base)
+    |> mist.new
+    |> mist.port(3000)
+    |> mist.start_http
 
   // Start syncing new releases periodically
   let assert Ok(_) = start_hex_syncer(database, key)

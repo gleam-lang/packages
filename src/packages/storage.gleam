@@ -100,6 +100,7 @@ fn package_to_json(package: Package) -> Json {
     #("description", json.string(package.description)),
     #("inserted_in_hex_at", json.int(package.inserted_in_hex_at)),
     #("updated_in_hex_at", json.int(package.updated_in_hex_at)),
+    #("latest_version", json.string(package.latest_version)),
     #("docs_url", json.string(package.docs_url)),
     #("downloads_all", json.int(package.downloads_all)),
     #("downloads_recent", json.int(package.downloads_recent)),
