@@ -3,7 +3,8 @@ import gleam/list
 import gleam/option
 import gleam/result
 import gleam/uri
-import packages/index
+import packages/storage
+import packages/text_search
 import packages/web.{type Context}
 import packages/web/page
 import wisp.{type Request, type Response}
@@ -38,18 +39,19 @@ pub fn middleware(
 }
 
 fn download_database() -> Response {
-  wisp.ok()
-  |> wisp.set_header("content-type", "application/vnd.sqlite3")
-  |> wisp.set_header(
-    "content-disposition",
-    "attachment; filename=packages.sqlite",
-  )
-  |> wisp.set_body(wisp.File(index.export_path))
+  todo
+  // wisp.ok()
+  // |> wisp.set_header("content-type", "application/vnd.sqlite3")
+  // |> wisp.set_header(
+  //   "content-disposition",
+  //   "attachment; filename=packages.sqlite",
+  // )
+  // |> wisp.set_body(wisp.File(index.export_path))
 }
 
 fn internet_points(context: Context) -> Response {
-  let assert Ok(package_counts) = index.new_package_count_per_day(context.db)
-  let assert Ok(release_counts) = index.new_release_count_per_day(context.db)
+  let assert Ok(package_counts) = storage.new_package_count_per_day(context.db)
+  let assert Ok(release_counts) = storage.new_release_count_per_day(context.db)
   let stats =
     page.Stats(package_counts: package_counts, release_counts: release_counts)
   page.internet_points(stats)
@@ -58,8 +60,11 @@ fn internet_points(context: Context) -> Response {
 
 fn search(request: Request, context: Context) -> Response {
   let search_term = get_search_parameter(request)
-  let assert Ok(packages) = index.search_packages(context.db, search_term)
-  let assert Ok(total_package_count) = index.get_total_package_count(context.db)
+  let assert Ok(packages) =
+    text_search.lookup(context.search_index, search_term)
+  let assert Ok(packages) = storage.package_summaries(context.db, packages)
+  let assert Ok(total_package_count) =
+    storage.get_total_package_count(context.db)
 
   page.packages_list(packages, total_package_count, search_term)
   |> wisp.html_response(200)

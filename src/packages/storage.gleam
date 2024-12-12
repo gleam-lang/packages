@@ -39,7 +39,7 @@ pub fn initialise(storage_path: String) -> Database {
 
   let releases =
     storail.Collection(
-      name: "packages",
+      name: "releases",
       to_json: release_to_json,
       decoder: release_decoder(),
       config:,

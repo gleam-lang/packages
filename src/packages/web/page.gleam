@@ -11,7 +11,7 @@ import gleam/string_tree.{type StringTree}
 import lustre/attribute.{attribute}
 import lustre/element.{type Element}
 import lustre/element/html
-import packages/index.{type PackageSummary}
+import packages/storage.{type PackageSummary}
 import packages/web/icons
 
 pub fn packages_list(
@@ -175,16 +175,12 @@ fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
 fn package_list_item(package: PackageSummary) -> Element(Nil) {
   let url = "https://hex.pm/packages/" <> package.name
 
-  let repository_url =
-    package.links
-    |> dict.get("Repository")
-    |> option.from_result
-
   let links =
     [
       package.docs_url
-        |> option.map(external_link_text(_, "Documentation")),
-      repository_url
+        |> external_link_text("Documentation")
+        |> option.Some,
+      package.repository_url
         |> option.map(external_link_text(_, "Repository")),
     ]
     |> list.filter_map(option.to_result(_, Nil))

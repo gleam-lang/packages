@@ -7,9 +7,9 @@ import gleam/otp/supervisor
 import gleam/result
 import mist
 import packages/error.{type Error}
-import packages/index
 import packages/periodic
 import packages/router
+import packages/storage
 import packages/syncing
 import packages/web
 import wisp
@@ -36,32 +36,27 @@ fn server() {
   let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(priv) = wisp.priv_directory("packages")
   let static_directory = priv <> "/static"
-  let database_name = database_name()
+  let database = storage.initialise(database_path())
 
   // We don't use any signing in this application so the secret key can be
   // generated anew each time
   let secret_key_base = wisp.random_string(64)
 
-  // Initialisation that is run per-request
-  let make_context = fn() {
-    let db = index.connect(database_name)
-    web.Context(db: db, static_directory: static_directory)
-  }
-
-  // Start the web server
-  let assert Ok(_) =
-    router.handle_request(_, make_context)
-    |> wisp_mist.handler(secret_key_base)
-    |> mist.new
-    |> mist.port(3000)
-    |> mist.start_http
+  // // Initialisation that is run per-request
+  // let make_context = fn() {
+  //   web.Context(db: database, static_directory: static_directory)
+  // }
+  //
+  // // Start the web server
+  // let assert Ok(_) =
+  //   router.handle_request(_, make_context)
+  //   |> wisp_mist.handler(secret_key_base)
+  //   |> mist.new
+  //   |> mist.port(3000)
+  //   |> mist.start_http
 
   // Start syncing new releases periodically
-  let assert Ok(_) = start_hex_syncer(database_name, key)
-
-  // Start exporting the database periodically so that folks can download it if
-  // they want to.
-  let assert Ok(_) = start_database_exporter(database_name)
+  let assert Ok(_) = start_hex_syncer(database, key)
 
   // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
@@ -74,45 +69,22 @@ fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {
   })
 }
 
-fn export_database(name: String) -> Result(Nil, Error) {
-  wisp.log_info("Exporting database to enable downloads")
-  let db = index.connect(name)
-  index.export(db)
-}
-
-fn database_name() {
+fn database_path() {
   case envoy.get("DATABASE_PATH") {
     Ok(path) -> path
-    Error(Nil) -> "./database.sqlite"
+    Error(Nil) -> "./storage"
   }
 }
 
-fn start_hex_syncer(database_name: String, api_key: String) -> Result(_, _) {
+fn start_hex_syncer(db: storage.Database, api_key: String) -> Result(_, _) {
   supervise(fn() {
-    let sync = fn() {
-      let db = index.connect(database_name)
-      syncing.sync_new_gleam_releases(api_key, db)
-    }
+    let sync = fn() { syncing.sync_new_gleam_releases(api_key, db) }
     periodic.periodically(do: sync, waiting: 60 * 1000)
   })
 }
 
-fn start_database_exporter(database_name: String) -> Result(_, _) {
-  use _ <- result.try(
-    export_database(database_name)
-    |> result.replace_error(Nil),
-  )
-  supervise(fn() {
-    periodic.periodically(
-      do: fn() { export_database(database_name) },
-      waiting: 5 * 60 * 1000,
-    )
-  })
-  |> result.replace_error(Nil)
-}
-
 fn sync_one(package_name: String) -> Nil {
-  let db = index.connect(database_name())
+  let db = storage.initialise(database_path())
   let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(Nil) =
     syncing.fetch_and_sync_package(db, package_name, secret: key)

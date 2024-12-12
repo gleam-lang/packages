@@ -1,5 +1,10 @@
-import packages/index
+import packages/storage
+import packages/text_search
 
 pub type Context {
-  Context(db: index.Connection, static_directory: String)
+  Context(
+    db: storage.Database,
+    search_index: text_search.TextSearchIndex,
+    static_directory: String,
+  )
 }

@@ -12,7 +12,7 @@ import gleam/result
 import gleam/string
 import gleam/uri
 import packages/error.{type Error}
-import packages/index
+import packages/storage.{type Database}
 import wisp
 
 pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
@@ -29,42 +29,33 @@ type State {
     newest: Time,
     hex_api_key: String,
     last_logged: Time,
-    db: index.Connection,
+    db: storage.Database,
   )
 }
 
 pub fn sync_new_gleam_releases(
   hex_api_key: String,
-  db: index.Connection,
+  db: Database,
 ) -> Result(Nil, Error) {
-  case index.has_write_permission() {
-    True -> {
-      wisp.log_info("Syncing new releases from Hex")
-      use limit <- try(index.get_most_recent_hex_timestamp(db))
-      use latest <- try(
-        sync_packages(State(
-          page: 1,
-          limit: limit,
-          newest: limit,
-          hex_api_key: hex_api_key,
-          last_logged: birl.now(),
-          db: db,
-        )),
-      )
-      let latest = index.upsert_most_recent_hex_timestamp(db, latest)
-      wisp.log_info("\nUp to date!")
-      latest
-    }
-
-    False -> {
-      wisp.log_info("Node lacks write permission to DB, not syncing")
-      Ok(Nil)
-    }
-  }
+  wisp.log_info("Syncing new releases from Hex")
+  use limit <- try(storage.get_most_recent_hex_timestamp(db))
+  use latest <- try(
+    sync_packages(State(
+      page: 1,
+      limit: limit,
+      newest: limit,
+      hex_api_key: hex_api_key,
+      last_logged: birl.now(),
+      db: db,
+    )),
+  )
+  let latest = storage.upsert_most_recent_hex_timestamp(db, latest)
+  wisp.log_info("\nUp to date!")
+  latest
 }
 
 pub fn fetch_and_sync_package(
-  db: index.Connection,
+  db: storage.Database,
   package_name: String,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
@@ -193,7 +184,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 }
 
 fn sync_single_package(
-  db: index.Connection,
+  db: storage.Database,
   package: hexpm.Package,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
@@ -240,18 +231,22 @@ fn log_if_needed(state: State, time: Time) -> State {
 fn insert_package_and_releases(
   package: hexpm.Package,
   releases: List(hexpm.Release),
-  db: index.Connection,
+  db: storage.Database,
 ) -> Result(Nil, Error) {
+  let assert Ok(latest) =
+    releases
+    |> list.sort(fn(a, b) { birl.compare(b.inserted_at, a.inserted_at) })
+    |> list.first
   let versions =
     releases
     |> list.map(fn(release) { release.version })
     |> string.join(", v")
   wisp.log_info("Saving " <> package.name <> " v" <> versions)
 
-  use id <- try(index.upsert_package(db, package))
+  use _ <- try(storage.upsert_package_from_hex(db, package, latest.version))
 
   releases
-  |> list.try_each(fn(release) { index.upsert_release(db, id, release) })
+  |> list.try_each(storage.upsert_release(db, package.name, _))
 }
 
 fn lookup_release(
