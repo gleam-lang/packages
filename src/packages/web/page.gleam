@@ -173,10 +173,11 @@ fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
 
 fn package_list_item(package: PackageSummary) -> Element(Nil) {
   let url = "https://hex.pm/packages/" <> package.name
+  let docs_url = "https://hexdocs.pm/" <> package.name
 
   let links =
     [
-      package.docs_url
+      docs_url
         |> external_link_text("Documentation")
         |> option.Some,
       package.repository_url
