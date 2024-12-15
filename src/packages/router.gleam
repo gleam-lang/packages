@@ -1,6 +1,8 @@
 import birl
+import gleam/http
 import gleam/http/request
 import gleam/int
+import gleam/json
 import gleam/list
 import gleam/option
 import gleam/result
@@ -21,7 +23,8 @@ pub fn handle_request(
   case request.path_segments(request) {
     [] -> search(request, context)
     ["internet-points"] -> internet_points(context)
-    ["packages.sqlite"] -> download_database()
+    ["api", "packages"] -> api_packages(request, context)
+    ["api", "packages", name] -> api_package(request, context, name)
     _ -> wisp.redirect(to: "/")
   }
 }
@@ -40,15 +43,38 @@ pub fn middleware(
   handle_request(req)
 }
 
-fn download_database() -> Response {
-  todo
-  // wisp.ok()
-  // |> wisp.set_header("content-type", "application/vnd.sqlite3")
-  // |> wisp.set_header(
-  //   "content-disposition",
-  //   "attachment; filename=packages.sqlite",
-  // )
-  // |> wisp.set_body(wisp.File(index.export_path))
+fn api_packages(req: Request, ctx: Context) -> Response {
+  use <- wisp.require_method(req, http.Get)
+  let assert Ok(packages) = {
+    use packages <- result.try(storage.list_packages(ctx.db))
+    let packages = list.try_map(packages, storage.get_package(ctx.db, _))
+    use packages <- result.try(packages)
+    packages
+    |> list.sort(fn(a, b) {
+      int.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
+    })
+    |> Ok
+  }
+  json.object([#("data", json.array(packages, package_to_json))])
+  |> json.to_string_tree()
+  |> wisp.json_response(200)
+}
+
+fn api_package(req: Request, ctx: Context, name: String) -> Response {
+  use <- wisp.require_method(req, http.Get)
+  let assert Ok(package) = storage.get_package(ctx.db, name)
+  json.object([#("data", package_to_json(package))])
+  |> json.to_string_tree()
+  |> wisp.json_response(200)
+}
+
+fn package_to_json(package: storage.Package) -> json.Json {
+  json.object([
+    #("name", json.string(package.name)),
+    #("description", json.string(package.description)),
+    #("latest-version", json.string(package.name)),
+    #("repository", json.nullable(package.repository_url, json.string)),
+  ])
 }
 
 fn internet_points(context: Context) -> Response {

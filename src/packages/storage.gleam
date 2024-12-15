@@ -1,6 +1,6 @@
 import birl.{type Time}
 import decode/zero
-import gleam/dict.{type Dict}
+import gleam/dict
 import gleam/hexpm
 import gleam/int
 import gleam/json.{type Json}
@@ -65,7 +65,6 @@ pub type PackageSummary {
   PackageSummary(
     name: String,
     description: String,
-    docs_url: String,
     repository_url: Option(String),
     latest_version: String,
     updated_in_hex_at: Time,
@@ -78,35 +77,27 @@ pub type Package {
     description: String,
     inserted_in_hex_at: Int,
     updated_in_hex_at: Int,
-    docs_url: String,
     downloads_all: Int,
     downloads_recent: Int,
     downloads_week: Int,
     downloads_day: Int,
-    links: Dict(String, String),
+    repository_url: Option(String),
     latest_version: String,
   )
 }
 
 fn package_to_json(package: Package) -> Json {
-  let links =
-    json.object(
-      package.links
-      |> dict.to_list
-      |> list.map(fn(pair) { #(pair.0, json.string(pair.1)) }),
-    )
   json.object([
     #("name", json.string(package.name)),
     #("description", json.string(package.description)),
     #("inserted_in_hex_at", json.int(package.inserted_in_hex_at)),
     #("updated_in_hex_at", json.int(package.updated_in_hex_at)),
     #("latest_version", json.string(package.latest_version)),
-    #("docs_url", json.string(package.docs_url)),
     #("downloads_all", json.int(package.downloads_all)),
     #("downloads_recent", json.int(package.downloads_recent)),
     #("downloads_week", json.int(package.downloads_week)),
     #("downloads_day", json.int(package.downloads_day)),
-    #("links", links),
+    #("repository_url", json.nullable(package.repository_url, json.string)),
   ])
 }
 
@@ -115,24 +106,22 @@ fn package_decoder() -> zero.Decoder(Package) {
   use description <- zero.field("description", zero.string)
   use inserted_in_hex_at <- zero.field("inserted_in_hex_at", zero.int)
   use updated_in_hex_at <- zero.field("updated_in_hex_at", zero.int)
-  use docs_url <- zero.field("docs_url", zero.string)
   use downloads_all <- zero.field("downloads_all", zero.int)
   use downloads_recent <- zero.field("downloads_recent", zero.int)
   use downloads_week <- zero.field("downloads_week", zero.int)
   use downloads_day <- zero.field("downloads_day", zero.int)
-  use links <- zero.field("links", zero.dict(zero.string, zero.string))
+  use repository_url <- zero.field("repository_url", zero.optional(zero.string))
   use latest_version <- zero.field("latest_version", zero.string)
   zero.success(Package(
     name:,
     description:,
     inserted_in_hex_at:,
     updated_in_hex_at:,
-    docs_url:,
     downloads_all:,
     downloads_recent:,
     downloads_week:,
     downloads_day:,
-    links:,
+    repository_url:,
     latest_version:,
   ))
 }
@@ -213,17 +202,18 @@ fn hex_package_to_storage_package(
   let downloads_count = fn(period) {
     package.downloads |> dict.get(period) |> result.unwrap(0)
   }
+  let repository_url =
+    dict.get(package.meta.links, "Repository") |> option.from_result
   Package(
     name: package.name,
     description: package.meta.description |> option.unwrap(""),
     inserted_in_hex_at: birl.to_unix(package.inserted_at),
     updated_in_hex_at: birl.to_unix(package.updated_at),
-    docs_url: package.docs_html_url |> option.unwrap(""),
     downloads_all: downloads_count("all"),
     downloads_recent: downloads_count("recent"),
     downloads_week: downloads_count("week"),
     downloads_day: downloads_count("day"),
-    links: package.meta.links,
+    repository_url:,
     latest_version:,
   )
 }
@@ -325,8 +315,7 @@ pub fn package_summaries(
   Ok(PackageSummary(
     name:,
     description: package.description,
-    docs_url: package.docs_url,
-    repository_url: dict.get(package.links, "Repository") |> option.from_result,
+    repository_url: package.repository_url,
     latest_version: package.latest_version,
     updated_in_hex_at: birl.from_unix(package.updated_in_hex_at),
   ))

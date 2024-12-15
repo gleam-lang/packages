@@ -54,7 +54,6 @@ pub fn insert_package_test() {
   |> should.equal(Package(
     description: "Standard library for Gleam",
     name: "gleam_stdlib",
-    docs_url: "https://hexdocs.pm/gleam_stdlib/",
     inserted_in_hex_at: 100,
     updated_in_hex_at: 2000,
     downloads_all: 5,
@@ -62,10 +61,7 @@ pub fn insert_package_test() {
     downloads_day: 0,
     downloads_week: 0,
     latest_version: "1.0.0",
-    links: dict.from_list([
-      #("Website", "https://gleam.run/"),
-      #("Repository", "https://github.com/gleam-lang/stdlib"),
-    ]),
+    repository_url: Some("https://github.com/gleam-lang/stdlib"),
   ))
 }
 
