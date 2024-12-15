@@ -3,6 +3,8 @@
 *.sqlite*
 .env
 .idea
+/storage
+/test/storage
 build
 erl_crash.dump
 secrets.env
