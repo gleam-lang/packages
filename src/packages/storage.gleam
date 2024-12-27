@@ -48,13 +48,13 @@ pub fn initialise(storage_path: String) -> Database {
   Database(most_recent_hex_timestamp:, packages:, releases:)
 }
 
-pub const hidden_packages = [
+const ignored_packages = [
   "bare_package1", "bare_package_one", "bare_package_two",
   "first_gleam_publish_package", "gleam_module_javascript_test",
   // Reserved official sounding names.
   "gleam", "gleam_deno", "gleam_email", "gleam_html", "gleam_nodejs",
   "gleam_tcp", "gleam_test", "gleam_toml", "gleam_xml", "gleam_mongo",
-  "gleam_bson",
+  "gleam_bson", "gleam_file",
   // Reserved unreleased project names.
   "glitter", "sequin",
 ]
@@ -240,10 +240,15 @@ pub fn upsert_package_from_hex(
   package: hexpm.Package,
   latest_version latest_version: String,
 ) -> Result(Nil, Error) {
-  database.packages
-  |> storail.key(package.name)
-  |> storail.write(hex_package_to_storage_package(package, latest_version))
-  |> result.map_error(error.StorageError)
+  case list.contains(ignored_packages, package.name) {
+    True -> Ok(Nil)
+    False -> {
+      database.packages
+      |> storail.key(package.name)
+      |> storail.write(hex_package_to_storage_package(package, latest_version))
+      |> result.map_error(error.StorageError)
+    }
+  }
 }
 
 pub fn get_package(database: Database, name: String) -> Result(Package, Error) {
