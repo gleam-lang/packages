@@ -3,7 +3,9 @@ import gleam/dict
 import gleam/hexpm
 import gleam/option.{None, Some}
 import gleeunit/should
+import packages/error
 import packages/storage.{Package, Release}
+import storail
 import tests
 
 pub fn most_recent_hex_timestamp_test() {
@@ -63,6 +65,40 @@ pub fn insert_package_test() {
     latest_version: "1.0.0",
     repository_url: Some("https://github.com/gleam-lang/stdlib"),
   ))
+}
+
+pub fn insert_ignored_package_test() {
+  use db <- tests.with_database
+
+  let assert Ok(_) =
+    storage.upsert_package_from_hex(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_file/"),
+        html_url: Some("https://hex.pm/packages/gleam_file"),
+        meta: hexpm.PackageMeta(
+          description: Some("Standard library for Gleam"),
+          licenses: ["Apache-2.0"],
+          links: dict.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
+        ),
+        name: "gleam_file",
+        owners: None,
+        releases: [],
+        inserted_at: birl.from_unix(100),
+        updated_at: birl.from_unix(2000),
+      ),
+      "1.0.0",
+    )
+
+  let package = storage.get_package(db, "gleam_file")
+  package
+  |> should.equal(
+    Error(error.StorageError(storail.ObjectNotFound([], "gleam_file"))),
+  )
 }
 
 pub fn insert_release_test() {
