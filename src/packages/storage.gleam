@@ -1,6 +1,6 @@
 import birl.{type Time}
-import decode/zero
 import gleam/dict
+import gleam/dynamic/decode.{type Decoder}
 import gleam/hexpm
 import gleam/int
 import gleam/json.{type Json}
@@ -25,7 +25,7 @@ pub fn initialise(storage_path: String) -> Database {
     storail.Collection(
       name: "most_recent_hex_timestamp",
       to_json: json.int,
-      decoder: zero.int,
+      decoder: decode.int,
       config:,
     )
 
@@ -101,18 +101,21 @@ fn package_to_json(package: Package) -> Json {
   ])
 }
 
-fn package_decoder() -> zero.Decoder(Package) {
-  use name <- zero.field("name", zero.string)
-  use description <- zero.field("description", zero.string)
-  use inserted_in_hex_at <- zero.field("inserted_in_hex_at", zero.int)
-  use updated_in_hex_at <- zero.field("updated_in_hex_at", zero.int)
-  use downloads_all <- zero.field("downloads_all", zero.int)
-  use downloads_recent <- zero.field("downloads_recent", zero.int)
-  use downloads_week <- zero.field("downloads_week", zero.int)
-  use downloads_day <- zero.field("downloads_day", zero.int)
-  use repository_url <- zero.field("repository_url", zero.optional(zero.string))
-  use latest_version <- zero.field("latest_version", zero.string)
-  zero.success(Package(
+fn package_decoder() -> Decoder(Package) {
+  use name <- decode.field("name", decode.string)
+  use description <- decode.field("description", decode.string)
+  use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
+  use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
+  use downloads_all <- decode.field("downloads_all", decode.int)
+  use downloads_recent <- decode.field("downloads_recent", decode.int)
+  use downloads_week <- decode.field("downloads_week", decode.int)
+  use downloads_day <- decode.field("downloads_day", decode.int)
+  use repository_url <- decode.field(
+    "repository_url",
+    decode.optional(decode.string),
+  )
+  use latest_version <- decode.field("latest_version", decode.string)
+  decode.success(Package(
     name:,
     description:,
     inserted_in_hex_at:,
@@ -152,19 +155,19 @@ fn release_to_json(release: Release) -> Json {
   ])
 }
 
-fn release_decoder() -> zero.Decoder(Release) {
-  use version <- zero.field("version", zero.string)
-  use retirement_reason <- zero.field(
+fn release_decoder() -> Decoder(Release) {
+  use version <- decode.field("version", decode.string)
+  use retirement_reason <- decode.field(
     "retirement_reason",
-    zero.optional(zero.string),
+    decode.optional(decode.string),
   )
-  use retirement_message <- zero.field(
+  use retirement_message <- decode.field(
     "retirement_message",
-    zero.optional(zero.string),
+    decode.optional(decode.string),
   )
-  use inserted_in_hex_at <- zero.field("inserted_in_hex_at", zero.int)
-  use updated_in_hex_at <- zero.field("updated_in_hex_at", zero.int)
-  zero.success(Release(
+  use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
+  use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
+  decode.success(Release(
     version:,
     retirement_reason:,
     retirement_message:,
