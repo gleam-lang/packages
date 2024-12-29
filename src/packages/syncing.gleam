@@ -7,12 +7,14 @@ import gleam/http/request
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option
 import gleam/order
 import gleam/result
 import gleam/string
 import gleam/uri
 import packages/error.{type Error}
 import packages/storage.{type Database}
+import packages/text_search
 import wisp
 
 pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
@@ -30,23 +32,26 @@ type State {
     hex_api_key: String,
     last_logged: Time,
     db: storage.Database,
+    text_search: text_search.TextSearchIndex,
   )
 }
 
 pub fn sync_new_gleam_releases(
   hex_api_key: String,
   db: Database,
+  text_search: text_search.TextSearchIndex,
 ) -> Result(Nil, Error) {
   wisp.log_info("Syncing new releases from Hex")
   use limit <- try(storage.get_most_recent_hex_timestamp(db))
   use latest <- try(
     sync_packages(State(
       page: 1,
-      limit: limit,
+      limit:,
       newest: limit,
-      hex_api_key: hex_api_key,
+      hex_api_key:,
       last_logged: birl.now(),
-      db: db,
+      db:,
+      text_search:,
     )),
   )
   let latest = storage.upsert_most_recent_hex_timestamp(db, latest)
@@ -56,12 +61,23 @@ pub fn sync_new_gleam_releases(
 
 pub fn fetch_and_sync_package(
   db: storage.Database,
+  text_search: text_search.TextSearchIndex,
   package_name: String,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
+  let state =
+    State(
+      page: 0,
+      limit: birl.now(),
+      newest: birl.now(),
+      hex_api_key:,
+      last_logged: birl.now(),
+      db:,
+      text_search:,
+    )
   use package <- try(get_api_package(package_name, secret: hex_api_key))
   wisp.log_info("Syncing package data from Hex")
-  use _ <- try(sync_single_package(db, package, hex_api_key))
+  use _ <- try(sync_single_package(state, package, hex_api_key))
   wisp.log_info("Done")
   Ok(Nil)
 }
@@ -176,7 +192,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
       Ok(state)
     }
     _ -> {
-      use _ <- try(insert_package_and_releases(package, releases, state.db))
+      use _ <- try(insert_package_and_releases(package, releases, state))
       let state = State(..state, last_logged: birl.now())
       Ok(state)
     }
@@ -184,7 +200,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 }
 
 fn sync_single_package(
-  db: storage.Database,
+  state: State,
   package: hexpm.Package,
   secret hex_api_key: String,
 ) -> Result(Nil, Error) {
@@ -195,7 +211,7 @@ fn sync_single_package(
       Ok(Nil)
     }
     _ -> {
-      use _ <- try(insert_package_and_releases(package, releases, db))
+      use _ <- try(insert_package_and_releases(package, releases, state))
       Ok(Nil)
     }
   }
@@ -231,7 +247,7 @@ fn log_if_needed(state: State, time: Time) -> State {
 fn insert_package_and_releases(
   package: hexpm.Package,
   releases: List(hexpm.Release),
-  db: storage.Database,
+  state: State,
 ) -> Result(Nil, Error) {
   let assert Ok(latest) =
     releases
@@ -243,10 +259,20 @@ fn insert_package_and_releases(
     |> string.join(", v")
   wisp.log_info("Saving " <> package.name <> " v" <> versions)
 
-  use _ <- try(storage.upsert_package_from_hex(db, package, latest.version))
+  use _ <- try(text_search.update(
+    state.text_search,
+    package.name,
+    package.meta.description |> option.unwrap(""),
+  ))
+
+  use _ <- try(storage.upsert_package_from_hex(
+    state.db,
+    package,
+    latest.version,
+  ))
 
   releases
-  |> list.try_each(storage.upsert_release(db, package.name, _))
+  |> list.try_each(storage.upsert_release(state.db, package.name, _))
 }
 
 fn lookup_release(

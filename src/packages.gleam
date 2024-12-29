@@ -62,7 +62,7 @@ fn server() {
     |> mist.start_http
 
   // Start syncing new releases periodically
-  let assert Ok(_) = start_hex_syncer(database, key)
+  let assert Ok(_) = start_hex_syncer(database, index, key)
 
   // Put the main process to sleep while the web server handles traffic
   process.sleep_forever()
@@ -94,17 +94,24 @@ fn database_path() {
   }
 }
 
-fn start_hex_syncer(db: storage.Database, api_key: String) -> Result(_, _) {
+fn start_hex_syncer(
+  db: storage.Database,
+  text_search: text_search.TextSearchIndex,
+  api_key: String,
+) -> Result(_, _) {
   supervise(fn() {
-    let sync = fn() { syncing.sync_new_gleam_releases(api_key, db) }
+    let sync = fn() {
+      syncing.sync_new_gleam_releases(api_key, db, text_search)
+    }
     periodic.periodically(do: sync, waiting: 60 * 1000)
   })
 }
 
 fn sync_one(package_name: String) -> Nil {
   let db = storage.initialise(database_path())
+  let index = text_search.new()
   let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(Nil) =
-    syncing.fetch_and_sync_package(db, package_name, secret: key)
+    syncing.fetch_and_sync_package(db, index, package_name, secret: key)
   Nil
 }
