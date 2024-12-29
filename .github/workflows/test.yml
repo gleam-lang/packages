@@ -19,3 +19,26 @@ jobs:
           rebar3-version: "3"
       - run: gleam test
       - run: gleam format --check src test
+
+  build-container:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag app
+
+      - name: Push image
+        run: |
+          TAG=ghcr.io/gleam-lang/packages:main
+
+          docker tag app $TAG
+          docker push $TAG
