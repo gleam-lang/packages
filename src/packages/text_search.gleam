@@ -64,6 +64,11 @@ fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
 
 fn stem_words(phrase: String) -> List(String) {
   phrase
+  |> string.replace(",", " ")
+  |> string.replace(".", " ")
+  |> string.replace("!", " ")
+  |> string.replace("/", " ")
+  |> string.replace("'", "")
   |> string.split(" ")
   |> list.filter(fn(word) { word != "" })
   |> list.map(porter_stemmer.stem)
