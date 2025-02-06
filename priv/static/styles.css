@@ -94,7 +94,7 @@ h6 {
   width: 100%;
   background-color: var(--color-header-background);
   color: var(--color-header-text);
-  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.1)
+  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.1);
 }
 
 .site-header a {
@@ -263,12 +263,23 @@ html.theme-light .theme-button.-light {
   font-size: var(--font-size-small);
 }
 
-.package-list .package-name {
+.package-name {
   overflow-wrap: break-word;
   margin: 0 var(--gap) var(--gap-s) 0;
 }
 
-.package-list .package-name > a {
+.package-name > a {
   color: var(--color-package-name);
   text-decoration-color: var(--color-package-name-decoration);
+}
+
+.package-name {
+  display: flex;
+  align-items: center;
+}
+
+.package-version {
+  font-size: var(--font-size-small);
+  padding-left: 1em;
+  color: var(--color-text-secondary);
 }
