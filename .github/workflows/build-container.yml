@@ -22,6 +22,6 @@ jobs:
       - name: Push image
         run: |
           IMAGE_ID=ghcr.io/gleam/packages
-          IMAGE_ID="$IMAGE_ID":$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          docker tag webapp $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+          TAG="$IMAGE_ID":$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          docker tag webapp "$TAG"
+          docker push "$TAG"
