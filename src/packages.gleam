@@ -58,6 +58,7 @@ fn server() {
     router.handle_request(_, make_context)
     |> wisp_mist.handler(secret_key_base)
     |> mist.new
+    |> mist.bind("0.0.0.0")
     |> mist.port(3000)
     |> mist.start_http
 
