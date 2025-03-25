@@ -27,3 +27,10 @@ jobs:
           TAG="$IMAGE_ID":"$BRANCH_NAME"
           docker tag webapp "$TAG"
           docker push "$TAG"
+
+      - uses: actions/delete-package-versions@v5
+        with: 
+          package-name: 'packages'
+          package-type: 'container'
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: 'true'
