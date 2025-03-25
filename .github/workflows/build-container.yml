@@ -1,8 +1,8 @@
 name: Build container image
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - main
 
 jobs:
   build-image:
@@ -10,6 +10,8 @@ jobs:
     permissions:
       packages: write
       contents: read
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +24,6 @@ jobs:
       - name: Push image
         run: |
           IMAGE_ID=ghcr.io/gleam-lang/packages
-          TAG="$IMAGE_ID":$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          TAG="$IMAGE_ID":"$BRANCH_NAME"
           docker tag webapp "$TAG"
           docker push "$TAG"
