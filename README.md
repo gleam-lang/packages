@@ -4,7 +4,7 @@
 
 A Gleam application using the [Wisp](https://gleam-wisp.github.io/wisp) web framework,
 served with the [Mist](https://github.com/rawhat/mist) web server, using a
-Stóráil database.
+[Stóráil](https://github.com/lpil/storail) database.
 
 ## Environment variables
 
@@ -22,4 +22,31 @@ Install Gleam! See `./Dockerfile` for which version is used in production.
 ```shell
 gleam test        # Run the tests
 gleam run server  # Run the server
+```
+
+## Deployment
+
+```ini
+[Unit]
+Description=My Gleam web application
+After=local-fs.target
+
+[Container]
+Image=ghcr.io/gleam-lang/packages:main
+
+# Make podman-auto-update.service update it when there's a new image version
+AutoUpdate=registry
+
+# Expose the port the app is listening on
+PublishPort=3000:3000
+
+# Mount the storage
+Volume=/srv/packages-storage:/storage:rw,z
+Environment=DATABASE_PATH=/storage
+
+# Provide the secrets
+EnvironmentFile=/srv/packages-environment
+
+[Install]
+WantedBy=multi-user.target default.target
 ```
