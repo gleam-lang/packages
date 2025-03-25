@@ -243,7 +243,7 @@ pub fn upsert_package_from_hex(
   package: hexpm.Package,
   latest_version latest_version: String,
 ) -> Result(Nil, Error) {
-  case list.contains(ignored_packages, package.name) {
+  case is_ignored_package(package.name) {
     True -> Ok(Nil)
     False -> {
       database.packages
@@ -252,6 +252,10 @@ pub fn upsert_package_from_hex(
       |> result.map_error(error.StorageError)
     }
   }
+}
+
+pub fn is_ignored_package(name: String) -> Bool {
+  list.contains(ignored_packages, name)
 }
 
 pub fn get_package(database: Database, name: String) -> Result(Package, Error) {

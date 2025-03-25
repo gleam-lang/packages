@@ -64,3 +64,17 @@ pub fn lookup_more_matches_higher_rank_test() {
   |> should.be_ok
   |> should.equal(["httpc", "pog"])
 }
+
+pub fn ignored_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "clean_bson", "wibble")
+  // This one is ignored
+  let assert Ok(_) = text_search.insert(index, "gleam_bson", "wibble")
+
+  text_search.lookup(index, "gleam_bson")
+  |> should.be_ok
+  |> should.equal([])
+  text_search.lookup(index, "wibble")
+  |> should.be_ok
+  |> should.equal(["clean_bson"])
+}

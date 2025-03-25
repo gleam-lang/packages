@@ -6,6 +6,7 @@ import gleam/option
 import gleam/result
 import gleam/string
 import packages/error.{type Error}
+import packages/storage
 import porter_stemmer
 
 pub opaque type TextSearchIndex {
@@ -21,12 +22,16 @@ pub fn insert(
   name name: String,
   description description: String,
 ) -> Result(Nil, Error) {
-  name
-  |> string.append(" ")
-  |> string.append(description)
-  |> stem_words
-  |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
-  |> result.replace_error(error.EtsTableError)
+  case storage.is_ignored_package(name) {
+    True -> Ok(Nil)
+    False ->
+      name
+      |> string.append(" ")
+      |> string.append(description)
+      |> stem_words
+      |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
+      |> result.replace_error(error.EtsTableError)
+  }
 }
 
 pub fn update(
