@@ -71,6 +71,7 @@ fn expand_search_term(term: String) -> List(String) {
   case term {
     "postgres" | "postgresql" -> ["postgres", "postgresql"]
     "regex" | "regexp" -> ["regex", "regexp"]
+    "luster" -> ["luster", "lustre"]
     term -> [term]
   }
 }
