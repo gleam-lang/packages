@@ -27,6 +27,8 @@ pub fn insert(
     False ->
       name
       |> string.append(" ")
+      |> string.append(string.replace(name, "_", " "))
+      |> string.append(" ")
       |> string.append(description)
       |> stem_words
       |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
@@ -48,6 +50,7 @@ pub fn lookup(
   phrase: String,
 ) -> Result(List(String), Error) {
   stem_words(phrase)
+  |> list.flat_map(expand_search_term)
   |> list.try_map(ethos.get(index.table, _))
   |> result.map(fn(names) {
     names
@@ -60,6 +63,16 @@ pub fn lookup(
     |> list.map(fn(pair) { pair.0 })
   })
   |> result.replace_error(error.EtsTableError)
+}
+
+/// Some words have common misspellings or associated words so we add those to
+/// the search to get all appropriate results.
+fn expand_search_term(term: String) -> List(String) {
+  case term {
+    "postgres" | "postgresql" -> ["postgres", "postgresql"]
+    "regex" | "regexp" -> ["regex", "regexp"]
+    term -> [term]
+  }
 }
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {

@@ -78,3 +78,23 @@ pub fn ignored_test() {
   |> should.be_ok
   |> should.equal(["clean_bson"])
 }
+
+pub fn word_in_title_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "gleam_regexp", "")
+
+  text_search.lookup(index, "regexp")
+  |> should.be_ok
+  |> should.equal(["gleam_regexp"])
+}
+
+// regex also searches for regexp
+pub fn extra_regex_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "gleam_regexp", "")
+  let assert Ok(_) = text_search.insert(index, "third_party_regex", "")
+
+  text_search.lookup(index, "regex")
+  |> should.be_ok
+  |> should.equal(["gleam_regexp", "third_party_regex"])
+}
