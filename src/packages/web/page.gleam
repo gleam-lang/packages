@@ -1,14 +1,14 @@
 import birl.{type Time}
 import birl/duration
+import gleam/hexpm
 import gleam/int
 import gleam/json
 import gleam/list
-import gleam/option
 import gleam/order
 import gleam/string
 import gleam/string_tree.{type StringTree}
-import lustre/attribute.{attribute}
-import lustre/element.{type Element}
+import lustre/attribute.{attribute, class}
+import lustre/element.{type Element, text}
 import lustre/element/html
 import packages/storage.{type PackageSummary}
 import packages/web/icons
@@ -19,9 +19,13 @@ pub fn packages_list(
   search_term: String,
 ) -> StringTree {
   html.div([attribute.class("content")], [
+    html.header([class("page-header")], [
+      text(int.to_string(total_package_count) <> " packages are available!"),
+    ]),
+    search_form(search_term),
     search_aware_package_list(packages, total_package_count, search_term),
   ])
-  |> layout(search_term)
+  |> layout
 }
 
 pub type Stats {
@@ -37,7 +41,7 @@ pub fn internet_points(stats: Stats) -> StringTree {
     line_chart("Package count", stats.package_counts),
     line_chart("Release count", stats.release_counts),
   ])
-  |> layout(search_term: "")
+  |> layout
 }
 
 fn line_chart(name: String, data: List(#(String, Int))) -> Element(Nil) {
@@ -93,19 +97,14 @@ fn theme_picker() -> Element(Nil) {
 }
 
 fn search_form(search_term: String) -> Element(Nil) {
-  html.form([attribute.class("search-form"), attribute("method", "GET")], [
+  html.form([class("search-bar")], [
     html.input([
-      attribute("data-keybind-focus", "/"),
-      attribute("value", search_term),
-      attribute.name("search"),
-      attribute.type_("search"),
       attribute.placeholder("Press / to focus"),
+      attribute("aria-label", "Package name, to search"),
+      attribute.name("query"),
+      attribute.value(search_term),
     ]),
-    html.input([
-      attribute.type_("submit"),
-      attribute("value", "🔎"),
-      attribute("aria-label", "search packages"),
-    ]),
+    icons.search(),
   ])
 }
 
@@ -119,7 +118,7 @@ fn pluralize_package(amount: Int) -> String {
 
 fn search_aware_package_list(
   packages: List(PackageSummary),
-  total_package_count: Int,
+  _total_package_count: Int,
   search_term: String,
 ) -> Element(Nil) {
   case packages, string.is_empty(search_term) {
@@ -128,85 +127,66 @@ fn search_aware_package_list(
         element.text("I couldn't find any package matching your search."),
       ])
     _, False -> {
-      let package_count = list.length(packages)
+      // TODO: Use this
+      let _package_count = list.length(packages)
 
-      html.div([], [
-        html.p([attribute.class("package-list-message")], [
-          element.text(
-            [
-              "I found",
-              int.to_string(package_count),
-              pluralize_package(package_count),
-              "matching your search.",
-            ]
-            |> string.join(" "),
-          ),
-        ]),
-        package_list(packages),
-      ])
+      package_list(packages)
     }
-    _, _ ->
-      html.div([], [
-        html.p([attribute.class("package-list-message")], [
-          element.text(
-            [
-              "There are",
-              int.to_string(total_package_count),
-              pluralize_package(total_package_count),
-              "available",
-            ]
-            |> string.join(" "),
-          ),
-          html.span([attribute("aria-hidden", "true")], [element.text(" ✨")]),
-        ]),
-        package_list(packages),
-      ])
+    _, _ -> package_list(packages)
   }
 }
 
 fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
-  html.ul(
+  html.div(
     [attribute.class("package-list")],
     list.map(packages, package_list_item),
   )
 }
 
-fn package_list_item(package: PackageSummary) -> Element(Nil) {
-  let url = "https://hex.pm/packages/" <> package.name
-  let docs_url = "https://hexdocs.pm/" <> package.name
+fn package_list_item(package: PackageSummary) {
+  let latest_release =
+    hexpm.PackageRelease(version: "0.0.0", url: "#", inserted_at: birl.now())
+  // package.releases
+  // |> list.first()
+  // |> result.unwrap(hexpm.PackageRelease(
+  // version: "0.0.0",
+  //   url: "#",
+  //  inserted_at: birl.now(),
+  // ))
 
-  let links =
-    [
-      docs_url
-        |> external_link_text("Documentation")
-        |> option.Some,
-      package.repository_url
-        |> option.map(external_link_text(_, "Repository")),
-    ]
-    |> list.filter_map(option.to_result(_, Nil))
-
-  html.li([], [
-    html.div([attribute.class("package-date-time")], [
-      element.text(format_date(package.updated_in_hex_at)),
+  html.div([class("package-item")], [
+    html.main([], [
+      html.h2([class("package-name")], [
+        text(package.name),
+        html.span([class("release-version")], [
+          text("@" <> latest_release.version),
+        ]),
+      ]),
+      html.p([class("package-description")], [text(package.description)]),
+      html.nav([class("package-buttons")], [
+        package_button(icons.docs(), "#", "Docs"),
+        package_button(icons.git(), "#", "Repo"),
+        package_button(icons.hex(), "#", "Hex"),
+      ]),
     ]),
-    html.h2([attribute.class("package-name")], [
-      external_link_text(url, package.name),
+    html.aside([], [
+      html.p([class("package-update-time")], [
+        element.text("Updated "),
+        html.span([], [element.text(format_date(package.updated_in_hex_at))]),
+      ]),
     ]),
-    html.p([attribute.class("package-description")], [
-      element.text(package.description),
-    ]),
-    case links {
-      [] -> element.text("")
-      links ->
-        html.nav([attribute.class("package-links")], [
-          html.ul(
-            [],
-            links
-              |> list.map(fn(link) { html.li([], [link]) }),
-          ),
-        ])
-    },
   ])
+}
+
+fn package_button(icon: Element(Nil), destination: String, label: String) {
+  html.a(
+    [
+      class("package-button"),
+      attribute.href(destination),
+      attribute.target("_blank"),
+    ],
+    [icon, text(label)],
+  )
 }
 
 fn format_date(datetime: Time) -> String {
@@ -229,8 +209,8 @@ fn external_link_text(url: String, text: String) -> Element(Nil) {
   )
 }
 
-fn layout(content: Element(Nil), search_term search_term: String) -> StringTree {
-  html.html([attribute("lang", "en"), attribute.class("theme-light")], [
+fn layout(content: Element(Nil)) -> StringTree {
+  html.html([attribute("lang", "en")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
       html.meta([
@@ -240,11 +220,7 @@ fn layout(content: Element(Nil), search_term search_term: String) -> StringTree 
       html.title([], "Gleam Packages"),
       html.link([
         attribute.rel("stylesheet"),
-        attribute.href("/static/common.css"),
-      ]),
-      html.link([
-        attribute.rel("stylesheet"),
-        attribute.href("/static/styles.css"),
+        attribute.href("/static/styles.css?v=dev" <> 10 |> int.random |> int.to_string),
       ]),
       html.link([
         attribute.rel("icon"),
@@ -265,48 +241,47 @@ fn layout(content: Element(Nil), search_term search_term: String) -> StringTree 
       html.script([attribute.type_("module")], theme_picker_js),
     ]),
     html.body([], [
-      html.main([], [
-        html.header([attribute.class("site-header")], [
-          html.nav([attribute.class("content")], [
-            html.a([attribute.href("/")], [
-              html.img([
-                attribute.class("logo"),
-                attribute.src("https://gleam.run/images/lucy/lucy.svg"),
-                attribute.alt("Lucy the star, Gleam's mascot"),
-              ]),
-              html.h1([], [element.text("Gleam Packages")]),
-            ]),
-            html.div([attribute.class("nav-right")], [
-              theme_picker(),
-              search_form(search_term),
-            ]),
-          ]),
-        ]),
-        content,
-      ]),
-      html.footer([attribute.class("site-footer")], [
-        html.div([], [
-          element.text("Special thanks to the "),
-          external_link_text("https://hex.pm/", "Hex"),
-          element.text(" team."),
-        ]),
-        html.div([], [
-          element.text("Kindly hosted by "),
-          external_link_text("https://fly.io/", "Fly"),
-          element.text("."),
-        ]),
-        html.div([], [
-          external_link_text(
-            "https://github.com/gleam-lang/packages",
-            "Source code",
-          ),
-          element.text("."),
-        ]),
-      ]),
+      navbar(),
+      html.main([class("page-content container")], [content]),
+      footer(),
     ]),
   ])
   |> element.to_string_builder
   |> string_tree.prepend("<!DOCTYPE html>")
+}
+
+fn navbar() {
+  html.nav([class("page-nav")], [
+    html.div([class("container")], [
+      html.div([class("nav-brand")], [
+        html.div([class("nav-icon")], [icons.packages()]),
+        text("Gleam Packages"),
+      ]),
+      darkmode_toggle(),
+    ]),
+  ])
+}
+
+fn darkmode_toggle() {
+  html.button([class("darkmode-toggle"), attribute.data("theme-toggle", "")], [icons.mode_switch()])
+}
+
+fn footer() {
+  html.footer([class("page-footer")], [
+    html.p([], [
+      // The spaces before and after the text elements are important for correct display.
+      element.text("Special thanks to the "),
+      html.a([attribute.href("https://hex.pm")], [element.text("Hex")]),
+      element.text(" team."),
+    ]),
+    html.a(
+      [
+        attribute.href("https://github.com/gleam-lang/packages"),
+        class("source-button"),
+      ],
+      [icons.git_tree(), element.text("Source Code")],
+    ),
+  ])
 }
 
 // This script is inlined in the response to avoid FOUC when applying the theme
@@ -326,8 +301,8 @@ function selectTheme(selectedTheme) {
 }
 
 function applyTheme(theme) {
-  document.documentElement.classList.toggle('theme-dark', theme === 'dark')
-  document.documentElement.classList.toggle('theme-light', theme !== 'dark')
+  document.body.classList.toggle('theme-dark', theme === 'dark')
+  document.body.classList.toggle('theme-light', theme !== 'dark')
 }
 
 // If user had selected a theme, load it. Otherwise, use device's preferred theme
@@ -347,10 +322,8 @@ mediaPrefersDarkTheme.addEventListener('change', () => {
 })
 
 // Add handlers for theme selection buttons.
-document.querySelector('[data-light-theme-toggle]').addEventListener('click', () => {
-  selectTheme('light')
-})
-document.querySelector('[data-dark-theme-toggle]').addEventListener('click', () => {
-  selectTheme('dark')
+document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
+  const theme = document.body.classList.contains('theme-dark') ? 'dark' : 'light'
+  selectTheme(theme)
 })
 "
