@@ -1,6 +1,6 @@
 import birl.{type Time}
 import birl/duration
-import gleam/dynamic as dyn
+import gleam/dynamic/decode
 import gleam/hackney
 import gleam/hexpm
 import gleam/http/request
@@ -114,8 +114,9 @@ fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
   case packages {
     [] -> state.newest
     [package, ..] -> {
-      case birl.compare(package.updated_at, state.newest) {
-        order.Gt -> package.updated_at
+      let assert Ok(updated_at) = birl.parse(package.updated_at)
+      case birl.compare(updated_at, state.newest) {
+        order.Gt -> updated_at
         _ -> state.newest
       }
     }
@@ -137,7 +138,7 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
   )
 
   use all_packages <- result.try(
-    json.decode(response.body, using: dyn.list(of: hexpm.decode_package))
+    json.parse(response.body, using: decode.list(of: hexpm.package_decoder()))
     |> result.map_error(error.JsonDecodeError),
   )
   Ok(all_packages)
@@ -157,7 +158,7 @@ fn get_api_package(
   )
 
   use package <- result.try(
-    json.decode(response.body, using: hexpm.decode_package)
+    json.parse(response.body, using: hexpm.package_decoder())
     |> result.map_error(error.JsonDecodeError),
   )
   Ok(package)
@@ -168,7 +169,8 @@ pub fn take_fresh_packages(
   limit: Time,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
-  birl.compare(limit, package.updated_at) == order.Lt
+  let assert Ok(updated_at) = birl.parse(package.updated_at)
+  birl.compare(limit, updated_at) == order.Lt
 }
 
 pub fn with_only_fresh_releases(
@@ -178,7 +180,8 @@ pub fn with_only_fresh_releases(
   let releases =
     package.releases
     |> list.take_while(fn(release) {
-      birl.compare(limit, release.inserted_at) == order.Lt
+      let assert Ok(inserted_at) = birl.parse(release.inserted_at)
+      birl.compare(limit, inserted_at) == order.Lt
     })
   hexpm.Package(..package, releases: releases)
 }
@@ -188,7 +191,8 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
-      let state = log_if_needed(state, package.updated_at)
+      let assert Ok(updated_at) = birl.parse(package.updated_at)
+      let state = log_if_needed(state, updated_at)
       Ok(state)
     }
     _ -> {
@@ -251,7 +255,11 @@ fn insert_package_and_releases(
 ) -> Result(Nil, Error) {
   let assert Ok(latest) =
     releases
-    |> list.sort(fn(a, b) { birl.compare(b.inserted_at, a.inserted_at) })
+    |> list.sort(fn(a, b) {
+      let assert Ok(a_inserted) = birl.parse(a.inserted_at)
+      let assert Ok(b_inserted) = birl.parse(b.inserted_at)
+      birl.compare(b_inserted, a_inserted)
+    })
     |> list.first
   let versions =
     releases
@@ -290,6 +298,6 @@ fn lookup_release(
     |> result.map_error(error.HttpClientError),
   )
 
-  json.decode(response.body, using: hexpm.decode_release)
+  json.parse(from: response.body, using: hexpm.release_decoder())
   |> result.map_error(error.JsonDecodeError)
 }

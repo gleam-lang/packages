@@ -41,6 +41,7 @@ body {
     /* Styles */
     background: var(--page-background);
     font-family: var(--primary-font);
+    color-scheme: light;
 }
 
 body.theme-dark {
@@ -49,6 +50,7 @@ body.theme-dark {
     --card-border: #474B60;
     --text-regular: #D9DFF8;
     --text-highlight: #ffffff;
+    color-scheme: dark;
 }
 
 .page-nav {
@@ -70,7 +72,7 @@ body.theme-dark {
         align-items: center;
     }
 
-    & .nav-icon svg {
+    & .nav-brand svg {
         width: 2.8rem;
         height: 2.8rem;
     }
@@ -209,6 +211,8 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
     }
 
     & .package-update-time {
+        margin: 0;
+        padding-top: .4rem;
         color: var(--text-regular);
         
         & span {

@@ -1,9 +1,9 @@
 import birl.{type Time}
 import birl/duration
-import gleam/hexpm
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option
 import gleam/order
 import gleam/string
 import gleam/string_tree.{type StringTree}
@@ -71,34 +71,10 @@ Plotly.newPlot('" <> id <> "', [trace], {
   html.div([], [html.div([attribute.id(id)], []), html.script([], javascript)])
 }
 
-fn theme_picker() -> Element(Nil) {
-  html.div([attribute.class("theme-picker")], [
-    html.button(
-      [
-        attribute.type_("button"),
-        attribute.class("theme-button -light"),
-        attribute.attribute("data-light-theme-toggle", ""),
-        attribute.alt("Switch to light mode"),
-        attribute.attribute("title", "Switch to light mode"),
-      ],
-      [icons.icon_moon(), icons.icon_toggle_left()],
-    ),
-    html.button(
-      [
-        attribute.type_("button"),
-        attribute.class("theme-button -dark"),
-        attribute.attribute("data-dark-theme-toggle", ""),
-        attribute.alt("Switch to dark mode"),
-        attribute.attribute("title", "Switch to dark mode"),
-      ],
-      [icons.icon_sun(), icons.icon_toggle_right()],
-    ),
-  ])
-}
-
 fn search_form(search_term: String) -> Element(Nil) {
   html.form([class("search-bar")], [
     html.input([
+      attribute.data("keybind-focus", "/"),
       attribute.placeholder("Press / to focus"),
       attribute("aria-label", "Package name, to search"),
       attribute.name("query"),
@@ -109,12 +85,12 @@ fn search_form(search_term: String) -> Element(Nil) {
 }
 
 /// Pluralizes the word "package" based on the number we're referring to.
-fn pluralize_package(amount: Int) -> String {
-  case amount {
-    1 -> "package"
-    _ -> "packages"
-  }
-}
+// fn pluralize_package(amount: Int) -> String {
+//  case amount {
+//    1 -> "package"
+//    _ -> "packages"
+//  }
+// }
 
 fn search_aware_package_list(
   packages: List(PackageSummary),
@@ -144,29 +120,30 @@ fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
 }
 
 fn package_list_item(package: PackageSummary) {
-  let latest_release =
-    hexpm.PackageRelease(version: "0.0.0", url: "#", inserted_at: birl.now())
-  // package.releases
-  // |> list.first()
-  // |> result.unwrap(hexpm.PackageRelease(
-  // version: "0.0.0",
-  //   url: "#",
-  //  inserted_at: birl.now(),
-  // ))
-
   html.div([class("package-item")], [
     html.main([], [
       html.h2([class("package-name")], [
         text(package.name),
         html.span([class("release-version")], [
-          text("@" <> latest_release.version),
+          text("@" <> package.latest_version),
         ]),
       ]),
       html.p([class("package-description")], [text(package.description)]),
       html.nav([class("package-buttons")], [
-        package_button(icons.docs(), "#", "Docs"),
-        package_button(icons.git(), "#", "Repo"),
-        package_button(icons.hex(), "#", "Hex"),
+        package_button(
+          icons.docs(),
+          "https://hexdocs.pm/" <> package.name,
+          "Docs",
+        ),
+        case package.repository_url {
+          option.Some(url) -> package_button(icons.git(), url, "Repo")
+          _ -> element.none()
+        },
+        package_button(
+          icons.hex(),
+          "https://hex.pm/packages/" <> package.name,
+          "Hex",
+        ), 
       ]),
     ]),
     html.aside([], [
@@ -198,17 +175,6 @@ fn format_date(datetime: Time) -> String {
   }
 }
 
-fn external_link_text(url: String, text: String) -> Element(Nil) {
-  html.a(
-    [
-      attribute.href(url),
-      attribute.rel("noopener noreferrer"),
-      attribute.target("_blank"),
-    ],
-    [element.text(text)],
-  )
-}
-
 fn layout(content: Element(Nil)) -> StringTree {
   html.html([attribute("lang", "en")], [
     html.head([], [
@@ -220,7 +186,9 @@ fn layout(content: Element(Nil)) -> StringTree {
       html.title([], "Gleam Packages"),
       html.link([
         attribute.rel("stylesheet"),
-        attribute.href("/static/styles.css?v=dev" <> 10 |> int.random |> int.to_string),
+        attribute.href(
+          "/static/styles.css?v=dev" <> 10 |> int.random |> int.to_string,
+        ),
       ]),
       html.link([
         attribute.rel("icon"),
@@ -254,7 +222,7 @@ fn navbar() {
   html.nav([class("page-nav")], [
     html.div([class("container")], [
       html.div([class("nav-brand")], [
-        html.div([class("nav-icon")], [icons.packages()]),
+        icons.packages(),
         text("Gleam Packages"),
       ]),
       darkmode_toggle(),
@@ -263,11 +231,13 @@ fn navbar() {
 }
 
 fn darkmode_toggle() {
-  html.button([class("darkmode-toggle"), attribute.data("theme-toggle", "")], [icons.mode_switch()])
+  html.button([class("darkmode-toggle"), attribute.data("theme-toggle", "")], [
+    icons.mode_switch(),
+  ])
 }
 
 fn footer() {
-  html.footer([class("page-footer")], [
+  html.footer([class("page-footer container")], [
     html.p([], [
       // The spaces before and after the text elements are important for correct display.
       element.text("Special thanks to the "),
@@ -323,7 +293,7 @@ mediaPrefersDarkTheme.addEventListener('change', () => {
 
 // Add handlers for theme selection buttons.
 document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
-  const theme = document.body.classList.contains('theme-dark') ? 'dark' : 'light'
+  const theme = document.body.classList.contains('theme-dark') ? 'light' : 'dark'
   selectTheme(theme)
 })
 "
