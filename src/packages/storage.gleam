@@ -209,7 +209,7 @@ fn hex_package_to_storage_package(
     dict.get(package.meta.links, "Repository") |> option.from_result
 
   let assert Ok(inserted_in_hex_at) = birl.parse(package.inserted_at)
-  let assert Ok(updated_in_hex_at) = birl.parse(package.inserted_at)
+  let assert Ok(updated_in_hex_at) = birl.parse(package.updated_at)
 
   Package(
     name: package.name,
@@ -235,7 +235,7 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
   }
 
   let assert Ok(inserted_at) = birl.parse(release.inserted_at)
-  let assert Ok(updated_at) = birl.parse(release.inserted_at)
+  let assert Ok(updated_at) = birl.parse(release.updated_at)
 
   Release(
     version: release.version,

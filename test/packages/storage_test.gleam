@@ -144,8 +144,8 @@ pub fn insert_release_test() {
           reason: hexpm.Security,
           message: Some("Retired due to security concerns"),
         )),
-        inserted_at: birl.to_iso8601(birl.from_unix(1000)),
-        updated_at: birl.to_iso8601(birl.from_unix(2000)),
+        inserted_at: birl.to_iso8601(birl.from_unix(2000)),
+        updated_at: birl.to_iso8601(birl.from_unix(1000)),
       ),
     )
 
