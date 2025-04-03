@@ -179,7 +179,6 @@ pub fn mode_switch() -> Element(Nil) {
   )
 }
 
-
 pub fn git_tree() -> Element(Nil) {
   svg.svg(
     [

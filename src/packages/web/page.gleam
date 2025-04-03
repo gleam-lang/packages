@@ -94,18 +94,23 @@ fn search_aware_package_list(
   total_package_count: Int,
   search_term: String,
 ) -> List(Element(Nil)) {
-  let header_phrase =
-    case search_term, list.length(packages) {
-      "", 0 -> "No packages have been added yet"
-      _, 0 -> "No packages match your query"
-      "", _ -> int.to_string(total_package_count) <> " " <> pluralize_package(total_package_count) <> " are available!"
-      _ , _ -> int.to_string(list.length(packages)) <> " " <> pluralize_package(total_package_count) <> " match your search"
-    }
+  let header_phrase = case search_term, list.length(packages) {
+    "", 0 -> "No packages have been added yet"
+    _, 0 -> "No packages match your query"
+    "", _ ->
+      int.to_string(total_package_count)
+      <> " "
+      <> pluralize_package(total_package_count)
+      <> " are available!"
+    _, _ ->
+      int.to_string(list.length(packages))
+      <> " "
+      <> pluralize_package(total_package_count)
+      <> " match your search"
+  }
 
   [
-    html.header([class("page-header")], [
-      text(header_phrase),
-    ]),
+    html.header([class("page-header")], [text(header_phrase)]),
     search_form(search_term),
     case packages, string.is_empty(search_term) {
       [], False ->
