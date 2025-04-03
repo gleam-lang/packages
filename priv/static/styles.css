@@ -160,7 +160,7 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
 
 .package-item {
     display: grid;
-    grid-template-columns: 1fr minmax(auto, calc(12 * var(--spacing)));
+    gap: 1rem;
     padding: 1rem 0;
 
     & .package-name {
@@ -204,10 +204,10 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
             height: 1.2rem;
             stroke: var(--faff-pink);
         }
-    }
+    } 
 
     & aside {
-        text-align: right;
+      font-size: .8rem;
     }
 
     & .package-update-time {
@@ -223,6 +223,17 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
     &:not(:last-child) {
         border-bottom: var(--card-border) 1px solid;
     }
+}
+
+@media screen and (min-width: 992px) {
+  .package-item {
+    & aside {
+        text-align: right;
+        font-size: 1rem;
+    }
+
+    grid-template-columns: 1fr minmax(auto, calc(12 * var(--spacing)));
+  }
 }
 
 .page-footer {

@@ -18,13 +18,10 @@ pub fn packages_list(
   total_package_count: Int,
   search_term: String,
 ) -> StringTree {
-  html.div([attribute.class("content")], [
-    html.header([class("page-header")], [
-      text(int.to_string(total_package_count) <> " packages are available!"),
-    ]),
-    search_form(search_term),
+  html.div(
+    [attribute.class("content")],
     search_aware_package_list(packages, total_package_count, search_term),
-  ])
+  )
   |> layout
 }
 
@@ -77,7 +74,7 @@ fn search_form(search_term: String) -> Element(Nil) {
       attribute.data("keybind-focus", "/"),
       attribute.placeholder("Press / to focus"),
       attribute("aria-label", "Package name, to search"),
-      attribute.name("query"),
+      attribute.name("search"),
       attribute.value(search_term),
     ]),
     icons.search(),
@@ -85,31 +82,39 @@ fn search_form(search_term: String) -> Element(Nil) {
 }
 
 /// Pluralizes the word "package" based on the number we're referring to.
-// fn pluralize_package(amount: Int) -> String {
-//  case amount {
-//    1 -> "package"
-//    _ -> "packages"
-//  }
-// }
+fn pluralize_package(amount: Int) -> String {
+  case amount {
+    1 -> "package"
+    _ -> "packages"
+  }
+}
 
 fn search_aware_package_list(
   packages: List(PackageSummary),
-  _total_package_count: Int,
+  total_package_count: Int,
   search_term: String,
-) -> Element(Nil) {
-  case packages, string.is_empty(search_term) {
-    [], False ->
-      html.p([attribute.class("package-list-message")], [
-        element.text("I couldn't find any package matching your search."),
-      ])
-    _, False -> {
-      // TODO: Use this
-      let _package_count = list.length(packages)
-
-      package_list(packages)
+) -> List(Element(Nil)) {
+  let header_phrase =
+    case search_term, list.length(packages) {
+      "", 0 -> "No packages have been added yet"
+      _, 0 -> "No packages match your query"
+      "", _ -> int.to_string(total_package_count) <> " " <> pluralize_package(total_package_count) <> " are available!"
+      _ , _ -> int.to_string(list.length(packages)) <> " " <> pluralize_package(total_package_count) <> " match your search"
     }
-    _, _ -> package_list(packages)
-  }
+
+  [
+    html.header([class("page-header")], [
+      text(header_phrase),
+    ]),
+    search_form(search_term),
+    case packages, string.is_empty(search_term) {
+      [], False ->
+        html.p([attribute.class("package-list-message")], [
+          element.text("I couldn't find any package matching your search."),
+        ])
+      _, _ -> package_list(packages)
+    },
+  ]
 }
 
 fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
@@ -143,7 +148,7 @@ fn package_list_item(package: PackageSummary) {
           icons.hex(),
           "https://hex.pm/packages/" <> package.name,
           "Hex",
-        ), 
+        ),
       ]),
     ]),
     html.aside([], [
@@ -221,10 +226,7 @@ fn layout(content: Element(Nil)) -> StringTree {
 fn navbar() {
   html.nav([class("page-nav")], [
     html.div([class("container")], [
-      html.div([class("nav-brand")], [
-        icons.packages(),
-        text("Gleam Packages"),
-      ]),
+      html.div([class("nav-brand")], [icons.packages(), text("Gleam Packages")]),
       darkmode_toggle(),
     ]),
   ])
