@@ -1,8 +1,8 @@
-import gleam/time/timestamp
 import birl
 import gleam/dict
 import gleam/hexpm
 import gleam/option.{None, Some}
+import gleam/time/timestamp
 import gleeunit/should
 import packages/error
 import packages/storage.{Package, Release}

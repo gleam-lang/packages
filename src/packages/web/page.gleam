@@ -172,7 +172,13 @@ fn package_button(icon_location: String, destination: String, label: String) {
       attribute.href(destination),
       attribute.target("_blank"),
     ],
-    [html.img([attribute.src(icon_location), attribute.alt(label <> " Button Icon")]), text(label)],
+    [
+      html.img([
+        attribute.src(icon_location),
+        attribute.alt(label <> " Button Icon"),
+      ]),
+      text(label),
+    ],
   )
 }
 
@@ -231,7 +237,13 @@ fn layout(content: Element(Nil)) -> StringTree {
 fn navbar() {
   html.nav([class("page-nav")], [
     html.div([class("container")], [
-      html.div([class("nav-brand")], [html.img([attribute.src("/static/packages-icon.svg"), attribute.alt("The Gleam Packages icon, Lucy popping out of a box!")]), text("Gleam Packages")]),
+      html.div([class("nav-brand")], [
+        html.img([
+          attribute.src("/static/packages-icon.svg"),
+          attribute.alt("The Gleam Packages icon, Lucy popping out of a box!"),
+        ]),
+        text("Gleam Packages"),
+      ]),
       darkmode_toggle(),
     ]),
   ])
@@ -239,8 +251,16 @@ fn navbar() {
 
 fn darkmode_toggle() {
   html.button([class("darkmode-toggle"), attribute.data("theme-toggle", "")], [
-    html.img([class("toggle-icon toggle-dark"), attribute.src("/static/mode-switch-dark.svg"), attribute.alt("Dark mode switch icon")]),
-    html.img([class("toggle-icon toggle-light"), attribute.src("/static/mode-switch-light.svg"), attribute.alt("Light mode switch icon")])
+    html.img([
+      class("toggle-icon toggle-dark"),
+      attribute.src("/static/mode-switch-dark.svg"),
+      attribute.alt("Dark mode switch icon"),
+    ]),
+    html.img([
+      class("toggle-icon toggle-light"),
+      attribute.src("/static/mode-switch-light.svg"),
+      attribute.alt("Light mode switch icon"),
+    ]),
   ])
 }
 
