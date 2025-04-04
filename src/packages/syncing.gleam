@@ -1,3 +1,4 @@
+import gleam/time/timestamp
 import birl.{type Time}
 import birl/duration
 import gleam/dynamic/decode
@@ -114,7 +115,7 @@ fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
   case packages {
     [] -> state.newest
     [package, ..] -> {
-      let assert Ok(updated_at) = birl.parse(package.updated_at)
+      let updated_at = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0)
       case birl.compare(updated_at, state.newest) {
         order.Gt -> updated_at
         _ -> state.newest
@@ -169,7 +170,7 @@ pub fn take_fresh_packages(
   limit: Time,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
-  let assert Ok(updated_at) = birl.parse(package.updated_at)
+  let updated_at = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0)
   birl.compare(limit, updated_at) == order.Lt
 }
 
@@ -180,7 +181,7 @@ pub fn with_only_fresh_releases(
   let releases =
     package.releases
     |> list.take_while(fn(release) {
-      let assert Ok(inserted_at) = birl.parse(release.inserted_at)
+      let inserted_at = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(release.inserted_at).0)
       birl.compare(limit, inserted_at) == order.Lt
     })
   hexpm.Package(..package, releases: releases)
@@ -191,7 +192,7 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
-      let assert Ok(updated_at) = birl.parse(package.updated_at)
+      let updated_at = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0)
       let state = log_if_needed(state, updated_at)
       Ok(state)
     }
@@ -256,8 +257,8 @@ fn insert_package_and_releases(
   let assert Ok(latest) =
     releases
     |> list.sort(fn(a, b) {
-      let assert Ok(a_inserted) = birl.parse(a.inserted_at)
-      let assert Ok(b_inserted) = birl.parse(b.inserted_at)
+      let a_inserted = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(a.inserted_at).0)
+      let b_inserted = birl.from_unix(timestamp.to_unix_seconds_and_nanoseconds(b.inserted_at).0)
       birl.compare(b_inserted, a_inserted)
     })
     |> list.first
