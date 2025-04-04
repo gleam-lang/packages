@@ -141,16 +141,16 @@ fn package_list_item(package: PackageSummary) {
       html.p([class("package-description")], [text(package.description)]),
       html.nav([class("package-buttons")], [
         package_button(
-          icons.docs(),
+          "/static/docs.svg",
           "https://hexdocs.pm/" <> package.name,
           "Docs",
         ),
         case package.repository_url {
-          option.Some(url) -> package_button(icons.git(), url, "Repo")
+          option.Some(url) -> package_button("/static/repo.svg", url, "Repo")
           _ -> element.none()
         },
         package_button(
-          icons.hex(),
+          "/static/hex.svg",
           "https://hex.pm/packages/" <> package.name,
           "Hex",
         ),
@@ -165,14 +165,14 @@ fn package_list_item(package: PackageSummary) {
   ])
 }
 
-fn package_button(icon: Element(Nil), destination: String, label: String) {
+fn package_button(icon_location: String, destination: String, label: String) {
   html.a(
     [
       class("package-button"),
       attribute.href(destination),
       attribute.target("_blank"),
     ],
-    [icon, text(label)],
+    [html.img([attribute.src(icon_location), attribute.alt(label <> " Button Icon")]), text(label)],
   )
 }
 
@@ -231,7 +231,7 @@ fn layout(content: Element(Nil)) -> StringTree {
 fn navbar() {
   html.nav([class("page-nav")], [
     html.div([class("container")], [
-      html.div([class("nav-brand")], [icons.packages(), text("Gleam Packages")]),
+      html.div([class("nav-brand")], [html.img([attribute.src("/static/packages-icon.svg"), attribute.alt("The Gleam Packages icon, Lucy popping out of a box!")]), text("Gleam Packages")]),
       darkmode_toggle(),
     ]),
   ])
@@ -239,7 +239,8 @@ fn navbar() {
 
 fn darkmode_toggle() {
   html.button([class("darkmode-toggle"), attribute.data("theme-toggle", "")], [
-    icons.mode_switch(),
+    html.img([class("toggle-icon toggle-dark"), attribute.src("/static/mode-switch-dark.svg"), attribute.alt("Dark mode switch icon")]),
+    html.img([class("toggle-icon toggle-light"), attribute.src("/static/mode-switch-light.svg"), attribute.alt("Light mode switch icon")])
   ])
 }
 

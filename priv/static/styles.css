@@ -21,8 +21,8 @@ body {
   /* Variables */
   --primary-font: "Lexend", -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
   --page-background: #FFFEFB;
-  --card-background: #FFFFFF;
   --card-border: #E7E5E1;
+  --card-border-highlight: #d9d6d0;
   --text-regular: #81747C;
   --text-highlight: #151515;
   --faff-pink: #FFAFF3;
@@ -41,6 +41,7 @@ body.theme-dark {
   --page-background: #292D3E;
   --card-background: #3E4356;
   --card-border: #474B60;
+  --card-border-highlight: #616683;
   --text-regular: #D9DFF8;
   --text-highlight: #ffffff;
   color-scheme: dark;
@@ -66,9 +67,8 @@ body.theme-dark {
   align-items: center;
 }
 
-.page-nav .nav-brand svg {
-  width: 2.8rem;
-  height: 2.8rem;
+.page-nav .nav-brand img {
+  height: 3rem;
 }
 
 .page-nav .darkmode-toggle {
@@ -76,8 +76,12 @@ body.theme-dark {
   appearance: none;
   border: none;
   background: none;
-  transition: opacity 100ms ease-in-out;
+  width: 2rem;
+  height: 2rem;
+  transition: opacity 120ms ease-in-out;
   opacity: 1;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .page-nav .darkmode-toggle:hover {
@@ -85,18 +89,22 @@ body.theme-dark {
   cursor: pointer;
 }
 
-.page-nav .lightmode-switch-icon {
+.page-nav .toggle-icon {
   width: 2rem;
   height: 2rem;
-  color: #151515;
+  position: absolute;
+  top: 0;
+  right: 0;
+  opacity: 1;
+  transition: all 120ms ease;
+  transform: translateY(0);
 }
 
-body:not(.theme-dark) .page-nav .lightmode-switch-icon .lightmode-switch-icon-dark {
-  display: none;
-}
-
-body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
-  display: none;
+body.theme-light .page-nav .toggle-light,
+body.theme-dark .page-nav .toggle-dark {
+  opacity: 0;
+  transform: translateY(-1rem);
+  pointer-events: none;
 }
 
 .page-header {
@@ -153,7 +161,7 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
 .package-item {
   display: grid;
   gap: 1rem;
-  padding: 1.3rem 0;
+  padding: 1.2rem 0 1.4rem;
 }
 
 .package-item .package-name {
@@ -181,7 +189,6 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
 }
 
 .package-item .package-button {
-  /*background: var(--card-background);*/
   border: var(--card-border) 1px solid;
   display: flex;
   align-items: center;
@@ -191,12 +198,16 @@ body.theme-dark .page-nav .lightmode-switch-icon .lightmode-switch-icon-light {
   border-radius: var(--corner-radius);
   text-decoration: none;
   color: var(--text-highlight);
+  transition: border-color 120ms ease-in-out;
 }
 
-.package-item .package-button svg {
+.package-item .package-button:hover {
+  border-color: var(--card-border-highlight);
+}
+
+.package-item .package-button img {
   width: 1.2rem;
   height: 1.2rem;
-  stroke: var(--faff-pink);
 }
 
 .package-item aside {
