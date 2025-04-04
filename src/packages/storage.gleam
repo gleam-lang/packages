@@ -1,3 +1,4 @@
+import gleam/time/timestamp
 import birl.{type Time}
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
@@ -208,14 +209,11 @@ fn hex_package_to_storage_package(
   let repository_url =
     dict.get(package.meta.links, "Repository") |> option.from_result
 
-  let assert Ok(inserted_in_hex_at) = birl.parse(package.inserted_at)
-  let assert Ok(updated_in_hex_at) = birl.parse(package.updated_at)
-
   Package(
     name: package.name,
     description: package.meta.description |> option.unwrap(""),
-    inserted_in_hex_at: birl.to_unix(inserted_in_hex_at),
-    updated_in_hex_at: birl.to_unix(updated_in_hex_at),
+    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(package.inserted_at).0,
+    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0,
     downloads_all: downloads_count("all"),
     downloads_recent: downloads_count("recent"),
     downloads_week: downloads_count("week"),
@@ -234,15 +232,12 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
     option.None -> #(option.None, option.None)
   }
 
-  let assert Ok(inserted_at) = birl.parse(release.inserted_at)
-  let assert Ok(updated_at) = birl.parse(release.updated_at)
-
   Release(
     version: release.version,
     retirement_reason:,
     retirement_message:,
-    inserted_in_hex_at: birl.to_unix(inserted_at),
-    updated_in_hex_at: birl.to_unix(updated_at),
+    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(release.inserted_at).0,
+    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(release.updated_at).0,
   )
 }
 

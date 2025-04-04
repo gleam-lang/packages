@@ -1,3 +1,4 @@
+import gleam/time/timestamp
 import birl
 import gleam/dict
 import gleam/hexpm
@@ -45,8 +46,8 @@ pub fn insert_package_test() {
         name: "gleam_stdlib",
         owners: None,
         releases: [],
-        inserted_at: birl.to_iso8601(birl.from_unix(100)),
-        updated_at: birl.to_iso8601(birl.from_unix(2000)),
+        inserted_at: timestamp.from_unix_seconds(100),
+        updated_at: timestamp.from_unix_seconds(2000),
       ),
       "1.0.0",
     )
@@ -88,8 +89,8 @@ pub fn insert_ignored_package_test() {
         name: "gleam_file",
         owners: None,
         releases: [],
-        inserted_at: birl.to_iso8601(birl.from_unix(100)),
-        updated_at: birl.to_iso8601(birl.from_unix(2000)),
+        inserted_at: timestamp.from_unix_seconds(100),
+        updated_at: timestamp.from_unix_seconds(2000),
       ),
       "1.0.0",
     )
@@ -119,8 +120,8 @@ pub fn insert_release_test() {
         name: "gleam_stdlib",
         owners: None,
         releases: [],
-        inserted_at: birl.to_iso8601(birl.from_unix(1_284_352_323)),
-        updated_at: birl.to_iso8601(birl.from_unix(1_284_352_322)),
+        inserted_at: timestamp.from_unix_seconds(1_284_352_323),
+        updated_at: timestamp.from_unix_seconds(1_284_352_322),
       ),
       "2.0.2",
     )
@@ -144,8 +145,8 @@ pub fn insert_release_test() {
           reason: hexpm.Security,
           message: Some("Retired due to security concerns"),
         )),
-        inserted_at: birl.to_iso8601(birl.from_unix(2000)),
-        updated_at: birl.to_iso8601(birl.from_unix(1000)),
+        inserted_at: timestamp.from_unix_seconds(2000),
+        updated_at: timestamp.from_unix_seconds(1000),
       ),
     )
 
