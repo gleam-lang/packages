@@ -1,4 +1,3 @@
-import gleam/time/timestamp
 import birl.{type Time}
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
@@ -8,6 +7,7 @@ import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option}
 import gleam/result
+import gleam/time/timestamp
 import packages/error.{type Error}
 import storail.{type Collection}
 
@@ -212,8 +212,12 @@ fn hex_package_to_storage_package(
   Package(
     name: package.name,
     description: package.meta.description |> option.unwrap(""),
-    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(package.inserted_at).0,
-    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0,
+    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
+      package.inserted_at,
+    ).0,
+    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
+      package.updated_at,
+    ).0,
     downloads_all: downloads_count("all"),
     downloads_recent: downloads_count("recent"),
     downloads_week: downloads_count("week"),
@@ -236,8 +240,12 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
     version: release.version,
     retirement_reason:,
     retirement_message:,
-    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(release.inserted_at).0,
-    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(release.updated_at).0,
+    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
+      release.inserted_at,
+    ).0,
+    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
+      release.updated_at,
+    ).0,
   )
 }
 
