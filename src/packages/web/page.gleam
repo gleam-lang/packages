@@ -202,9 +202,7 @@ fn layout(content: Element(Nil)) -> StringTree {
       html.title([], "Gleam Packages"),
       html.link([
         attribute.rel("stylesheet"),
-        attribute.href(
-          "/static/styles.css"
-        ),
+        attribute.href("/static/styles.css"),
       ]),
       html.link([
         attribute.rel("icon"),
