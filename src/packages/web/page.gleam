@@ -203,7 +203,7 @@ fn layout(content: Element(Nil)) -> StringTree {
       html.link([
         attribute.rel("stylesheet"),
         attribute.href(
-          "/static/styles.css?v=dev" <> 10 |> int.random |> int.to_string,
+          "/static/styles.css"
         ),
       ]),
       html.link([
