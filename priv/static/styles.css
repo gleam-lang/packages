@@ -57,6 +57,12 @@ body.theme-dark {
   color: #000;
 }
 
+.page-nav,
+.page-nav a {
+  color: #000;
+  text-decoration: none;
+}
+
 .page-nav .container {
   display: flex;
   flex-wrap: wrap;

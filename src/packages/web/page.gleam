@@ -215,7 +215,7 @@ fn layout(content: Element(Nil)) -> StringTree {
 fn navbar() {
   html.nav([class("page-nav")], [
     html.div([class("container")], [
-      html.div([class("nav-brand")], [
+      html.a([attribute.href("/"), class("nav-brand")], [
         html.img([
           attribute.src("/static/packages-icon.svg"),
           attribute.alt("The Gleam Packages icon, Lucy popping out of a box!"),
