@@ -81,32 +81,20 @@ fn search_form(search_term: String) -> Element(Nil) {
   ])
 }
 
-/// Pluralizes the word "package" based on the number we're referring to.
-fn pluralize_package(amount: Int) -> String {
-  case amount {
-    1 -> "package"
-    _ -> "packages"
-  }
-}
-
 fn search_aware_package_list(
   packages: List(PackageSummary),
   total_package_count: Int,
   search_term: String,
 ) -> List(Element(Nil)) {
-  let header_phrase = case search_term, list.length(packages) {
-    "", 0 -> "No packages have been added yet"
-    _, 0 -> "No packages match your query"
-    "", _ ->
-      int.to_string(total_package_count)
-      <> " "
-      <> pluralize_package(total_package_count)
-      <> " are available!"
+  let header_phrase = case search_term, packages {
+    "", [] -> "No packages have been added yet"
+    "", [_] -> "1 package is available!"
+    "", _ -> int.to_string(total_package_count) <> " packages are available!"
+
+    _, [] -> "No packages match your query"
+    _, [_] -> "1 package matches your query!"
     _, _ ->
-      int.to_string(list.length(packages))
-      <> " "
-      <> pluralize_package(total_package_count)
-      <> " match your search"
+      int.to_string(list.length(packages)) <> " packages match your search"
   }
 
   [
@@ -179,7 +167,7 @@ fn format_date(datetime: Time) -> String {
   let now = birl.now()
   let one_hour_ago = birl.subtract(now, duration.hours(1))
   case birl.compare(datetime, one_hour_ago) {
-    order.Gt -> "Just now!"
+    order.Gt -> "just now!"
     _ -> birl.legible_difference(now, datetime)
   }
 }
@@ -215,7 +203,6 @@ fn layout(content: Element(Nil)) -> StringTree {
       ),
     ]),
     html.body([], [
-      html.script([], theme_picker_js),
       navbar(),
       html.main([class("page-content container")], [content]),
       footer(),
@@ -252,6 +239,7 @@ fn darkmode_toggle() {
       attribute.src("/static/mode-switch-light.svg"),
       attribute.alt("Light mode switch icon"),
     ]),
+    html.script([], theme_picker_js),
   ])
 }
 
@@ -310,9 +298,12 @@ mediaPrefersDarkTheme.addEventListener('change', () => {
   }
 })
 
+
 // Add handlers for theme selection buttons.
-document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
-  const theme = document.body.classList.contains('theme-dark') ? 'light' : 'dark'
-  selectTheme(theme)
-})
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
+    const theme = document.body.classList.contains('theme-dark') ? 'light' : 'dark'
+    selectTheme(theme)
+  })
+});
 "
