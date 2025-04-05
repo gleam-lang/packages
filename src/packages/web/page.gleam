@@ -213,9 +213,9 @@ fn layout(content: Element(Nil)) -> StringTree {
         [attribute.type_("module"), attribute.src("/static/main.js")],
         "",
       ),
-      html.script([attribute.type_("module")], theme_picker_js),
     ]),
     html.body([], [
+      html.script([], theme_picker_js),
       navbar(),
       html.main([class("page-content container")], [content]),
       footer(),
