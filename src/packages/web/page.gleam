@@ -166,20 +166,13 @@ fn package_list_item(package: PackageSummary) {
 }
 
 fn package_button(icon_location: String, destination: String, label: String) {
-  html.a(
-    [
-      class("package-button"),
-      attribute.href(destination),
-      attribute.target("_blank"),
-    ],
-    [
-      html.img([
-        attribute.src(icon_location),
-        attribute.alt(label <> " Button Icon"),
-      ]),
-      text(label),
-    ],
-  )
+  html.a([class("package-button"), attribute.href(destination)], [
+    html.img([
+      attribute.src(icon_location),
+      attribute.alt(label <> " Button Icon"),
+    ]),
+    text(label),
+  ])
 }
 
 fn format_date(datetime: Time) -> String {
