@@ -11,7 +11,8 @@
   src: url("https://gleam.run/fonts/Outfit.woff") format("woff");
 }
 
-html, body {
+html,
+body {
   min-height: 100%;
   padding: 0;
   margin: 0;
@@ -19,30 +20,33 @@ html, body {
 
 body {
   /* Variables */
-  --primary-font: "Lexend", -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
-  --page-background: #FFFEFB;
-  --card-border: #E7E5E1;
+  --primary-font: "Lexend", -apple-system, BlinkMacSystemFont, avenir next,
+    avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto,
+    noto, arial, sans-serif;
+  --page-background: #fffefb;
+  --card-border: #e7e5e1;
   --card-border-highlight: #d9d6d0;
-  --text-regular: #81747C;
+  --text-regular: #81747c;
   --text-highlight: #151515;
-  --faff-pink: #FFAFF3;
+  --faff-pink: #ffaff3;
   --font-regular: 400;
   --font-medium: 500;
   --font-bold: 600;
-  --corner-radius: .4rem;
+  --corner-radius: 0.4rem;
   --spacing: 1rem;
   /* Styles */
   background: var(--page-background);
   font-family: var(--primary-font);
+  color: var(--text-regular);
   color-scheme: light;
 }
 
 body.theme-dark {
-  --page-background: #292D3E;
-  --card-background: #3E4356;
-  --card-border: #474B60;
+  --page-background: #292d3e;
+  --card-background: #3e4356;
+  --card-border: #474b60;
   --card-border-highlight: #616683;
-  --text-regular: #D9DFF8;
+  --text-regular: #d9dff8;
   --text-highlight: #ffffff;
   color-scheme: dark;
 }
@@ -50,6 +54,7 @@ body.theme-dark {
 .page-nav {
   height: 4rem;
   background: var(--faff-pink);
+  color: #000;
 }
 
 .page-nav .container {
@@ -148,10 +153,6 @@ body.theme-dark .page-nav .toggle-dark {
   outline: none;
 }
 
-.search-bar input::placeholder {
-  color: var(--text-regular);
-}
-
 .container {
   max-width: 992px;
   margin: 0 auto;
@@ -172,12 +173,10 @@ body.theme-dark .page-nav .toggle-dark {
 }
 
 .package-item .release-version {
-  color: var(--text-regular);
   font-size: 1rem;
 }
 
 .package-item .package-description {
-  color: var(--text-regular);
   margin: 0 0 1rem;
   font-size: 0.9rem;
 }
@@ -217,7 +216,6 @@ body.theme-dark .page-nav .toggle-dark {
 .package-item .package-update-time {
   margin: 0;
   padding-top: 0.4rem;
-  color: var(--text-regular);
 }
 
 .package-item .package-update-time span {
@@ -244,7 +242,6 @@ body.theme-dark .page-nav .toggle-dark {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  color: var(--text-regular);
   gap: 1rem;
 }
 
