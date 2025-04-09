@@ -182,6 +182,13 @@ fn layout(content: Element(Nil)) -> StringTree {
       ]),
       html.title([], "Gleam Packages"),
       html.link([
+        attribute.rel("preload"),
+        attribute.href("/fonts/Lexend.woff2"),
+        attribute.type_("font/woff2"),
+        attribute("crossorigin", "true"),
+        attribute("as", "font"),
+      ]),
+      html.link([
         attribute.rel("stylesheet"),
         attribute.href("/static/styles.css"),
       ]),
@@ -217,6 +224,8 @@ fn navbar() {
     html.div([class("container")], [
       html.a([attribute.href("/"), class("nav-brand")], [
         html.img([
+          attribute.width(55),
+          attribute.height(60),
           attribute.src("/static/packages-icon.svg"),
           attribute.alt("The Gleam Packages icon, Lucy popping out of a box!"),
         ]),
