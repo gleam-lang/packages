@@ -217,6 +217,8 @@ fn navbar() {
     html.div([class("container")], [
       html.a([attribute.href("/"), class("nav-brand")], [
         html.img([
+          attribute.width(55),
+          attribute.height(60),
           attribute.src("/static/packages-icon.svg"),
           attribute.alt("The Gleam Packages icon, Lucy popping out of a box!"),
         ]),
