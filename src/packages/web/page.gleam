@@ -182,6 +182,13 @@ fn layout(content: Element(Nil)) -> StringTree {
       ]),
       html.title([], "Gleam Packages"),
       html.link([
+        attribute.rel("preload"),
+        attribute.href("/fonts/Lexend.woff2"),
+        attribute.type_("font/woff2"),
+        attribute("crossorigin", "true"),
+        attribute("as", "font"),
+      ]),
+      html.link([
         attribute.rel("stylesheet"),
         attribute.href("/static/styles.css"),
       ]),
