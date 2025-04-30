@@ -316,9 +316,18 @@ pub fn get_release(
   |> result.map_error(error.StorageError)
 }
 
+pub fn get_releases(
+  database: Database,
+  package package: String,
+) -> Result(List(Release), Error) {
+  use releases <- result.try(list_releases(database, package))
+  use release <- list.try_map(releases)
+  get_release(database, package, release)
+}
+
 pub fn list_releases(
   database: Database,
-  package: String,
+  package package: String,
 ) -> Result(List(String), Error) {
   storail.list(database.releases, [package])
   |> result.map_error(error.StorageError)

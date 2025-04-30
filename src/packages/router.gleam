@@ -55,7 +55,7 @@ fn api_packages(req: Request, ctx: Context) -> Response {
     })
     |> Ok
   }
-  json.object([#("data", json.array(packages, package_to_json))])
+  json.object([#("data", json.array(packages, package_to_json(_, option.None)))])
   |> json.to_string_tree()
   |> wisp.json_response(200)
 }
@@ -63,19 +63,43 @@ fn api_packages(req: Request, ctx: Context) -> Response {
 fn api_package(req: Request, ctx: Context, name: String) -> Response {
   use <- wisp.require_method(req, http.Get)
   let assert Ok(package) = storage.get_package(ctx.db, name)
-  json.object([#("data", package_to_json(package))])
+  let assert Ok(releases) = storage.get_releases(ctx.db, name)
+  json.object([#("data", package_to_json(package, option.Some(releases)))])
   |> json.to_string_tree()
   |> wisp.json_response(200)
 }
 
-fn package_to_json(package: storage.Package) -> json.Json {
-  json.object([
+fn package_to_json(
+  package: storage.Package,
+  releases: option.Option(List(storage.Release)),
+) -> json.Json {
+  let fields = [
     #("name", json.string(package.name)),
     #("description", json.string(package.description)),
     #("latest-version", json.string(package.latest_version)),
     #("repository", json.nullable(package.repository_url, json.string)),
     #("updated-at", json.int(package.updated_in_hex_at)),
-  ])
+  ]
+
+  let fields = case releases {
+    option.None -> fields
+    option.Some(releases) -> {
+      let releases =
+        releases
+        |> list.sort(fn(a, b) {
+          int.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
+        })
+        |> json.array(fn(release) {
+          json.object([
+            #("version", json.string(release.version)),
+            #("updated-at", json.int(release.updated_in_hex_at)),
+          ])
+        })
+      list.append(fields, [#("releases", releases)])
+    }
+  }
+
+  json.object(fields)
 }
 
 fn internet_points(context: Context) -> Response {
