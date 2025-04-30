@@ -1,7 +1,8 @@
 import gleam/erlang/process.{type Subject}
-import gleam/io
 import gleam/otp/actor
+import gleam/string
 import packages/error.{type Error}
+import wisp
 
 pub opaque type Message {
   Rerun
@@ -58,7 +59,7 @@ fn log_error(result: Result(a, b)) -> Nil {
   case result {
     Ok(_) -> Nil
     Error(e) -> {
-      io.debug(e)
+      wisp.log_error(string.inspect(e))
       Nil
     }
   }

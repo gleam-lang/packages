@@ -72,7 +72,7 @@ fn package_to_json(package: storage.Package) -> json.Json {
   json.object([
     #("name", json.string(package.name)),
     #("description", json.string(package.description)),
-    #("latest-version", json.string(package.name)),
+    #("latest-version", json.string(package.latest_version)),
     #("repository", json.nullable(package.repository_url, json.string)),
   ])
 }
