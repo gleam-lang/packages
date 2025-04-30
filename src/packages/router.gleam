@@ -74,6 +74,7 @@ fn package_to_json(package: storage.Package) -> json.Json {
     #("description", json.string(package.description)),
     #("latest-version", json.string(package.latest_version)),
     #("repository", json.nullable(package.repository_url, json.string)),
+    #("updated-at", json.int(package.updated_in_hex_at)),
   ])
 }
 
