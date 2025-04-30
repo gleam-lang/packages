@@ -62,11 +62,19 @@ fn api_packages(req: Request, ctx: Context) -> Response {
 
 fn api_package(req: Request, ctx: Context, name: String) -> Response {
   use <- wisp.require_method(req, http.Get)
-  let assert Ok(package) = storage.get_package(ctx.db, name)
-  let assert Ok(releases) = storage.get_releases(ctx.db, name)
-  json.object([#("data", package_to_json(package, option.Some(releases)))])
-  |> json.to_string_tree()
-  |> wisp.json_response(200)
+
+  let json = {
+    use package <- result.try(storage.get_package(ctx.db, name))
+    use releases <- result.try(storage.get_releases(ctx.db, name))
+    let json = package_to_json(package, option.Some(releases))
+    let json = json.object([#("data", json)])
+    Ok(json)
+  }
+
+  case json {
+    Ok(json) -> json |> json.to_string_tree() |> wisp.json_response(200)
+    Error(_) -> wisp.not_found()
+  }
 }
 
 fn package_to_json(
