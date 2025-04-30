@@ -50,3 +50,10 @@ EnvironmentFile=/srv/packages-environment
 [Install]
 WantedBy=multi-user.target default.target
 ```
+
+Podman will check for new image versions once and hour, and upgrade the
+container if needed, so new commits to main will be auto-deployed within an
+hour.
+
+You can `ssh linuxuser@packages.gleam.run` if you need to do something on the
+server.
