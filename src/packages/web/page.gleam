@@ -1,12 +1,11 @@
-import birl.{type Time}
-import birl/duration
 import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option
-import gleam/order
 import gleam/string
 import gleam/string_tree.{type StringTree}
+import gleam/time/duration
+import gleam/time/timestamp.{type Timestamp}
 import lustre/attribute.{attribute, class}
 import lustre/element.{type Element, text}
 import lustre/element/html
@@ -163,12 +162,27 @@ fn package_button(icon_location: String, destination: String, label: String) {
   ])
 }
 
-fn format_date(datetime: Time) -> String {
-  let now = birl.now()
-  let one_hour_ago = birl.subtract(now, duration.hours(1))
-  case birl.compare(datetime, one_hour_ago) {
-    order.Gt -> "just now!"
-    _ -> birl.legible_difference(now, datetime)
+fn format_date(datetime: Timestamp) -> String {
+  let now = timestamp.system_time()
+  let #(i, unit) = duration.approximate(timestamp.difference(datetime, now))
+  let print = fn(unit) {
+    case i {
+      1 -> "1 " <> unit <> " ago"
+      _ -> int.to_string(i) <> " " <> unit <> "s ago"
+    }
+  }
+  case unit {
+    _ if i < 0 -> "Just now"
+    duration.Microsecond
+    | duration.Millisecond
+    | duration.Minute
+    | duration.Nanosecond
+    | duration.Second -> "Just now"
+    duration.Day -> print("day")
+    duration.Hour -> print("hour")
+    duration.Week -> print("week")
+    duration.Month -> print("month")
+    duration.Year -> print("year")
   }
 }
 

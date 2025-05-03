@@ -1,19 +1,21 @@
-import birl.{type Time}
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
+import gleam/float
 import gleam/hexpm
 import gleam/int
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option}
 import gleam/result
-import gleam/time/timestamp
+import gleam/string
+import gleam/time/calendar
+import gleam/time/timestamp.{type Timestamp}
 import packages/error.{type Error}
 import storail.{type Collection}
 
 pub opaque type Database {
   Database(
-    most_recent_hex_timestamp: Collection(Int),
+    most_recent_hex_timestamp: Collection(Timestamp),
     packages: Collection(Package),
     releases: Collection(Release),
   )
@@ -25,8 +27,8 @@ pub fn initialise(storage_path: String) -> Database {
   let most_recent_hex_timestamp =
     storail.Collection(
       name: "most_recent_hex_timestamp",
-      to_json: json.int,
-      decoder: decode.int,
+      to_json: json_timestamp,
+      decoder: decode.int |> decode.map(timestamp.from_unix_seconds),
       config:,
     )
 
@@ -60,7 +62,9 @@ const ignored_packages = [
   "glitter", "sequin",
 ]
 
-const gleam_package_epoch = 1_635_092_380
+fn gleam_package_epoch() -> Timestamp {
+  timestamp.from_unix_seconds(1_635_092_380)
+}
 
 pub type PackageSummary {
   PackageSummary(
@@ -68,7 +72,7 @@ pub type PackageSummary {
     description: String,
     repository_url: Option(String),
     latest_version: String,
-    updated_in_hex_at: Time,
+    updated_in_hex_at: Timestamp,
   )
 }
 
@@ -76,8 +80,8 @@ pub type Package {
   Package(
     name: String,
     description: String,
-    inserted_in_hex_at: Int,
-    updated_in_hex_at: Int,
+    inserted_in_hex_at: Timestamp,
+    updated_in_hex_at: Timestamp,
     downloads_all: Int,
     downloads_recent: Int,
     downloads_week: Int,
@@ -91,8 +95,8 @@ fn package_to_json(package: Package) -> Json {
   json.object([
     #("name", json.string(package.name)),
     #("description", json.string(package.description)),
-    #("inserted_in_hex_at", json.int(package.inserted_in_hex_at)),
-    #("updated_in_hex_at", json.int(package.updated_in_hex_at)),
+    #("inserted_in_hex_at", json_timestamp(package.inserted_in_hex_at)),
+    #("updated_in_hex_at", json_timestamp(package.updated_in_hex_at)),
     #("latest_version", json.string(package.latest_version)),
     #("downloads_all", json.int(package.downloads_all)),
     #("downloads_recent", json.int(package.downloads_recent)),
@@ -119,8 +123,8 @@ fn package_decoder() -> Decoder(Package) {
   decode.success(Package(
     name:,
     description:,
-    inserted_in_hex_at:,
-    updated_in_hex_at:,
+    inserted_in_hex_at: timestamp.from_unix_seconds(inserted_in_hex_at),
+    updated_in_hex_at: timestamp.from_unix_seconds(updated_in_hex_at),
     downloads_all:,
     downloads_recent:,
     downloads_week:,
@@ -135,9 +139,16 @@ pub type Release {
     version: String,
     retirement_reason: Option(String),
     retirement_message: Option(String),
-    inserted_in_hex_at: Int,
-    updated_in_hex_at: Int,
+    inserted_in_hex_at: Timestamp,
+    updated_in_hex_at: Timestamp,
   )
+}
+
+fn json_timestamp(timestamp: timestamp.Timestamp) -> json.Json {
+  timestamp
+  |> timestamp.to_unix_seconds
+  |> float.round
+  |> json.int
 }
 
 fn release_to_json(release: Release) -> Json {
@@ -151,8 +162,8 @@ fn release_to_json(release: Release) -> Json {
       "retirement_message",
       json.nullable(release.retirement_message, json.string),
     ),
-    #("inserted_in_hex_at", json.int(release.inserted_in_hex_at)),
-    #("updated_in_hex_at", json.int(release.updated_in_hex_at)),
+    #("inserted_in_hex_at", json_timestamp(release.inserted_in_hex_at)),
+    #("updated_in_hex_at", json_timestamp(release.updated_in_hex_at)),
   ])
 }
 
@@ -172,30 +183,31 @@ fn release_decoder() -> Decoder(Release) {
     version:,
     retirement_reason:,
     retirement_message:,
-    inserted_in_hex_at:,
-    updated_in_hex_at:,
+    inserted_in_hex_at: timestamp.from_unix_seconds(inserted_in_hex_at),
+    updated_in_hex_at: timestamp.from_unix_seconds(updated_in_hex_at),
   ))
 }
 
 /// Insert or replace the most recent Hex timestamp in the database.
 pub fn upsert_most_recent_hex_timestamp(
   database: Database,
-  time: Time,
+  time: Timestamp,
 ) -> Result(Nil, Error) {
   database.most_recent_hex_timestamp
   |> storail.key("latest")
-  |> storail.write(birl.to_unix(time))
+  |> storail.write(time)
   |> result.map_error(error.StorageError)
 }
 
 /// Get the most recent Hex timestamp from the database, returning the Unix
 /// epoch if there is no previous timestamp in the database.
-pub fn get_most_recent_hex_timestamp(database: Database) -> Result(Time, Error) {
+pub fn get_most_recent_hex_timestamp(
+  database: Database,
+) -> Result(Timestamp, Error) {
   database.most_recent_hex_timestamp
   |> storail.key("latest")
   |> storail.optional_read
-  |> result.map(option.unwrap(_, gleam_package_epoch))
-  |> result.map(birl.from_unix)
+  |> result.map(option.unwrap(_, gleam_package_epoch()))
   |> result.map_error(error.StorageError)
 }
 
@@ -212,12 +224,8 @@ fn hex_package_to_storage_package(
   Package(
     name: package.name,
     description: package.meta.description |> option.unwrap(""),
-    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
-      package.inserted_at,
-    ).0,
-    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
-      package.updated_at,
-    ).0,
+    inserted_in_hex_at: package.inserted_at,
+    updated_in_hex_at: package.updated_at,
     downloads_all: downloads_count("all"),
     downloads_recent: downloads_count("recent"),
     downloads_week: downloads_count("week"),
@@ -240,12 +248,8 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
     version: release.version,
     retirement_reason:,
     retirement_message:,
-    inserted_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
-      release.inserted_at,
-    ).0,
-    updated_in_hex_at: timestamp.to_unix_seconds_and_nanoseconds(
-      release.updated_at,
-    ).0,
+    inserted_in_hex_at: release.inserted_at,
+    updated_in_hex_at: release.updated_at,
   )
 }
 
@@ -349,7 +353,7 @@ pub fn package_summaries(
     description: package.description,
     repository_url: package.repository_url,
     latest_version: package.latest_version,
-    updated_in_hex_at: birl.from_unix(package.updated_in_hex_at),
+    updated_in_hex_at: package.updated_in_hex_at,
   ))
 }
 
@@ -384,8 +388,8 @@ pub fn new_package_count_per_day(
 ) -> Result(List(#(String, Int)), Error) {
   use packages <- result.try(
     try_fold_packages(database, dict.new(), fn(counts, package) {
-      birl.from_unix(package.inserted_in_hex_at)
-      |> birl.to_date_string
+      package.inserted_in_hex_at
+      |> date_string
       |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
       |> Ok
     }),
@@ -396,13 +400,19 @@ pub fn new_package_count_per_day(
   |> Ok
 }
 
+fn date_string(timestamp: Timestamp) -> String {
+  timestamp
+  |> timestamp.to_rfc3339(calendar.utc_offset)
+  |> string.slice(0, 10)
+}
+
 pub fn new_release_count_per_day(
   database: Database,
 ) -> Result(List(#(String, Int)), Error) {
   use releases <- result.try(
     try_fold_releases(database, dict.new(), fn(counts, release) {
-      birl.from_unix(release.inserted_in_hex_at)
-      |> birl.to_date_string
+      release.inserted_in_hex_at
+      |> date_string
       |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
       |> Ok
     }),

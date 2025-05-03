@@ -1,7 +1,7 @@
-import birl
 import gleam/dict
 import gleam/hexpm
 import gleam/option.{None, Some}
+import gleam/time/calendar
 import gleam/time/timestamp
 import gleeunit/should
 import packages/error
@@ -13,16 +13,19 @@ pub fn most_recent_hex_timestamp_test() {
   use db <- tests.with_database
 
   let assert Ok(Nil) =
-    storage.upsert_most_recent_hex_timestamp(db, birl.from_unix(0))
+    storage.upsert_most_recent_hex_timestamp(db, timestamp.from_unix_seconds(0))
   let assert Ok(time) = storage.get_most_recent_hex_timestamp(db)
-  let assert 0 = birl.to_unix(time)
-  let assert "1970-01-01T00:00:00.000Z" = birl.to_iso8601(time)
+  let assert #(0, 0) = timestamp.to_unix_seconds_and_nanoseconds(time)
+  let assert "1970-01-01T00:00:00Z" =
+    timestamp.to_rfc3339(time, calendar.utc_offset)
 
-  let assert Ok(Nil) =
-    storage.upsert_most_recent_hex_timestamp(db, birl.from_unix(2_284_352_323))
+  let timestamp = timestamp.from_unix_seconds(2_284_352_323)
+  let assert Ok(Nil) = storage.upsert_most_recent_hex_timestamp(db, timestamp)
   let assert Ok(time) = storage.get_most_recent_hex_timestamp(db)
-  let assert "2042-05-22T06:18:43.000Z" = birl.to_iso8601(time)
-  let assert 2_284_352_323 = birl.to_unix(time)
+  let assert "2042-05-22T06:18:43Z" =
+    timestamp.to_rfc3339(time, calendar.utc_offset)
+  let assert #(2_284_352_323, 0) =
+    timestamp.to_unix_seconds_and_nanoseconds(time)
 }
 
 pub fn insert_package_test() {
@@ -57,8 +60,8 @@ pub fn insert_package_test() {
   |> should.equal(Package(
     description: "Standard library for Gleam",
     name: "gleam_stdlib",
-    inserted_in_hex_at: 100,
-    updated_in_hex_at: 2000,
+    inserted_in_hex_at: timestamp.from_unix_seconds(100),
+    updated_in_hex_at: timestamp.from_unix_seconds(2000),
     downloads_all: 5,
     downloads_recent: 2,
     downloads_day: 0,
@@ -156,7 +159,7 @@ pub fn insert_release_test() {
     version: "0.0.3",
     retirement_reason: Some("security"),
     retirement_message: Some("Retired due to security concerns"),
-    updated_in_hex_at: 1000,
-    inserted_in_hex_at: 2000,
+    updated_in_hex_at: timestamp.from_unix_seconds(1000),
+    inserted_in_hex_at: timestamp.from_unix_seconds(2000),
   ))
 }

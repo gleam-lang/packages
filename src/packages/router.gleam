@@ -1,11 +1,11 @@
-import birl
+import gleam/float
 import gleam/http
 import gleam/http/request
-import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/time/timestamp
 import gleam/uri
 import packages/storage
 import packages/text_search
@@ -51,7 +51,7 @@ fn api_packages(req: Request, ctx: Context) -> Response {
     use packages <- result.try(packages)
     packages
     |> list.sort(fn(a, b) {
-      int.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
+      timestamp.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
     })
     |> Ok
   }
@@ -77,7 +77,7 @@ fn api_package(req: Request, ctx: Context, name: String) -> Response {
   }
 }
 
-fn package_to_json(
+pub fn package_to_json(
   package: storage.Package,
   releases: option.Option(List(storage.Release)),
 ) -> json.Json {
@@ -86,7 +86,7 @@ fn package_to_json(
     #("description", json.string(package.description)),
     #("latest-version", json.string(package.latest_version)),
     #("repository", json.nullable(package.repository_url, json.string)),
-    #("updated-at", json.int(package.updated_in_hex_at)),
+    #("updated-at", json_timestamp(package.updated_in_hex_at)),
   ]
 
   let fields = case releases {
@@ -95,12 +95,12 @@ fn package_to_json(
       let releases =
         releases
         |> list.sort(fn(a, b) {
-          int.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
+          timestamp.compare(b.inserted_in_hex_at, a.inserted_in_hex_at)
         })
         |> json.array(fn(release) {
           json.object([
             #("version", json.string(release.version)),
-            #("updated-at", json.int(release.updated_in_hex_at)),
+            #("updated-at", json_timestamp(release.updated_in_hex_at)),
           ])
         })
       list.append(fields, [#("releases", releases)])
@@ -129,7 +129,7 @@ fn search(request: Request, context: Context) -> Response {
   let packages = case search_term {
     "" ->
       list.sort(packages, fn(a, b) {
-        birl.compare(b.updated_in_hex_at, a.updated_in_hex_at)
+        timestamp.compare(b.updated_in_hex_at, a.updated_in_hex_at)
       })
     _ -> packages
   }
@@ -146,4 +146,11 @@ fn get_search_parameter(request: Request) -> String {
   |> result.then(uri.parse_query)
   |> result.then(list.key_find(_, "search"))
   |> result.unwrap("")
+}
+
+fn json_timestamp(timestamp: timestamp.Timestamp) -> json.Json {
+  timestamp
+  |> timestamp.to_unix_seconds
+  |> float.round
+  |> json.int
 }

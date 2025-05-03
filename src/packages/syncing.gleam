@@ -1,5 +1,3 @@
-import birl.{type Time}
-import birl/duration
 import gleam/dynamic/decode
 import gleam/hackney
 import gleam/hexpm
@@ -11,7 +9,9 @@ import gleam/option
 import gleam/order
 import gleam/result
 import gleam/string
-import gleam/time/timestamp
+import gleam/time/calendar
+import gleam/time/duration
+import gleam/time/timestamp.{type Timestamp}
 import gleam/uri
 import packages/error.{type Error}
 import packages/storage.{type Database}
@@ -28,10 +28,10 @@ pub fn try(a: Result(a, e), f: fn(a) -> Result(b, e)) -> Result(b, e) {
 type State {
   State(
     page: Int,
-    limit: Time,
-    newest: Time,
+    limit: Timestamp,
+    newest: Timestamp,
     hex_api_key: String,
-    last_logged: Time,
+    last_logged: Timestamp,
     db: storage.Database,
     text_search: text_search.TextSearchIndex,
   )
@@ -50,7 +50,7 @@ pub fn sync_new_gleam_releases(
       limit:,
       newest: limit,
       hex_api_key:,
-      last_logged: birl.now(),
+      last_logged: timestamp.system_time(),
       db:,
       text_search:,
     )),
@@ -69,10 +69,10 @@ pub fn fetch_and_sync_package(
   let state =
     State(
       page: 0,
-      limit: birl.now(),
-      newest: birl.now(),
+      limit: timestamp.system_time(),
+      newest: timestamp.system_time(),
+      last_logged: timestamp.system_time(),
       hex_api_key:,
-      last_logged: birl.now(),
       db:,
       text_search:,
     )
@@ -83,7 +83,7 @@ pub fn fetch_and_sync_package(
   Ok(Nil)
 }
 
-fn sync_packages(state: State) -> Result(Time, Error) {
+fn sync_packages(state: State) -> Result(Timestamp, Error) {
   // Get the next page of packages from the API.
   use all_packages <- try(get_api_packages_page(state))
 
@@ -111,15 +111,12 @@ fn sync_packages(state: State) -> Result(Time, Error) {
   }
 }
 
-fn first_timestamp(packages: List(hexpm.Package), state: State) -> Time {
+fn first_timestamp(packages: List(hexpm.Package), state: State) -> Timestamp {
   case packages {
     [] -> state.newest
     [package, ..] -> {
-      let updated_at =
-        birl.from_unix(
-          timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0,
-        )
-      case birl.compare(updated_at, state.newest) {
+      let updated_at = package.updated_at
+      case timestamp.compare(updated_at, state.newest) {
         order.Gt -> updated_at
         _ -> state.newest
       }
@@ -170,28 +167,21 @@ fn get_api_package(
 
 pub fn take_fresh_packages(
   packages: List(hexpm.Package),
-  limit: Time,
+  limit: Timestamp,
 ) -> List(hexpm.Package) {
   use package <- list.take_while(packages)
-  let updated_at =
-    birl.from_unix(
-      timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0,
-    )
-  birl.compare(limit, updated_at) == order.Lt
+  let updated_at = package.updated_at
+  timestamp.compare(limit, updated_at) == order.Lt
 }
 
 pub fn with_only_fresh_releases(
   package: hexpm.Package,
-  limit: Time,
+  limit: Timestamp,
 ) -> hexpm.Package {
   let releases =
     package.releases
     |> list.take_while(fn(release) {
-      let inserted_at =
-        birl.from_unix(
-          timestamp.to_unix_seconds_and_nanoseconds(release.inserted_at).0,
-        )
-      birl.compare(limit, inserted_at) == order.Lt
+      timestamp.compare(limit, release.inserted_at) == order.Lt
     })
   hexpm.Package(..package, releases: releases)
 }
@@ -201,16 +191,12 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
 
   case releases {
     [] -> {
-      let updated_at =
-        birl.from_unix(
-          timestamp.to_unix_seconds_and_nanoseconds(package.updated_at).0,
-        )
-      let state = log_if_needed(state, updated_at)
+      let state = log_if_needed(state, package.updated_at)
       Ok(state)
     }
     _ -> {
       use _ <- try(insert_package_and_releases(package, releases, state))
-      let state = State(..state, last_logged: birl.now())
+      let state = State(..state, last_logged: timestamp.system_time())
       Ok(state)
     }
   }
@@ -248,14 +234,16 @@ fn lookup_gleam_releases(
   |> Ok
 }
 
-fn log_if_needed(state: State, time: Time) -> State {
-  let interval = duration.new([#(5, duration.Second)])
-  let print_deadline = birl.add(state.last_logged, interval)
-  let not_logged_recently = birl.compare(print_deadline, birl.now()) == order.Lt
+fn log_if_needed(state: State, time: Timestamp) -> State {
+  let interval = duration.seconds(5)
+  let print_deadline = timestamp.add(state.last_logged, interval)
+  let not_logged_recently =
+    timestamp.compare(print_deadline, timestamp.system_time()) == order.Lt
   case not_logged_recently {
     True -> {
-      wisp.log_info("Still syncing, up to " <> birl.to_iso8601(time))
-      State(..state, last_logged: birl.now())
+      let date = timestamp.to_rfc3339(time, calendar.local_offset())
+      wisp.log_info("Still syncing, up to " <> date)
+      State(..state, last_logged: timestamp.system_time())
     }
     False -> state
   }
@@ -268,17 +256,7 @@ fn insert_package_and_releases(
 ) -> Result(Nil, Error) {
   let assert Ok(latest) =
     releases
-    |> list.sort(fn(a, b) {
-      let a_inserted =
-        birl.from_unix(
-          timestamp.to_unix_seconds_and_nanoseconds(a.inserted_at).0,
-        )
-      let b_inserted =
-        birl.from_unix(
-          timestamp.to_unix_seconds_and_nanoseconds(b.inserted_at).0,
-        )
-      birl.compare(b_inserted, a_inserted)
-    })
+    |> list.sort(fn(a, b) { timestamp.compare(b.inserted_at, a.inserted_at) })
     |> list.first
   let versions =
     releases
