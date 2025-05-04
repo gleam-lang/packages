@@ -23,6 +23,7 @@ pub fn handle_request(
   case request.path_segments(request) {
     [] -> search(request, context)
     ["internet-points"] -> internet_points(context)
+    ["api"] -> api(request, context)
     ["api", "packages"] -> api_packages(request, context)
     ["api", "packages", name] -> api_package(request, context, name)
     _ -> wisp.redirect(to: "/")
@@ -41,6 +42,13 @@ pub fn middleware(
   use <- wisp.serve_static(req, under: "/static", from: ctx.static_directory)
 
   handle_request(req)
+}
+
+fn api(request: Request, context: Context) -> Response {
+  use <- wisp.require_method(request, http.Get)
+  json.object([#("version", json.string(context.git_sha))])
+  |> json.to_string_tree()
+  |> wisp.json_response(200)
 }
 
 fn api_packages(req: Request, ctx: Context) -> Response {

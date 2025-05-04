@@ -5,6 +5,8 @@ COPY . /app/
 RUN cd /app && gleam export erlang-shipment
 
 FROM erlang:27.1.1.0-alpine
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 RUN \
   addgroup --system gleam_packages && \
   adduser --system gleam_packages -g gleam_packages   

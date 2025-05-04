@@ -141,6 +141,7 @@ pub type Release {
     retirement_message: Option(String),
     inserted_in_hex_at: Timestamp,
     updated_in_hex_at: Timestamp,
+    last_scanned_at: Timestamp,
   )
 }
 
@@ -164,6 +165,7 @@ fn release_to_json(release: Release) -> Json {
     ),
     #("inserted_in_hex_at", json_timestamp(release.inserted_in_hex_at)),
     #("updated_in_hex_at", json_timestamp(release.updated_in_hex_at)),
+    #("last_scanned_at", json_timestamp(release.last_scanned_at)),
   ])
 }
 
@@ -179,12 +181,14 @@ fn release_decoder() -> Decoder(Release) {
   )
   use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
   use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
+  use last_scanned_at <- decode.optional_field("last_scanned_at", 0, decode.int)
   decode.success(Release(
     version:,
     retirement_reason:,
     retirement_message:,
     inserted_in_hex_at: timestamp.from_unix_seconds(inserted_in_hex_at),
     updated_in_hex_at: timestamp.from_unix_seconds(updated_in_hex_at),
+    last_scanned_at: timestamp.from_unix_seconds(last_scanned_at),
   ))
 }
 
@@ -235,7 +239,10 @@ fn hex_package_to_storage_package(
   )
 }
 
-fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
+fn hexpm_release_to_storage_release(
+  release: hexpm.Release,
+  last_scanned_at: Timestamp,
+) -> Release {
   let #(retirement_reason, retirement_message) = case release.retirement {
     option.Some(retirement) -> #(
       option.Some(hexpm.retirement_reason_to_string(retirement.reason)),
@@ -250,6 +257,7 @@ fn hexpm_release_to_storage_release(release: hexpm.Release) -> Release {
     retirement_message:,
     inserted_in_hex_at: release.inserted_at,
     updated_in_hex_at: release.updated_at,
+    last_scanned_at:,
   )
 }
 
@@ -301,8 +309,9 @@ pub fn upsert_release(
   database: Database,
   package: String,
   release: hexpm.Release,
+  now now: Timestamp,
 ) -> Result(Nil, Error) {
-  let release = hexpm_release_to_storage_release(release)
+  let release = hexpm_release_to_storage_release(release, now)
   database.releases
   |> storail.namespaced_key([package], release.version)
   |> storail.write(release)

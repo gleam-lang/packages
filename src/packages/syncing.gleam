@@ -276,8 +276,9 @@ fn insert_package_and_releases(
     latest.version,
   ))
 
+  let now = timestamp.system_time()
   releases
-  |> list.try_each(storage.upsert_release(state.db, package.name, _))
+  |> list.try_each(storage.upsert_release(state.db, package.name, _, now))
 }
 
 fn lookup_release(

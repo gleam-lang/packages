@@ -151,6 +151,7 @@ pub fn insert_release_test() {
         inserted_at: timestamp.from_unix_seconds(2000),
         updated_at: timestamp.from_unix_seconds(1000),
       ),
+      timestamp.from_unix_seconds(5000),
     )
 
   let assert Ok(release) = storage.get_release(db, "gleam_stdlib", "0.0.3")
@@ -161,5 +162,6 @@ pub fn insert_release_test() {
     retirement_message: Some("Retired due to security concerns"),
     updated_in_hex_at: timestamp.from_unix_seconds(1000),
     inserted_in_hex_at: timestamp.from_unix_seconds(2000),
+    last_scanned_at: timestamp.from_unix_seconds(5000),
   ))
 }
