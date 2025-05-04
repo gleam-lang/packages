@@ -5,6 +5,7 @@ import gleam/json
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/time/calendar
 import gleam/time/timestamp
 import gleam/uri
 import packages/storage
@@ -46,7 +47,11 @@ pub fn middleware(
 
 fn api(request: Request, context: Context) -> Response {
   use <- wisp.require_method(request, http.Get)
-  json.object([#("version", json.string(context.git_sha))])
+  let start_time = timestamp.to_rfc3339(context.start_time, calendar.utc_offset)
+  json.object([
+    #("version", json.string(context.git_sha)),
+    #("start-time", json.string(start_time)),
+  ])
   |> json.to_string_tree()
   |> wisp.json_response(200)
 }

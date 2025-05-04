@@ -5,6 +5,7 @@ import gleam/io
 import gleam/otp/actor
 import gleam/otp/supervisor
 import gleam/result
+import gleam/time/timestamp
 import mist
 import packages/error.{type Error}
 import packages/periodic
@@ -34,6 +35,7 @@ pub fn main() {
 fn server() {
   wisp.configure_logger()
 
+  let start_time = timestamp.system_time()
   let git_sha = envoy.get("GIT_SHA") |> result.unwrap("HEAD")
   let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(priv) = wisp.priv_directory("packages")
@@ -51,6 +53,7 @@ fn server() {
     web.Context(
       db: database,
       git_sha:,
+      start_time:,
       search_index: index,
       static_directory: static_directory,
     )
