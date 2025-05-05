@@ -137,7 +137,7 @@ pub fn insert_release_test() {
         version: "0.0.3",
         checksum: "a895b55c4c3749eb32328f02b15bbd3acc205dd874fabd135d7be5d12eda59a8",
         url: "https://hex.pm/api/packages/shimmer/releases/0.0.3",
-        downloads: 0,
+        downloads: 12_345,
         meta: hexpm.ReleaseMeta(app: Some("shimmer"), build_tools: ["gleam"]),
         publisher: Some(hexpm.PackageOwner(
           username: "harryet",
@@ -158,6 +158,7 @@ pub fn insert_release_test() {
   release
   |> should.equal(Release(
     version: "0.0.3",
+    downloads: 12_345,
     retirement_reason: Some("security"),
     retirement_message: Some("Retired due to security concerns"),
     updated_in_hex_at: timestamp.from_unix_seconds(1000),

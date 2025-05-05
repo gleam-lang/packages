@@ -116,6 +116,7 @@ pub fn package_to_json(
         |> json.array(fn(release) {
           json.object([
             #("version", json.string(release.version)),
+            #("downloads", json.int(release.downloads)),
             #("updated-at", json_timestamp(release.updated_in_hex_at)),
           ])
         })

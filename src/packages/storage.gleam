@@ -137,6 +137,7 @@ fn package_decoder() -> Decoder(Package) {
 pub type Release {
   Release(
     version: String,
+    downloads: Int,
     retirement_reason: Option(String),
     retirement_message: Option(String),
     inserted_in_hex_at: Timestamp,
@@ -153,19 +154,23 @@ fn json_timestamp(timestamp: timestamp.Timestamp) -> json.Json {
 }
 
 fn release_to_json(release: Release) -> Json {
+  let Release(
+    version:,
+    downloads:,
+    retirement_reason:,
+    retirement_message:,
+    inserted_in_hex_at:,
+    updated_in_hex_at:,
+    last_scanned_at:,
+  ) = release
   json.object([
-    #("version", json.string(release.version)),
-    #(
-      "retirement_reason",
-      json.nullable(release.retirement_reason, json.string),
-    ),
-    #(
-      "retirement_message",
-      json.nullable(release.retirement_message, json.string),
-    ),
-    #("inserted_in_hex_at", json_timestamp(release.inserted_in_hex_at)),
-    #("updated_in_hex_at", json_timestamp(release.updated_in_hex_at)),
-    #("last_scanned_at", json_timestamp(release.last_scanned_at)),
+    #("version", json.string(version)),
+    #("downloads", json.int(downloads)),
+    #("retirement_reason", json.nullable(retirement_reason, json.string)),
+    #("retirement_message", json.nullable(retirement_message, json.string)),
+    #("inserted_in_hex_at", json_timestamp(inserted_in_hex_at)),
+    #("updated_in_hex_at", json_timestamp(updated_in_hex_at)),
+    #("last_scanned_at", json_timestamp(last_scanned_at)),
   ])
 }
 
@@ -179,11 +184,13 @@ fn release_decoder() -> Decoder(Release) {
     "retirement_message",
     decode.optional(decode.string),
   )
+  use downloads <- decode.field("downloads", decode.int)
   use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
   use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
   use last_scanned_at <- decode.optional_field("last_scanned_at", 0, decode.int)
   decode.success(Release(
     version:,
+    downloads:,
     retirement_reason:,
     retirement_message:,
     inserted_in_hex_at: timestamp.from_unix_seconds(inserted_in_hex_at),
@@ -253,6 +260,7 @@ fn hexpm_release_to_storage_release(
 
   Release(
     version: release.version,
+    downloads: release.downloads,
     retirement_reason:,
     retirement_message:,
     inserted_in_hex_at: release.inserted_at,
