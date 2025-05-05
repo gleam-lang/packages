@@ -1,0 +1,8 @@
+#!/bin/sh
+
+BOX=linuxuser@packages.gleam.run 
+
+echo "Running podman-auto-update"
+ssh "$BOX" "sudo systemctl start podman-auto-update.service" 
+
+ssh -t "$BOX" "sudo systemctl --no-pager status packages.service"
