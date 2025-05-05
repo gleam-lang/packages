@@ -187,6 +187,12 @@ body.theme-dark .page-nav .toggle-dark {
   font-size: 0.9rem;
 }
 
+.package-item .package-name,
+.package-item .package-description {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .package-item .package-buttons {
   display: flex;
   flex-wrap: wrap;
