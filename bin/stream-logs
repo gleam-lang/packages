@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ssh linuxuser@packages.gleam.run sudo journalctl -xeu packages.service --follow
