@@ -187,7 +187,7 @@ fn release_decoder() -> Decoder(Release) {
   use downloads <- decode.field("downloads", decode.int)
   use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
   use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
-  use last_scanned_at <- decode.optional_field("last_scanned_at", 0, decode.int)
+  use last_scanned_at <- decode.field("last_scanned_at", decode.int)
   decode.success(Release(
     version:,
     downloads:,
