@@ -39,7 +39,8 @@ jobs:
           docker build . \
             --file Dockerfile \
             --tag app \
-            --build-arg GIT_SHA=${{ github.sha }}
+            --build-arg GIT_SHA=${{ github.sha }} \
+            --build-arg BUILD_TIME=$(date +%s)
 
       - name: Push image
         run: |

@@ -47,10 +47,13 @@ pub fn middleware(
 
 fn api(request: Request, context: Context) -> Response {
   use <- wisp.require_method(request, http.Get)
-  let start_time = timestamp.to_rfc3339(context.start_time, calendar.utc_offset)
+  let time = fn(timestamp) {
+    json.string(timestamp.to_rfc3339(timestamp, calendar.utc_offset))
+  }
   json.object([
     #("version", json.string(context.git_sha)),
-    #("start-time", json.string(start_time)),
+    #("started-at", time(context.start_time)),
+    #("built-at", time(context.build_time)),
   ])
   |> json.to_string_tree()
   |> wisp.json_response(200)

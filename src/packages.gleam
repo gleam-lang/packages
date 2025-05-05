@@ -1,6 +1,7 @@
 import argv
 import envoy
 import gleam/erlang/process
+import gleam/int
 import gleam/io
 import gleam/otp/actor
 import gleam/otp/supervisor
@@ -36,6 +37,11 @@ fn server() {
   wisp.configure_logger()
 
   let start_time = timestamp.system_time()
+  let build_time =
+    envoy.get("GIT_SHA")
+    |> result.try(int.parse)
+    |> result.map(timestamp.from_unix_seconds)
+    |> result.unwrap(start_time)
   let git_sha = envoy.get("GIT_SHA") |> result.unwrap("HEAD")
   let assert Ok(key) = envoy.get("HEX_API_KEY")
   let assert Ok(priv) = wisp.priv_directory("packages")
@@ -54,6 +60,7 @@ fn server() {
       db: database,
       git_sha:,
       start_time:,
+      build_time:,
       search_index: index,
       static_directory: static_directory,
     )
