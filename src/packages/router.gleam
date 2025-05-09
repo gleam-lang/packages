@@ -50,8 +50,10 @@ fn api(request: Request, context: Context) -> Response {
   let time = fn(timestamp) {
     json.string(timestamp.to_rfc3339(timestamp, calendar.utc_offset))
   }
+  let url = "https://github.com/gleam-lang/packages/commit/" <> context.git_sha
   json.object([
     #("version", json.string(context.git_sha)),
+    #("code", json.string(url)),
     #("started-at", time(context.start_time)),
     #("built-at", time(context.build_time)),
   ])
