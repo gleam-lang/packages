@@ -38,7 +38,7 @@ fn server() {
 
   let start_time = timestamp.system_time()
   let build_time =
-    envoy.get("GIT_SHA")
+    envoy.get("BUILD_TIME")
     |> result.try(int.parse)
     |> result.map(timestamp.from_unix_seconds)
     |> result.unwrap(start_time)
