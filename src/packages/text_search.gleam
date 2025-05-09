@@ -3,6 +3,7 @@ import gleam/dict
 import gleam/int
 import gleam/list
 import gleam/option
+import gleam/order
 import gleam/result
 import gleam/string
 import packages/error.{type Error}
@@ -59,7 +60,13 @@ pub fn lookup(
       dict.upsert(counters, name, fn(x) { option.unwrap(x, 0) + 1 })
     })
     |> dict.to_list
-    |> list.sort(fn(a, b) { int.compare(b.1, a.1) })
+    |> list.sort(fn(a, b) {
+      case a, b {
+        #(name, _), _ if name == phrase -> order.Lt
+        _, #(name, _) if name == phrase -> order.Gt
+        _, _ -> int.compare(b.1, a.1)
+      }
+    })
     |> list.map(fn(pair) { pair.0 })
   })
   |> result.replace_error(error.EtsTableError)

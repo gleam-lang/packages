@@ -98,3 +98,16 @@ pub fn extra_regex_test() {
   |> should.be_ok
   |> should.equal(["gleam_regexp", "third_party_regex"])
 }
+
+pub fn exact_title_match_goes_first_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "lustre_1", "stuff for lustre")
+  let assert Ok(_) = text_search.insert(index, "lustre_2", "stuff for lustre")
+  let assert Ok(_) = text_search.insert(index, "lustre", "html stuff")
+  let assert Ok(_) = text_search.insert(index, "lustre_3", "stuff for lustre")
+  let assert Ok(_) = text_search.insert(index, "lustre_4", "stuff for lustre")
+
+  text_search.lookup(index, "lustre")
+  |> should.be_ok
+  |> should.equal(["lustre", "lustre_1", "lustre_2", "lustre_3", "lustre_4"])
+}
