@@ -172,12 +172,12 @@ fn format_date(datetime: Timestamp) -> String {
     }
   }
   case unit {
-    _ if i < 0 -> "Just now"
+    _ if i < 0 -> "just now"
     duration.Microsecond
     | duration.Millisecond
     | duration.Minute
     | duration.Nanosecond
-    | duration.Second -> "Just now"
+    | duration.Second -> "just now"
     duration.Day -> print("day")
     duration.Hour -> print("hour")
     duration.Week -> print("week")
