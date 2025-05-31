@@ -391,7 +391,7 @@ pub fn ranked_package_summaries(
       let is_old =
         timestamp.compare(package.updated_in_hex_at, gleam_v1) == order.Lt
       use <- bool.lazy_guard(is_old, fn() {
-        Groups(..groups, v0: [package, ..groups.v0])
+        Groups(..groups, old: [package, ..groups.old])
       })
 
       let is_zero_version = string.starts_with(package.latest_version, "0.")
