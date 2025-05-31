@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
 import gleam/float
@@ -6,6 +7,7 @@ import gleam/int
 import gleam/json.{type Json}
 import gleam/list
 import gleam/option.{type Option}
+import gleam/order
 import gleam/result
 import gleam/string
 import gleam/time/calendar
@@ -64,16 +66,6 @@ const ignored_packages = [
 
 fn gleam_package_epoch() -> Timestamp {
   timestamp.from_unix_seconds(1_635_092_380)
-}
-
-pub type PackageSummary {
-  PackageSummary(
-    name: String,
-    description: String,
-    repository_url: Option(String),
-    latest_version: String,
-    updated_in_hex_at: Timestamp,
-  )
 }
 
 pub type Package {
@@ -359,19 +351,72 @@ pub fn list_packages(database: Database) -> Result(List(String), Error) {
   |> result.map_error(error.StorageError)
 }
 
-pub fn package_summaries(
+type Groups {
+  Groups(
+    exact: List(Package),
+    regular: List(Package),
+    v0: List(Package),
+    old: List(Package),
+  )
+}
+
+pub fn ranked_package_summaries(
   database: Database,
   packages: List(String),
-) -> Result(List(PackageSummary), Error) {
-  use name <- list.try_map(packages)
-  use package <- result.try(get_package(database, name))
-  Ok(PackageSummary(
-    name:,
-    description: package.description,
-    repository_url: package.repository_url,
-    latest_version: package.latest_version,
-    updated_in_hex_at: package.updated_in_hex_at,
-  ))
+  search_term: String,
+) -> Result(List(Package), Error) {
+  let gleam_v1 =
+    timestamp.from_calendar(
+      calendar.Date(2024, calendar.March, 4),
+      calendar.TimeOfDay(0, 0, 0, 0),
+      calendar.utc_offset,
+    )
+
+  use packages <- result.map({
+    use name <- list.try_map(packages)
+    get_package(database, name)
+  })
+
+  let groups = Groups([], [], [], [])
+
+  let groups =
+    list.fold(packages, groups, fn(groups, package) {
+      // The ordering of the clauses matter. Something can be both v0 and old,
+      // and which group it goes into impacts the final ordering.
+
+      use <- bool.lazy_guard(package.name == search_term, fn() {
+        Groups(..groups, exact: [package, ..groups.exact])
+      })
+
+      let is_old =
+        timestamp.compare(package.updated_in_hex_at, gleam_v1) == order.Lt
+      use <- bool.lazy_guard(is_old, fn() {
+        Groups(..groups, v0: [package, ..groups.v0])
+      })
+
+      let is_zero_version = string.starts_with(package.latest_version, "0.")
+      use <- bool.lazy_guard(is_zero_version, fn() {
+        Groups(..groups, v0: [package, ..groups.v0])
+      })
+
+      Groups(..groups, regular: [package, ..groups.regular])
+    })
+
+  let Groups(exact:, regular:, v0:, old:) = groups
+  // This list is ordered backwards, so the later in the list the higher it
+  // will be shown in the UI.
+  [
+    // Packages published before Gleam v1.0.0 are likely outdated.
+    old,
+    // v0 versions are discouraged, so they are shown lower.
+    v0,
+    // Regular versions are not prioritised in any particular way.
+    regular,
+    // Exact matches for the search term come first.
+    exact,
+  ]
+  |> list.flatten
+  |> list.reverse
 }
 
 pub fn try_fold_packages(

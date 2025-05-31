@@ -9,11 +9,11 @@ import gleam/time/timestamp.{type Timestamp}
 import lustre/attribute.{attribute, class}
 import lustre/element.{type Element, text}
 import lustre/element/html
-import packages/storage.{type PackageSummary}
+import packages/storage.{type Package}
 import packages/web/icons
 
 pub fn packages_list(
-  packages: List(PackageSummary),
+  packages: List(Package),
   total_package_count: Int,
   search_term: String,
 ) -> StringTree {
@@ -81,7 +81,7 @@ fn search_form(search_term: String) -> Element(Nil) {
 }
 
 fn search_aware_package_list(
-  packages: List(PackageSummary),
+  packages: List(Package),
   total_package_count: Int,
   search_term: String,
 ) -> List(Element(Nil)) {
@@ -109,14 +109,14 @@ fn search_aware_package_list(
   ]
 }
 
-fn package_list(packages: List(PackageSummary)) -> Element(Nil) {
+fn package_list(packages: List(Package)) -> Element(Nil) {
   html.div(
     [attribute.class("package-list")],
     list.map(packages, package_list_item),
   )
 }
 
-fn package_list_item(package: PackageSummary) {
+fn package_list_item(package: Package) {
   html.div([class("package-item")], [
     html.main([], [
       html.h2([class("package-name")], [

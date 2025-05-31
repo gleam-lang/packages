@@ -5,6 +5,7 @@ import gleam/json
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/string
 import gleam/time/calendar
 import gleam/time/timestamp
 import gleam/uri
@@ -144,7 +145,8 @@ fn search(request: Request, context: Context) -> Response {
     "" -> storage.list_packages(context.db)
     _ -> text_search.lookup(context.search_index, search_term)
   }
-  let assert Ok(packages) = storage.package_summaries(context.db, packages)
+  let assert Ok(packages) =
+    storage.ranked_package_summaries(context.db, packages, search_term)
   let packages = case search_term {
     "" ->
       list.sort(packages, fn(a, b) {
@@ -165,6 +167,7 @@ fn get_search_parameter(request: Request) -> String {
   |> result.then(uri.parse_query)
   |> result.then(list.key_find(_, "search"))
   |> result.unwrap("")
+  |> string.trim
 }
 
 fn json_timestamp(timestamp: timestamp.Timestamp) -> json.Json {
