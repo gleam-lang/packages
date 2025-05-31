@@ -77,6 +77,8 @@ pub fn lookup(
 fn expand_search_term(term: String) -> List(String) {
   case term {
     "postgres" | "postgresql" -> ["postgres", "postgresql"]
+    "mysql" | "mariadb" -> ["mysql", "mariadb"]
+    "redis" | "valkey" -> ["redis", "valkey"]
     "regex" | "regexp" -> ["regex", "regexp"]
     "luster" -> ["luster", "lustre"]
     term -> [term]
