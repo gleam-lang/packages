@@ -81,6 +81,7 @@ fn expand_search_term(term: String) -> List(String) {
     "redis" | "valkey" -> ["redis", "valkey"]
     "regex" | "regexp" -> ["regex", "regexp"]
     "luster" -> ["luster", "lustre"]
+    "mail" -> ["mail", "email"]
     term -> [term]
   }
 }
