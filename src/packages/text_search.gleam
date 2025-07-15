@@ -100,6 +100,40 @@ fn stem_words(phrase: String) -> List(String) {
   |> string.replace("'", "")
   |> string.split(" ")
   |> list.filter(fn(word) { word != "" })
+  |> list.map(normalise_spelling)
   |> list.map(porter_stemmer.stem)
   |> list.unique
+}
+
+fn normalise_spelling(word: String) -> String {
+  case word {
+    "analyze" -> "analyse"
+    "authorize" -> "authorise"
+    "behavior" -> "behaviour"
+    "categorize" -> "categorise"
+    "color" -> "colour"
+    "customization" -> "customisation"
+    "customize" -> "customise"
+    "honor" -> "honour"
+    "initialize" -> "initialise"
+    "labeled" -> "labelled"
+    "labor" -> "labour"
+    "license" -> "licence"
+    "modeling" -> "modelling"
+    "normalization" -> "normalisation"
+    "normalize" -> "normalise"
+    "optimization" -> "optimisation"
+    "optimize" -> "optimise"
+    "organize" -> "organise"
+    "parameterize" -> "parameterise"
+    "deserialization" -> "deserialisation"
+    "deserialize" -> "deserialise"
+    "serialization" -> "serialisation"
+    "serialize" -> "serialise"
+    "standardize" -> "standardise"
+    "summarize" -> "summarise"
+    "synchronize" -> "synchronise"
+    "tokenize" -> "tokenise"
+    _ -> word
+  }
 }

@@ -111,3 +111,28 @@ pub fn exact_title_match_goes_first_test() {
   |> should.be_ok
   |> should.equal(["lustre", "lustre_1", "lustre_2", "lustre_3", "lustre_4"])
 }
+
+pub fn translate_from_freedom_language_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(
+      index,
+      "gleam_community_colour",
+      "Colour types, conversions, and other utilities",
+    )
+
+  // Traditional
+  text_search.lookup(index, "colour")
+  |> should.be_ok
+  |> should.equal(["gleam_community_colour"])
+
+  // USA
+  text_search.lookup(index, "color")
+  |> should.be_ok
+  |> should.equal(["gleam_community_colour"])
+
+  // Irish
+  text_search.lookup(index, "dath")
+  |> should.be_ok
+  |> should.equal([])
+}
