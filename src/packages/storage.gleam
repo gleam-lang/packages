@@ -60,6 +60,8 @@ const ignored_packages = [
   "gleam", "gleam_deno", "gleam_email", "gleam_html", "gleam_nodejs",
   "gleam_tcp", "gleam_test", "gleam_toml", "gleam_xml", "gleam_mongo",
   "gleam_bson", "gleam_file", "gleam_yaml",
+  // Unofficial packages impersonating the core team
+  "gleam_roman",
   // Reserved unreleased project names.
   "glitter", "sequin",
 ]
