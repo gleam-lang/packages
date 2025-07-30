@@ -349,8 +349,10 @@ pub fn list_releases(
 }
 
 pub fn list_packages(database: Database) -> Result(List(String), Error) {
-  storail.list(database.packages, [])
-  |> result.map_error(error.StorageError)
+  case storail.list(database.packages, []) {
+    Ok(packages) -> Ok(list.filter(packages, fn(p) { !is_ignored_package(p) }))
+    Error(e) -> Error(error.StorageError(e))
+  }
 }
 
 type Groups {
