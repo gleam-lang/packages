@@ -43,7 +43,7 @@ fn server() {
     |> result.map(timestamp.from_unix_seconds)
     |> result.unwrap(start_time)
   let git_sha = envoy.get("GIT_SHA") |> result.unwrap("HEAD")
-  let assert Ok(key) = envoy.get("HEX_API_KEY")
+  let assert Ok(key) = envoy.get("HEX_API_KEY") as "HEX_API_KEY not set"
   let assert Ok(priv) = wisp.priv_directory("packages")
   let static_directory = priv <> "/static"
   let database = storage.initialise(database_path())

@@ -9,7 +9,7 @@ version = "1.0.0"
 # repository = { type = "github", user = "username", repo = "project" }
 # links = [{ title = "Website", href = "https://gleam.run" }]
 
-gleam = ">= 1.6.0"
+gleam = ">= 1.7.0"
 
 [dependencies]
 gleam_stdlib = "~> 0.23"
