@@ -93,6 +93,8 @@ fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
 
 fn stem_words(phrase: String) -> List(String) {
   phrase
+  |> string.replace("-", " ")
+  |> string.replace("_", " ")
   |> string.replace(",", " ")
   |> string.replace(".", " ")
   |> string.replace("!", " ")

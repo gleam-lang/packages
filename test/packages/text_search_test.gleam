@@ -73,7 +73,7 @@ pub fn ignored_test() {
 
   text_search.lookup(index, "gleam_bson")
   |> should.be_ok
-  |> should.equal([])
+  |> should.equal(["clean_bson"])
   text_search.lookup(index, "wibble")
   |> should.be_ok
   |> should.equal(["clean_bson"])
@@ -135,4 +135,15 @@ pub fn translate_from_freedom_language_test() {
   text_search.lookup(index, "dath")
   |> should.be_ok
   |> should.equal([])
+}
+
+pub fn underscores_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "lustre_dev_tools", "")
+  let assert Ok(_) = text_search.insert(index, "lustre", "")
+  let assert Ok(_) = text_search.insert(index, "glam", "")
+
+  text_search.lookup(index, "lustre_dev")
+  |> should.be_ok
+  |> should.equal(["lustre_dev_tools", "lustre"])
 }
