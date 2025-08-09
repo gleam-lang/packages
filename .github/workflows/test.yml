@@ -15,8 +15,8 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           # Be sure to change in the dockerfile also
-          otp-version: "27.1.2"
-          gleam-version: "1.10.0"
+          otp-version: "28.0.2.0"
+          gleam-version: "1.12.0"
           rebar3-version: "3"
       - run: gleam test
       - run: gleam format --check src test

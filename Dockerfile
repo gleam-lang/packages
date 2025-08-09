@@ -1,10 +1,10 @@
 # Be sure to change Erlang and Gleam versions in the github workflow also
-FROM erlang:27.1.1.0-alpine AS build
+FROM erlang:28.0.2.0-alpine AS build
 COPY --from=ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine /bin/gleam /bin/gleam
 COPY . /app/
 RUN cd /app && gleam export erlang-shipment
 
-FROM erlang:27.1.1.0-alpine
+FROM erlang:28.0.2.0-alpine
 ARG GIT_SHA
 ARG BUILD_TIME
 ENV GIT_SHA=${GIT_SHA}
