@@ -1,7 +1,7 @@
 import gleam/dynamic/decode
-import gleam/hackney
 import gleam/hexpm
 import gleam/http/request
+import gleam/httpc
 import gleam/int
 import gleam/json
 import gleam/list
@@ -134,7 +134,7 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
       #("page", int.to_string(state.page)),
     ])
     |> request.prepend_header("authorization", state.hex_api_key)
-    |> hackney.send
+    |> httpc.send
     |> result.map_error(error.HttpClientError),
   )
 
@@ -154,7 +154,7 @@ fn get_api_package(
     |> request.set_host("hex.pm")
     |> request.set_path("/api/packages/" <> package_name)
     |> request.prepend_header("authorization", hex_api_key)
-    |> hackney.send
+    |> httpc.send
     |> result.map_error(error.HttpClientError),
   )
 
@@ -292,7 +292,7 @@ fn lookup_release(
     |> request.set_host("hex.pm")
     |> request.set_path(url.path)
     |> request.prepend_header("authorization", hex_api_key)
-    |> hackney.send
+    |> httpc.send
     |> result.map_error(error.HttpClientError),
   )
 
