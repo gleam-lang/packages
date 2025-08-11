@@ -16,8 +16,9 @@ ARG GIT_SHA
 ARG BUILD_TIME
 ENV GIT_SHA=${GIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
-RUN addgroup --system gleam_packages && \
-    adduser --system gleam_packages -g gleam_packages
+RUN \
+  addgroup --system gleam_packages && \
+  adduser --system gleam_packages --group gleam_packages
 COPY --from=build /app/build/erlang-shipment /app
 VOLUME /app/data
 LABEL org.opencontainers.image.source=https://github.com/gleam-lang/packages
