@@ -99,6 +99,28 @@ pub fn extra_regex_test() {
   |> should.equal(["gleam_regexp", "third_party_regex"])
 }
 
+pub fn case_insensitive_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(
+      index,
+      "bucket",
+      "Gleam S3 API client, suitable for AWS S3, Garage, Minio, Storj, Backblaze B2, Cloudflare R2, Ceph, Wasabi, and so on!",
+    )
+
+  text_search.lookup(index, "S3")
+  |> should.be_ok
+  |> should.equal(["bucket"])
+
+  text_search.lookup(index, "s3")
+  |> should.be_ok
+  |> should.equal(["bucket"])
+
+  text_search.lookup(index, "gArAgE")
+  |> should.be_ok
+  |> should.equal(["bucket"])
+}
+
 pub fn exact_title_match_goes_first_test() {
   let index = text_search.new()
   let assert Ok(_) = text_search.insert(index, "lustre_1", "stuff for lustre")
