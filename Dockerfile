@@ -1,17 +1,22 @@
-# Be sure to change Erlang and Gleam versions in the github workflow also
-FROM erlang:28.0.2.0-alpine AS build
-COPY --from=ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine /bin/gleam /bin/gleam
+ARG ERLANG_VERSION=28.0.2.0-alpine
+ARG GLEAM_VERSION=v1.12.0-scratch
+
+# Build stage
+FROM erlang:${ERLANG_VERSION} AS build
+ARG GLEAM_VERSION
+COPY --from=ghcr.io/gleam-lang/gleam:${GLEAM_VERSION} /bin/gleam /bin/gleam
 COPY . /app/
 RUN cd /app && gleam export erlang-shipment
 
-FROM erlang:28.0.2.0-alpine
+# Final stage
+FROM erlang:${ERLANG_VERSION}
 ARG GIT_SHA
 ARG BUILD_TIME
 ENV GIT_SHA=${GIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
 RUN \
   addgroup --system gleam_packages && \
-  adduser --system gleam_packages -g gleam_packages   
+  adduser --system gleam_packages -g gleam_packages
 COPY --from=build /app/build/erlang-shipment /app
 VOLUME /app/data
 LABEL org.opencontainers.image.source=https://github.com/gleam-lang/packages
