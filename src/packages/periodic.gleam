@@ -18,29 +18,28 @@ type State(a) {
 pub fn periodically(
   do work: fn() -> Result(a, Error),
   waiting interval: Int,
-) -> Result(Subject(Message), actor.StartError) {
-  actor.start_spec(actor.Spec(
-    init: fn() { init(interval, work) },
-    loop: loop,
-    init_timeout: 100,
-  ))
+) -> Result(actor.Started(Subject(Message)), actor.StartError) {
+  actor.new_with_initialiser(100, init(interval, work, _))
+  |> actor.on_message(loop)
+  |> actor.start
 }
 
-fn init(
-  interval: Int,
-  work: fn() -> Result(a, Error),
-) -> actor.InitResult(State(a), Message) {
-  let subject = process.new_subject()
-  let state = State(subject, work, interval)
+fn init(interval: Int, work: fn() -> Result(a, Error), self) {
+  let state = State(self, work, interval)
+
   let selector =
     process.new_selector()
-    |> process.selecting(subject, fn(x) { x })
+    |> process.select(self)
 
   enqueue_next_rerun(state)
-  actor.Ready(state, selector)
+
+  actor.initialised(state)
+  |> actor.selecting(selector)
+  |> actor.returning(self)
+  |> Ok
 }
 
-fn loop(message: Message, state: State(a)) -> actor.Next(Message, State(a)) {
+fn loop(state: State(a), message: Message) {
   case message {
     Rerun -> {
       log_error(state.work())

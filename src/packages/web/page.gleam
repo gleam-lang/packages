@@ -212,7 +212,7 @@ fn layout(content: Element(Nil)) -> StringTree {
       ]),
       html.script(
         [
-          attribute.property("defer", True),
+          attribute.property("defer", json.bool(True)),
           attribute.src("https://plausible.io/js/plausible.js"),
           attribute("data-domain", "packages.gleam.run"),
         ],
@@ -229,7 +229,7 @@ fn layout(content: Element(Nil)) -> StringTree {
       footer(),
     ]),
   ])
-  |> element.to_string_builder
+  |> element.to_string_tree
   |> string_tree.prepend("<!DOCTYPE html>")
 }
 

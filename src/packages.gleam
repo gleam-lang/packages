@@ -4,7 +4,8 @@ import gleam/erlang/process
 import gleam/int
 import gleam/io
 import gleam/otp/actor
-import gleam/otp/supervisor
+import gleam/otp/static_supervisor as supervisor
+import gleam/otp/supervision
 import gleam/result
 import gleam/time/timestamp
 import mist
@@ -73,7 +74,7 @@ fn server() {
     |> mist.new
     |> mist.bind("0.0.0.0")
     |> mist.port(3000)
-    |> mist.start_http
+    |> mist.start
 
   // Start syncing new releases periodically
   let assert Ok(_) = start_hex_syncer(database, index, key)
@@ -95,10 +96,9 @@ fn seed_index(
 }
 
 fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {
-  supervisor.start(fn(children) {
-    children
-    |> supervisor.add(supervisor.worker(fn(_) { start() }))
-  })
+  supervisor.new(supervisor.OneForOne)
+  |> supervisor.add(supervision.worker(fn() { start() }))
+  |> supervisor.start()
 }
 
 fn database_path() {
