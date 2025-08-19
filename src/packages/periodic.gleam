@@ -24,7 +24,11 @@ pub fn periodically(
   |> actor.start
 }
 
-fn init(interval: Int, work: fn() -> Result(a, Error), self) {
+fn init(
+  interval: Int,
+  work: fn() -> Result(a, Error),
+  self,
+) -> Result(actor.Initialised(State(a), Message, Subject(Message)), b) {
   let state = State(self, work, interval)
 
   let selector =
@@ -39,7 +43,7 @@ fn init(interval: Int, work: fn() -> Result(a, Error), self) {
   |> Ok
 }
 
-fn loop(state: State(a), message: Message) {
+fn loop(state: State(a), message: Message) -> actor.Next(State(a), b) {
   case message {
     Rerun -> {
       log_error(state.work())
