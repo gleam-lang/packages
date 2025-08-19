@@ -97,7 +97,7 @@ fn seed_index(
 
 fn supervise(start: fn() -> _) -> Result(_, actor.StartError) {
   supervisor.new(supervisor.OneForOne)
-  |> supervisor.add(supervision.worker(fn() { start() }))
+  |> supervisor.add(supervision.worker(start))
   |> supervisor.start()
 }
 
