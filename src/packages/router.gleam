@@ -58,7 +58,7 @@ fn api(request: Request, context: Context) -> Response {
     #("started-at", time(context.start_time)),
     #("built-at", time(context.build_time)),
   ])
-  |> json.to_string_tree()
+  |> json.to_string()
   |> wisp.json_response(200)
 }
 
@@ -75,7 +75,7 @@ fn api_packages(req: Request, ctx: Context) -> Response {
     |> Ok
   }
   json.object([#("data", json.array(packages, package_to_json(_, option.None)))])
-  |> json.to_string_tree()
+  |> json.to_string()
   |> wisp.json_response(200)
 }
 
@@ -91,7 +91,7 @@ fn api_package(req: Request, ctx: Context, name: String) -> Response {
   }
 
   case json {
-    Ok(json) -> json |> json.to_string_tree() |> wisp.json_response(200)
+    Ok(json) -> json |> json.to_string() |> wisp.json_response(200)
     Error(_) -> wisp.not_found()
   }
 }
