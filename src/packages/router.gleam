@@ -164,8 +164,8 @@ fn search(request: Request, context: Context) -> Response {
 fn get_search_parameter(request: Request) -> String {
   request.query
   |> option.to_result(Nil)
-  |> result.then(uri.parse_query)
-  |> result.then(list.key_find(_, "search"))
+  |> result.try(uri.parse_query)
+  |> result.try(list.key_find(_, "search"))
   |> result.unwrap("")
   |> string.trim
 }
