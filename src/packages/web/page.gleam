@@ -186,8 +186,7 @@ fn format_date(datetime: Timestamp) -> String {
 }
 
 fn layout(content: Element(Nil)) -> String {
-  "<!DOCTYPE html>"
-  <> html.html([attribute("lang", "en")], [
+  html.html([attribute("lang", "en")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
       html.meta([
@@ -229,7 +228,7 @@ fn layout(content: Element(Nil)) -> String {
       footer(),
     ]),
   ])
-  |> element.to_string
+  |> element.to_document_string
 }
 
 fn navbar() {
