@@ -185,7 +185,63 @@ fn format_date(datetime: Timestamp) -> String {
   }
 }
 
+const meta_title = "Gleam Package Index"
+
+const meta_description = "List and search through all the packages available for the Gleam programming language!"
+
 fn layout(content: Element(Nil)) -> String {
+  let social_meta_tags = [
+    html.title([], meta_title),
+    html.meta([
+      attribute("content", meta_title),
+      attribute.name("title"),
+    ]),
+    html.meta([
+      attribute("content", meta_description),
+      attribute.name("description"),
+    ]),
+    html.meta([
+      attribute("content", "website"),
+      attribute("property", "og:type"),
+    ]),
+    html.meta([
+      attribute("content", "https://packages.gleam.run/"),
+      attribute("property", "og:url"),
+    ]),
+    html.meta([
+      attribute("content", meta_title),
+      attribute("property", "og:title"),
+    ]),
+    html.meta([
+      attribute("content", meta_description),
+      attribute("property", "og:description"),
+    ]),
+    // html.meta([
+    //   attribute("content", "https://packages.gleam.run/preview.png"),
+    //   attribute("property", "og:image"),
+    // ]),
+    // html.meta([
+    //   attribute("content", "summary_large_image"),
+    //   attribute("property", "twitter:card"),
+    // ]),
+    html.meta([
+      attribute("content", "https://packages.gleam.run/"),
+      attribute("property", "twitter:url"),
+    ]),
+    html.meta([
+      attribute("content", meta_title),
+      attribute("property", "twitter:title"),
+    ]),
+    // html.meta([
+    //   attribute("content", "https://packages.gleam.run/preview.png"),
+    //   attribute("property", "twitter:image"),
+    // ]),
+    html.meta([
+      attribute("content", meta_description),
+      attribute("property", "twitter:description"),
+    ]),
+  ]
+
   html.html([attribute("lang", "en")], [
     html.head([], [
       html.meta([attribute("charset", "utf-8")]),
@@ -193,7 +249,9 @@ fn layout(content: Element(Nil)) -> String {
         attribute.name("viewport"),
         attribute("content", "width=device-width, initial-scale=1"),
       ]),
-      html.title([], "Gleam Packages"),
+
+      element.fragment(social_meta_tags),
+
       html.link([
         attribute.rel("preload"),
         attribute.href("/fonts/Lexend.woff2"),
