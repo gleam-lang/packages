@@ -189,6 +189,8 @@ const meta_title = "Gleam Package Index"
 
 const meta_description = "List and search through all the packages available for the Gleam programming language!"
 
+const meta_image = "https://packages.gleam.run/share-preview.png"
+
 fn layout(content: Element(Nil)) -> String {
   let social_meta_tags = [
     html.title([], meta_title),
@@ -216,14 +218,14 @@ fn layout(content: Element(Nil)) -> String {
       attribute("content", meta_description),
       attribute("property", "og:description"),
     ]),
-    // html.meta([
-    //   attribute("content", "https://packages.gleam.run/preview.png"),
-    //   attribute("property", "og:image"),
-    // ]),
-    // html.meta([
-    //   attribute("content", "summary_large_image"),
-    //   attribute("property", "twitter:card"),
-    // ]),
+    html.meta([
+      attribute("content", meta_image),
+      attribute("property", "og:image"),
+    ]),
+    html.meta([
+      attribute("content", "summary_large_image"),
+      attribute("property", "twitter:card"),
+    ]),
     html.meta([
       attribute("content", "https://packages.gleam.run/"),
       attribute("property", "twitter:url"),
@@ -232,10 +234,10 @@ fn layout(content: Element(Nil)) -> String {
       attribute("content", meta_title),
       attribute("property", "twitter:title"),
     ]),
-    // html.meta([
-    //   attribute("content", "https://packages.gleam.run/preview.png"),
-    //   attribute("property", "twitter:image"),
-    // ]),
+    html.meta([
+      attribute("content", meta_image),
+      attribute("property", "twitter:image"),
+    ]),
     html.meta([
       attribute("content", meta_description),
       attribute("property", "twitter:description"),
