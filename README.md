@@ -28,7 +28,7 @@ gleam run server  # Run the server
 
 ```ini
 [Unit]
-Description=My Gleam web application
+Description=Gleam packages index web application
 After=local-fs.target
 
 [Container]
