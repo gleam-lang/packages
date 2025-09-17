@@ -1,11 +1,9 @@
-import gleeunit/should
 import packages/text_search
 
 pub fn lookup_empty_test() {
   let index = text_search.new()
-  text_search.lookup(index, "wibble")
-  |> should.be_ok
-  |> should.equal([])
+  let assert Ok(value) = text_search.lookup(index, "wibble")
+  assert value == []
 }
 
 pub fn lookup_case_test() {
@@ -14,12 +12,10 @@ pub fn lookup_case_test() {
     text_search.insert(index, "lustre", "HTML templates and stuff")
   let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
 
-  text_search.lookup(index, "HTML")
-  |> should.be_ok
-  |> should.equal(["lustre"])
-  text_search.lookup(index, "html")
-  |> should.be_ok
-  |> should.equal(["lustre"])
+  let assert Ok(value) = text_search.lookup(index, "HTML")
+  assert value == ["lustre"]
+  let assert Ok(value) = text_search.lookup(index, "html")
+  assert value == ["lustre"]
 }
 
 pub fn lookup_different_case_exact_match_test() {
@@ -27,15 +23,12 @@ pub fn lookup_different_case_exact_match_test() {
   let assert Ok(_) = text_search.insert(index, "wibble", "blah")
   let assert Ok(_) = text_search.insert(index, "blah", "wibble wibble wibble")
 
-  text_search.lookup(index, "wibble")
-  |> should.be_ok
-  |> should.equal(["wibble", "blah"])
-  text_search.lookup(index, "WIBBLE")
-  |> should.be_ok
-  |> should.equal(["wibble", "blah"])
-  text_search.lookup(index, "Wibble")
-  |> should.be_ok
-  |> should.equal(["wibble", "blah"])
+  let assert Ok(value) = text_search.lookup(index, "wibble")
+  assert value == ["wibble", "blah"]
+  let assert Ok(value) = text_search.lookup(index, "WIBBLE")
+  assert value == ["wibble", "blah"]
+  let assert Ok(value) = text_search.lookup(index, "Wibble")
+  assert value == ["wibble", "blah"]
 }
 
 pub fn lookup_ing_test() {
@@ -44,9 +37,8 @@ pub fn lookup_ing_test() {
     text_search.insert(index, "lustre", "HTML templates and stuff")
   let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
 
-  text_search.lookup(index, "templating")
-  |> should.be_ok
-  |> should.equal(["lustre"])
+  let assert Ok(value) = text_search.lookup(index, "templating")
+  assert value == ["lustre"]
 }
 
 pub fn lookup_er_test() {
@@ -55,9 +47,8 @@ pub fn lookup_er_test() {
     text_search.insert(index, "lustre", "HTML templates and stuff")
   let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
 
-  text_search.lookup(index, "templater")
-  |> should.be_ok
-  |> should.equal(["lustre"])
+  let assert Ok(value) = text_search.lookup(index, "templater")
+  assert value == ["lustre"]
 }
 
 pub fn lookup_spaces_test() {
@@ -66,9 +57,8 @@ pub fn lookup_spaces_test() {
     text_search.insert(index, "lustre", "HTML templates and stuff")
   let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
 
-  text_search.lookup(index, "  html   templater     ")
-  |> should.be_ok
-  |> should.equal(["lustre"])
+  let assert Ok(value) = text_search.lookup(index, "  html   templater     ")
+  assert value == ["lustre"]
 }
 
 pub fn lookup_more_matches_higher_rank_test() {
@@ -76,9 +66,8 @@ pub fn lookup_more_matches_higher_rank_test() {
   let assert Ok(_) = text_search.insert(index, "pog", "database client")
   let assert Ok(_) = text_search.insert(index, "httpc", "http client")
 
-  text_search.lookup(index, "http client")
-  |> should.be_ok
-  |> should.equal(["httpc", "pog"])
+  let assert Ok(value) = text_search.lookup(index, "http client")
+  assert value == ["httpc", "pog"]
 }
 
 pub fn ignored_test() {
@@ -87,21 +76,18 @@ pub fn ignored_test() {
   // This one is ignored
   let assert Ok(_) = text_search.insert(index, "gleam_bson", "wibble")
 
-  text_search.lookup(index, "gleam_bson")
-  |> should.be_ok
-  |> should.equal(["clean_bson"])
-  text_search.lookup(index, "wibble")
-  |> should.be_ok
-  |> should.equal(["clean_bson"])
+  let assert Ok(value) = text_search.lookup(index, "gleam_bson")
+  assert value == ["clean_bson"]
+  let assert Ok(value) = text_search.lookup(index, "wibble")
+  assert value == ["clean_bson"]
 }
 
 pub fn word_in_title_test() {
   let index = text_search.new()
   let assert Ok(_) = text_search.insert(index, "gleam_regexp", "")
 
-  text_search.lookup(index, "regexp")
-  |> should.be_ok
-  |> should.equal(["gleam_regexp"])
+  let assert Ok(value) = text_search.lookup(index, "regexp")
+  assert value == ["gleam_regexp"]
 }
 
 // regex also searches for regexp
@@ -110,9 +96,8 @@ pub fn extra_regex_test() {
   let assert Ok(_) = text_search.insert(index, "gleam_regexp", "")
   let assert Ok(_) = text_search.insert(index, "third_party_regex", "")
 
-  text_search.lookup(index, "regex")
-  |> should.be_ok
-  |> should.equal(["gleam_regexp", "third_party_regex"])
+  let assert Ok(value) = text_search.lookup(index, "regex")
+  assert value == ["gleam_regexp", "third_party_regex"]
 }
 
 pub fn case_insensitive_test() {
@@ -124,17 +109,14 @@ pub fn case_insensitive_test() {
       "Gleam S3 API client, suitable for AWS S3, Garage, Minio, Storj, Backblaze B2, Cloudflare R2, Ceph, Wasabi, and so on!",
     )
 
-  text_search.lookup(index, "S3")
-  |> should.be_ok
-  |> should.equal(["bucket"])
+  let assert Ok(value) = text_search.lookup(index, "S3")
+  assert value == ["bucket"]
 
-  text_search.lookup(index, "s3")
-  |> should.be_ok
-  |> should.equal(["bucket"])
+  let assert Ok(value) = text_search.lookup(index, "s3")
+  assert value == ["bucket"]
 
-  text_search.lookup(index, "gArAgE")
-  |> should.be_ok
-  |> should.equal(["bucket"])
+  let assert Ok(value) = text_search.lookup(index, "gArAgE")
+  assert value == ["bucket"]
 }
 
 pub fn exact_title_match_goes_first_test() {
@@ -145,9 +127,8 @@ pub fn exact_title_match_goes_first_test() {
   let assert Ok(_) = text_search.insert(index, "lustre_3", "stuff for lustre")
   let assert Ok(_) = text_search.insert(index, "lustre_4", "stuff for lustre")
 
-  text_search.lookup(index, "lustre")
-  |> should.be_ok
-  |> should.equal(["lustre", "lustre_1", "lustre_2", "lustre_3", "lustre_4"])
+  let assert Ok(value) = text_search.lookup(index, "lustre")
+  assert value == ["lustre", "lustre_1", "lustre_2", "lustre_3", "lustre_4"]
 }
 
 pub fn translate_from_freedom_language_test() {
@@ -160,19 +141,16 @@ pub fn translate_from_freedom_language_test() {
     )
 
   // Traditional
-  text_search.lookup(index, "colour")
-  |> should.be_ok
-  |> should.equal(["gleam_community_colour"])
+  let assert Ok(value) = text_search.lookup(index, "colour")
+  assert value == ["gleam_community_colour"]
 
   // USA
-  text_search.lookup(index, "color")
-  |> should.be_ok
-  |> should.equal(["gleam_community_colour"])
+  let assert Ok(value) = text_search.lookup(index, "color")
+  assert value == ["gleam_community_colour"]
 
   // Irish
-  text_search.lookup(index, "dath")
-  |> should.be_ok
-  |> should.equal([])
+  let assert Ok(value) = text_search.lookup(index, "dath")
+  assert value == []
 }
 
 pub fn underscores_test() {
@@ -181,7 +159,6 @@ pub fn underscores_test() {
   let assert Ok(_) = text_search.insert(index, "lustre", "")
   let assert Ok(_) = text_search.insert(index, "glam", "")
 
-  text_search.lookup(index, "lustre_dev")
-  |> should.be_ok
-  |> should.equal(["lustre_dev_tools", "lustre"])
+  let assert Ok(value) = text_search.lookup(index, "lustre_dev")
+  assert value == ["lustre_dev_tools", "lustre"]
 }

@@ -3,7 +3,6 @@ import gleam/hexpm
 import gleam/option.{None, Some}
 import gleam/time/calendar
 import gleam/time/timestamp
-import gleeunit/should
 import packages/error
 import packages/storage.{Package, Release}
 import storail
@@ -56,19 +55,19 @@ pub fn insert_package_test() {
     )
 
   let assert Ok(package) = storage.get_package(db, "gleam_stdlib")
-  package
-  |> should.equal(Package(
-    description: "Standard library for Gleam",
-    name: "gleam_stdlib",
-    inserted_in_hex_at: timestamp.from_unix_seconds(100),
-    updated_in_hex_at: timestamp.from_unix_seconds(2000),
-    downloads_all: 5,
-    downloads_recent: 2,
-    downloads_day: 0,
-    downloads_week: 0,
-    latest_version: "1.0.0",
-    repository_url: Some("https://github.com/gleam-lang/stdlib"),
-  ))
+  assert package
+    == Package(
+      description: "Standard library for Gleam",
+      name: "gleam_stdlib",
+      inserted_in_hex_at: timestamp.from_unix_seconds(100),
+      updated_in_hex_at: timestamp.from_unix_seconds(2000),
+      downloads_all: 5,
+      downloads_recent: 2,
+      downloads_day: 0,
+      downloads_week: 0,
+      latest_version: "1.0.0",
+      repository_url: Some("https://github.com/gleam-lang/stdlib"),
+    )
 }
 
 pub fn insert_ignored_package_test() {
@@ -99,10 +98,8 @@ pub fn insert_ignored_package_test() {
     )
 
   let package = storage.get_package(db, "gleam_file")
-  package
-  |> should.equal(
-    Error(error.StorageError(storail.ObjectNotFound([], "gleam_file"))),
-  )
+  assert package
+    == Error(error.StorageError(storail.ObjectNotFound([], "gleam_file")))
 }
 
 pub fn insert_release_test() {
@@ -155,14 +152,14 @@ pub fn insert_release_test() {
     )
 
   let assert Ok(release) = storage.get_release(db, "gleam_stdlib", "0.0.3")
-  release
-  |> should.equal(Release(
-    version: "0.0.3",
-    downloads: 12_345,
-    retirement_reason: Some("security"),
-    retirement_message: Some("Retired due to security concerns"),
-    updated_in_hex_at: timestamp.from_unix_seconds(1000),
-    inserted_in_hex_at: timestamp.from_unix_seconds(2000),
-    last_scanned_at: timestamp.from_unix_seconds(5000),
-  ))
+  assert release
+    == Release(
+      version: "0.0.3",
+      downloads: 12_345,
+      retirement_reason: Some("security"),
+      retirement_message: Some("Retired due to security concerns"),
+      updated_in_hex_at: timestamp.from_unix_seconds(1000),
+      inserted_in_hex_at: timestamp.from_unix_seconds(2000),
+      last_scanned_at: timestamp.from_unix_seconds(5000),
+    )
 }
