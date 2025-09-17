@@ -60,10 +60,23 @@ pub fn lookup(
       dict.upsert(counters, name, fn(x) { option.unwrap(x, 0) + 1 })
     })
     |> dict.to_list
+    |> list.map(fn(pair) {
+      case pair.0 {
+        // Rank up proritised packages
+        "gleam_stdlib"
+        | "gleam_javascript"
+        | "gleam_erlang"
+        | "gleam_otp"
+        | "gleam_time" -> #(pair.0, pair.1 + 10)
+        _ -> pair
+      }
+    })
     |> list.sort(fn(a, b) {
       case a, b {
+        // Exact matches come first
         #(name, _), _ if name == phrase -> order.Lt
         _, #(name, _) if name == phrase -> order.Gt
+        // Otherwise compare the score
         _, _ -> int.compare(b.1, a.1)
       }
     })
