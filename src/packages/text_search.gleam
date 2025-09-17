@@ -68,6 +68,7 @@ pub fn lookup(
         | "gleam_javascript"
         | "gleam_erlang"
         | "gleam_otp"
+        | "gleam_json"
         | "gleam_time" -> #(pair.0, pair.1 + 10)
         _ -> pair
       }
