@@ -50,6 +50,7 @@ pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
 ) -> Result(List(String), Error) {
+  let phrase = string.lowercase(phrase)
   stem_words(phrase)
   |> list.flat_map(expand_search_term)
   |> list.try_map(ethos.get(index.table, _))

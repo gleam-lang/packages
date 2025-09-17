@@ -22,6 +22,22 @@ pub fn lookup_case_test() {
   |> should.equal(["lustre"])
 }
 
+pub fn lookup_different_case_exact_match_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "wibble", "blah")
+  let assert Ok(_) = text_search.insert(index, "blah", "wibble wibble wibble")
+
+  text_search.lookup(index, "wibble")
+  |> should.be_ok
+  |> should.equal(["wibble", "blah"])
+  text_search.lookup(index, "WIBBLE")
+  |> should.be_ok
+  |> should.equal(["wibble", "blah"])
+  text_search.lookup(index, "Wibble")
+  |> should.be_ok
+  |> should.equal(["wibble", "blah"])
+}
+
 pub fn lookup_ing_test() {
   let index = text_search.new()
   let assert Ok(_) =
