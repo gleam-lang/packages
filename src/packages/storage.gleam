@@ -82,21 +82,36 @@ pub type Package {
     downloads_day: Int,
     repository_url: Option(String),
     latest_version: String,
+    owners: List(String),
   )
 }
 
 fn package_to_json(package: Package) -> Json {
+  let Package(
+    name:,
+    description:,
+    inserted_in_hex_at:,
+    updated_in_hex_at:,
+    downloads_all:,
+    downloads_recent:,
+    downloads_week:,
+    downloads_day:,
+    repository_url:,
+    latest_version:,
+    owners:,
+  ) = package
   json.object([
-    #("name", json.string(package.name)),
-    #("description", json.string(package.description)),
-    #("inserted_in_hex_at", json_timestamp(package.inserted_in_hex_at)),
-    #("updated_in_hex_at", json_timestamp(package.updated_in_hex_at)),
-    #("latest_version", json.string(package.latest_version)),
-    #("downloads_all", json.int(package.downloads_all)),
-    #("downloads_recent", json.int(package.downloads_recent)),
-    #("downloads_week", json.int(package.downloads_week)),
-    #("downloads_day", json.int(package.downloads_day)),
-    #("repository_url", json.nullable(package.repository_url, json.string)),
+    #("name", json.string(name)),
+    #("description", json.string(description)),
+    #("inserted_in_hex_at", json_timestamp(inserted_in_hex_at)),
+    #("updated_in_hex_at", json_timestamp(updated_in_hex_at)),
+    #("latest_version", json.string(latest_version)),
+    #("downloads_all", json.int(downloads_all)),
+    #("downloads_recent", json.int(downloads_recent)),
+    #("downloads_week", json.int(downloads_week)),
+    #("downloads_day", json.int(downloads_day)),
+    #("repository_url", json.nullable(repository_url, json.string)),
+    #("owners", json.array(owners, json.string)),
   ])
 }
 
@@ -114,6 +129,7 @@ fn package_decoder() -> Decoder(Package) {
     decode.optional(decode.string),
   )
   use latest_version <- decode.field("latest_version", decode.string)
+  use owners <- decode.optional_field("owners", [], decode.list(decode.string))
   decode.success(Package(
     name:,
     description:,
@@ -125,6 +141,7 @@ fn package_decoder() -> Decoder(Package) {
     downloads_day:,
     repository_url:,
     latest_version:,
+    owners:,
   ))
 }
 
@@ -225,6 +242,10 @@ fn hex_package_to_storage_package(
   }
   let repository_url =
     dict.get(package.meta.links, "Repository") |> option.from_result
+  let owners =
+    package.owners
+    |> option.unwrap([])
+    |> list.map(fn(owner) { owner.username })
 
   Package(
     name: package.name,
@@ -237,6 +258,7 @@ fn hex_package_to_storage_package(
     downloads_day: downloads_count("day"),
     repository_url:,
     latest_version:,
+    owners:,
   )
 }
 

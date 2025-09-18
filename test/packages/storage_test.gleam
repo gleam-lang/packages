@@ -67,6 +67,62 @@ pub fn insert_package_test() {
       downloads_week: 0,
       latest_version: "1.0.0",
       repository_url: Some("https://github.com/gleam-lang/stdlib"),
+      owners: [],
+    )
+}
+
+pub fn insert_package_with_owners_test() {
+  use db <- tests.with_database
+
+  let assert Ok(_) =
+    storage.upsert_package_from_hex(
+      db,
+      hexpm.Package(
+        downloads: dict.from_list([#("all", 5), #("recent", 2)]),
+        docs_html_url: Some("https://hexdocs.pm/gleam_stdlib/"),
+        html_url: Some("https://hex.pm/packages/gleam_stdlib"),
+        meta: hexpm.PackageMeta(
+          description: Some("Standard library for Gleam"),
+          licenses: ["Apache-2.0"],
+          links: dict.from_list([
+            #("Website", "https://gleam.run/"),
+            #("Repository", "https://github.com/gleam-lang/stdlib"),
+          ]),
+        ),
+        name: "gleam_stdlib",
+        owners: Some([
+          hexpm.PackageOwner(
+            username: "user1",
+            email: Some("u1@example.com"),
+            url: "https://hex.pm/api/users/user1",
+          ),
+          hexpm.PackageOwner(
+            username: "user2",
+            email: None,
+            url: "https://hex.pm/api/users/user2",
+          ),
+        ]),
+        releases: [],
+        inserted_at: timestamp.from_unix_seconds(100),
+        updated_at: timestamp.from_unix_seconds(2000),
+      ),
+      "1.0.0",
+    )
+
+  let assert Ok(package) = storage.get_package(db, "gleam_stdlib")
+  assert package
+    == Package(
+      description: "Standard library for Gleam",
+      name: "gleam_stdlib",
+      inserted_in_hex_at: timestamp.from_unix_seconds(100),
+      updated_in_hex_at: timestamp.from_unix_seconds(2000),
+      downloads_all: 5,
+      downloads_recent: 2,
+      downloads_day: 0,
+      downloads_week: 0,
+      latest_version: "1.0.0",
+      repository_url: Some("https://github.com/gleam-lang/stdlib"),
+      owners: ["user1", "user2"],
     )
 }
 
