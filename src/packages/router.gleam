@@ -106,6 +106,7 @@ pub fn package_to_json(
     #("latest-version", json.string(package.latest_version)),
     #("repository", json.nullable(package.repository_url, json.string)),
     #("updated-at", json_timestamp(package.updated_in_hex_at)),
+    #("owners", json.array(package.owners, json.string)),
   ]
 
   let fields = case releases {
