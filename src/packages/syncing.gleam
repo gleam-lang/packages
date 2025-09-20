@@ -56,7 +56,7 @@ pub fn sync_new_gleam_releases(
     )),
   )
   let latest = storage.upsert_most_recent_hex_timestamp(db, latest)
-  wisp.log_info("\nUp to date!")
+  wisp.log_info("Up to date!")
   latest
 }
 
