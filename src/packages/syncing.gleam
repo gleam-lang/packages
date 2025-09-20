@@ -76,9 +76,8 @@ pub fn fetch_and_sync_package(
       db:,
       text_search:,
     )
-  use package <- try(get_api_package(package_name, secret: hex_api_key))
   wisp.log_info("Syncing package data from Hex")
-  use _ <- try(sync_single_package(state, package, hex_api_key))
+  use _ <- try(sync_package(state, package_name))
   wisp.log_info("Done")
   Ok(Nil)
 }
@@ -95,7 +94,8 @@ fn sync_packages(state: State) -> Result(Timestamp, Error) {
   let new_packages =
     all_packages
     |> take_fresh_packages(state.limit)
-  list.map(new_packages, with_only_fresh_releases(_, state.limit))
+    |> list.map(with_only_fresh_releases(_, state.limit))
+    |> list.map(fn(package) { package.name })
 
   // Insert the new releases into the database.
   use state <- try(list.try_fold(new_packages, state, sync_package))
@@ -186,7 +186,12 @@ pub fn with_only_fresh_releases(
   hexpm.Package(..package, releases: releases)
 }
 
-fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
+fn sync_package(state: State, package_name: String) -> Result(State, Error) {
+  // We want all the information about the package, so we fetch the package
+  // again from the package endpoint, as the package list endpoint doesn't have
+  // all the data.
+  use package <- try(get_api_package(package_name, secret: state.hex_api_key))
+
   use releases <- try(lookup_gleam_releases(package, secret: state.hex_api_key))
 
   case releases {
@@ -198,24 +203,6 @@ fn sync_package(state: State, package: hexpm.Package) -> Result(State, Error) {
       use _ <- try(insert_package_and_releases(package, releases, state))
       let state = State(..state, last_logged: timestamp.system_time())
       Ok(state)
-    }
-  }
-}
-
-fn sync_single_package(
-  state: State,
-  package: hexpm.Package,
-  secret hex_api_key: String,
-) -> Result(Nil, Error) {
-  use releases <- try(lookup_gleam_releases(package, secret: hex_api_key))
-
-  case releases {
-    [] -> {
-      Ok(Nil)
-    }
-    _ -> {
-      use _ <- try(insert_package_and_releases(package, releases, state))
-      Ok(Nil)
     }
   }
 }
