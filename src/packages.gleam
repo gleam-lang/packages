@@ -152,7 +152,7 @@ fn sync_all() -> Nil {
   io.println(
     "Synced in "
     <> duration.to_iso8601_string(time_taken)
-    <> ". There are now "
+    <> ". There is now "
     <> int.to_string(packages_count)
     <> " packages and "
     <> int.to_string(releases_count)
