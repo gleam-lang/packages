@@ -554,7 +554,7 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
     package_counts: acc.package_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
-    release_counts: acc.package_counts
+    release_counts: acc.release_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
     owner_download_counts: acc.owner_download_counts
