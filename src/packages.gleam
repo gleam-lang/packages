@@ -23,6 +23,7 @@ import wisp/wisp_mist
 
 const usage = "Usage:
   gleam run server
+  gleam run sync
   gleam run sync --name PACKAGE_NAME
 "
 

@@ -14,7 +14,7 @@ import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 import gleam/uri
 import packages/error.{type Error}
-import packages/storage.{type Database}
+import packages/storage.{type Database, FullSync, PartialSync}
 import packages/text_search
 import wisp
 
@@ -42,8 +42,26 @@ pub fn sync_new_gleam_releases(
   db: Database,
   text_search: text_search.TextSearchIndex,
 ) -> Result(Nil, Error) {
-  wisp.log_info("Syncing new releases from Hex")
-  use limit <- try(storage.get_most_recent_hex_timestamp(db))
+  let now = timestamp.system_time()
+  use latest_partial <- try(storage.get_hex_sync_time(db, PartialSync))
+  use latest_full <- try(storage.get_hex_sync_time(db, FullSync))
+
+  // Periodically a full-sync is performed, to get the most up-to-date
+  // information for all packages and releases instead of just those that have
+  // been published since the last sync.
+  let next_full_sync_deadline = timestamp.add(latest_full, duration.hours(12))
+  let #(limit, mode) = case timestamp.compare(now, next_full_sync_deadline) {
+    order.Gt | order.Eq -> {
+      wisp.log_info("Performing full Hex sync, getting all data")
+      #(latest_full, FullSync)
+    }
+    order.Lt -> {
+      wisp.log_info("Performing partial Hex sync, getting newly published data")
+      #(latest_partial, PartialSync)
+    }
+  }
+
+  // Perform the sync with the Hex API
   use latest <- try(
     sync_packages(State(
       page: 1,
@@ -55,9 +73,16 @@ pub fn sync_new_gleam_releases(
       text_search:,
     )),
   )
-  let latest = storage.upsert_most_recent_hex_timestamp(db, latest)
+
+  // Record stats, so we know how to scan next time.
+  use _ <- result.try(storage.upsert_hex_sync_time(db, PartialSync, latest))
+  use _ <- result.try(case mode {
+    FullSync -> storage.upsert_hex_sync_time(db, FullSync, latest)
+    PartialSync -> Ok(Nil)
+  })
+
   wisp.log_info("Up to date!")
-  latest
+  Ok(Nil)
 }
 
 pub fn fetch_and_sync_package(

@@ -4,23 +4,42 @@ import gleam/option.{None, Some}
 import gleam/time/calendar
 import gleam/time/timestamp
 import packages/error
-import packages/storage.{Package, Release}
+import packages/storage.{FullSync, Package, PartialSync, Release}
 import storail
 import tests
 
-pub fn most_recent_hex_timestamp_test() {
+pub fn partial_sync_time_test() {
   use db <- tests.with_database
 
-  let assert Ok(Nil) =
-    storage.upsert_most_recent_hex_timestamp(db, timestamp.from_unix_seconds(0))
-  let assert Ok(time) = storage.get_most_recent_hex_timestamp(db)
+  let timestamp = timestamp.from_unix_seconds(0)
+  let assert Ok(Nil) = storage.upsert_hex_sync_time(db, PartialSync, timestamp)
+  let assert Ok(time) = storage.get_hex_sync_time(db, PartialSync)
   let assert #(0, 0) = timestamp.to_unix_seconds_and_nanoseconds(time)
   let assert "1970-01-01T00:00:00Z" =
     timestamp.to_rfc3339(time, calendar.utc_offset)
 
   let timestamp = timestamp.from_unix_seconds(2_284_352_323)
-  let assert Ok(Nil) = storage.upsert_most_recent_hex_timestamp(db, timestamp)
-  let assert Ok(time) = storage.get_most_recent_hex_timestamp(db)
+  let assert Ok(Nil) = storage.upsert_hex_sync_time(db, PartialSync, timestamp)
+  let assert Ok(time) = storage.get_hex_sync_time(db, PartialSync)
+  let assert "2042-05-22T06:18:43Z" =
+    timestamp.to_rfc3339(time, calendar.utc_offset)
+  let assert #(2_284_352_323, 0) =
+    timestamp.to_unix_seconds_and_nanoseconds(time)
+}
+
+pub fn full_sync_time_test() {
+  use db <- tests.with_database
+
+  let timestamp = timestamp.from_unix_seconds(0)
+  let assert Ok(Nil) = storage.upsert_hex_sync_time(db, FullSync, timestamp)
+  let assert Ok(time) = storage.get_hex_sync_time(db, FullSync)
+  let assert #(0, 0) = timestamp.to_unix_seconds_and_nanoseconds(time)
+  let assert "1970-01-01T00:00:00Z" =
+    timestamp.to_rfc3339(time, calendar.utc_offset)
+
+  let timestamp = timestamp.from_unix_seconds(2_284_352_323)
+  let assert Ok(Nil) = storage.upsert_hex_sync_time(db, FullSync, timestamp)
+  let assert Ok(time) = storage.get_hex_sync_time(db, FullSync)
   let assert "2042-05-22T06:18:43Z" =
     timestamp.to_rfc3339(time, calendar.utc_offset)
   let assert #(2_284_352_323, 0) =

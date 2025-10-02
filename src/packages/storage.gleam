@@ -17,7 +17,7 @@ import storail.{type Collection}
 
 pub opaque type Database {
   Database(
-    most_recent_hex_timestamp: Collection(Timestamp),
+    hex_sync_times: Collection(Timestamp),
     packages: Collection(Package),
     releases: Collection(Release),
   )
@@ -26,9 +26,9 @@ pub opaque type Database {
 pub fn initialise(storage_path: String) -> Database {
   let config = storail.Config(storage_path:)
 
-  let most_recent_hex_timestamp =
+  let hex_sync_times =
     storail.Collection(
-      name: "most_recent_hex_timestamp",
+      name: "hex_sync_times",
       to_json: json_timestamp,
       decoder: decode.int |> decode.map(timestamp.from_unix_seconds),
       config:,
@@ -50,7 +50,7 @@ pub fn initialise(storage_path: String) -> Database {
       config:,
     )
 
-  Database(most_recent_hex_timestamp:, packages:, releases:)
+  Database(hex_sync_times:, packages:, releases:)
 }
 
 const ignored_packages = [
@@ -210,24 +210,39 @@ fn release_decoder() -> Decoder(Release) {
   ))
 }
 
-/// Insert or replace the most recent Hex timestamp in the database.
-pub fn upsert_most_recent_hex_timestamp(
+pub type WhichHexSyncTime {
+  PartialSync
+  FullSync
+}
+
+fn which_hex_sync_time_key(which: WhichHexSyncTime) -> String {
+  case which {
+    PartialSync -> "most-recent-partial-sync"
+    FullSync -> "most-recent-full-sync"
+  }
+}
+
+/// Insert or replace the a Hex timestamp in the database.
+pub fn upsert_hex_sync_time(
   database: Database,
+  which: WhichHexSyncTime,
   time: Timestamp,
 ) -> Result(Nil, Error) {
-  database.most_recent_hex_timestamp
-  |> storail.key("latest")
+  database.hex_sync_times
+  |> storail.key(which_hex_sync_time_key(which))
   |> storail.write(time)
   |> result.map_error(error.StorageError)
 }
 
-/// Get the most recent Hex timestamp from the database, returning the Unix
-/// epoch if there is no previous timestamp in the database.
-pub fn get_most_recent_hex_timestamp(
+/// Get a Hex timestamp from the database, returning a time
+/// before the first package publication if there is no previous timestamp in
+/// the database.
+pub fn get_hex_sync_time(
   database: Database,
+  which: WhichHexSyncTime,
 ) -> Result(Timestamp, Error) {
-  database.most_recent_hex_timestamp
-  |> storail.key("latest")
+  database.hex_sync_times
+  |> storail.key(which_hex_sync_time_key(which))
   |> storail.optional_read
   |> result.map(option.unwrap(_, gleam_package_epoch()))
   |> result.map_error(error.StorageError)
