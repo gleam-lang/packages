@@ -487,8 +487,10 @@ fn try_fold_releases(
 
 pub type InternetPoints {
   InternetPoints(
+    total_downloads: Int,
     package_counts: List(#(String, Int)),
     release_counts: List(#(String, Int)),
+    package_download_counts: List(#(String, Int)),
     owner_download_counts: List(#(String, Int)),
     owner_package_counts: List(#(String, Int)),
   )
@@ -496,15 +498,18 @@ pub type InternetPoints {
 
 type InternetPointsAcc {
   InternetPointsAcc(
+    total_downloads: Int,
     package_counts: dict.Dict(String, Int),
     release_counts: dict.Dict(String, Int),
+    package_download_counts: dict.Dict(String, Int),
     owner_download_counts: dict.Dict(String, Int),
     owner_package_counts: dict.Dict(String, Int),
   )
 }
 
 pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
-  let acc = InternetPointsAcc(dict.new(), dict.new(), dict.new(), dict.new())
+  let d = dict.new()
+  let acc = InternetPointsAcc(0, d, d, d, d, d)
 
   use acc <- result.try(
     try_fold_packages(database, acc, fn(acc, package) {
@@ -519,6 +524,10 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
         |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
       }
 
+      let package_download_counts =
+        dict.upsert(acc.package_download_counts, package.name, fn(c) {
+          option.unwrap(c, 0) + package.downloads_all
+        })
       let owner_package_counts = count_for_owners(acc.owner_package_counts, 1)
       let owner_download_counts =
         count_for_owners(acc.owner_download_counts, package.downloads_all)
@@ -541,8 +550,10 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
 
       let acc =
         InternetPointsAcc(
+          total_downloads: acc.total_downloads + package.downloads_all,
           release_counts:,
           package_counts:,
+          package_download_counts:,
           owner_download_counts:,
           owner_package_counts:,
         )
@@ -551,12 +562,16 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
   )
 
   Ok(InternetPoints(
+    total_downloads: echo acc.total_downloads,
     package_counts: acc.package_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
     release_counts: acc.release_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
+    package_download_counts: acc.package_download_counts
+      |> dict.to_list
+      |> list.sort(fn(a, b) { int.compare(b.1, a.1) }),
     owner_download_counts: acc.owner_download_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { int.compare(b.1, a.1) }),

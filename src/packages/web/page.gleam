@@ -50,6 +50,8 @@ pub fn internet_points(stats: storage.InternetPoints) -> String {
   }
 
   html.div([], [
+    html.h2([], [html.text("Package total downloads")]),
+    count_table(stats.package_download_counts),
     html.h2([], [html.text("Package owners total downloads")]),
     count_table(stats.owner_download_counts),
     html.h2([], [html.text("Package owners number of packages")]),
