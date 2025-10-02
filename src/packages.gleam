@@ -3,10 +3,12 @@ import envoy
 import gleam/erlang/process
 import gleam/int
 import gleam/io
+import gleam/list
 import gleam/otp/actor
 import gleam/otp/static_supervisor as supervisor
 import gleam/otp/supervision
 import gleam/result
+import gleam/time/duration
 import gleam/time/timestamp
 import mist
 import packages/error.{type Error}
@@ -29,6 +31,7 @@ pub fn main() {
 
   case argv.load().arguments {
     ["server"] -> server()
+    ["sync"] -> sync_all()
     ["sync", "--name", package_name] -> sync_one(package_name)
     _ -> io.println(usage)
   }
@@ -119,6 +122,43 @@ fn start_hex_syncer(
     }
     periodic.periodically(do: sync, waiting: 60 * 1000)
   })
+}
+
+fn sync_all() -> Nil {
+  wisp.configure_logger()
+
+  // Prepare
+  let assert Ok(api_key) = envoy.get("HEX_API_KEY") as "HEX_API_KEY not set"
+  let db = storage.initialise(database_path())
+  let index = text_search.new()
+
+  // Sync
+  let start_time = timestamp.system_time()
+  let assert Ok(_) = syncing.sync_new_gleam_releases(api_key, db, index)
+  let end_time = timestamp.system_time()
+
+  // Report
+  let assert Ok(packages) = storage.list_packages(db)
+  let assert Ok(releases_count) =
+    packages
+    |> list.try_map(fn(p) {
+      storage.list_releases(db, p) |> result.map(list.length)
+    })
+    |> result.map(int.sum)
+  let packages_count = list.length(packages)
+
+  let time_taken = timestamp.difference(start_time, end_time)
+  io.println(
+    "Synced in "
+    <> duration.to_iso8601_string(time_taken)
+    <> ". There are now "
+    <> int.to_string(packages_count)
+    <> " packages and "
+    <> int.to_string(releases_count)
+    <> " releases.",
+  )
+
+  Nil
 }
 
 fn sync_one(package_name: String) -> Nil {

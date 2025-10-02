@@ -130,6 +130,7 @@ fn get_api_packages_page(state: State) -> Result(List(hexpm.Package), Error) {
     |> request.set_host("hex.pm")
     |> request.set_path("/api/packages")
     |> request.set_query([
+      #("search", "build_tool:gleam"),
       #("sort", "updated_at"),
       #("page", int.to_string(state.page)),
     ])
