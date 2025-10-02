@@ -474,54 +474,100 @@ pub fn try_fold_packages(
 
 fn try_fold_releases(
   database: Database,
+  package: String,
   initial: acc,
   folder: fn(acc, Release) -> Result(acc, Error),
 ) -> Result(acc, Error) {
-  try_fold_packages(database, initial, fn(acc, package) {
-    use releases <- result.try(list_releases(database, package.name))
-    list.try_fold(releases, acc, fn(acc, version) {
-      use release <- result.try(get_release(database, package.name, version))
-      folder(acc, release)
-    })
+  use releases <- result.try(list_releases(database, package))
+  list.try_fold(releases, initial, fn(acc, version) {
+    use release <- result.try(get_release(database, package, version))
+    folder(acc, release)
   })
 }
 
-pub fn new_package_count_per_day(
-  database: Database,
-) -> Result(List(#(String, Int)), Error) {
-  use packages <- result.try(
-    try_fold_packages(database, dict.new(), fn(counts, package) {
-      package.inserted_in_hex_at
-      |> date_string
-      |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
-      |> Ok
+pub type InternetPoints {
+  InternetPoints(
+    package_counts: List(#(String, Int)),
+    release_counts: List(#(String, Int)),
+    owner_download_counts: List(#(String, Int)),
+    owner_package_counts: List(#(String, Int)),
+  )
+}
+
+type InternetPointsAcc {
+  InternetPointsAcc(
+    package_counts: dict.Dict(String, Int),
+    release_counts: dict.Dict(String, Int),
+    owner_download_counts: dict.Dict(String, Int),
+    owner_package_counts: dict.Dict(String, Int),
+  )
+}
+
+pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
+  let acc = InternetPointsAcc(dict.new(), dict.new(), dict.new(), dict.new())
+
+  use acc <- result.try(
+    try_fold_packages(database, acc, fn(acc, package) {
+      let count_for_owners = fn(counts, amount) {
+        list.fold(package.owners, counts, fn(counts, owner) {
+          dict.upsert(counts, owner, fn(c) { option.unwrap(c, 0) + amount })
+        })
+      }
+      let count_for_dates = fn(counts, date) {
+        date
+        |> date_string
+        |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
+      }
+
+      let owner_package_counts = count_for_owners(acc.owner_package_counts, 1)
+      let owner_download_counts =
+        count_for_owners(acc.owner_download_counts, package.downloads_all)
+      let package_counts =
+        count_for_dates(acc.package_counts, package.inserted_in_hex_at)
+
+      use release_counts <- result.try(
+        try_fold_releases(
+          database,
+          package.name,
+          acc.release_counts,
+          fn(counts, release) {
+            release.inserted_in_hex_at
+            |> date_string
+            |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
+            |> Ok
+          },
+        ),
+      )
+
+      let acc =
+        InternetPointsAcc(
+          release_counts:,
+          package_counts:,
+          owner_download_counts:,
+          owner_package_counts:,
+        )
+      Ok(acc)
     }),
   )
-  packages
-  |> dict.to_list
-  |> list.sort(fn(a, b) { int.compare(a.1, b.1) })
-  |> Ok
+
+  Ok(InternetPoints(
+    package_counts: acc.package_counts
+      |> dict.to_list
+      |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
+    release_counts: acc.package_counts
+      |> dict.to_list
+      |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
+    owner_download_counts: acc.owner_download_counts
+      |> dict.to_list
+      |> list.sort(fn(a, b) { int.compare(b.1, a.1) }),
+    owner_package_counts: acc.owner_package_counts
+      |> dict.to_list
+      |> list.sort(fn(a, b) { int.compare(b.1, a.1) }),
+  ))
 }
 
 fn date_string(timestamp: Timestamp) -> String {
   timestamp
   |> timestamp.to_rfc3339(calendar.utc_offset)
   |> string.slice(0, 10)
-}
-
-pub fn new_release_count_per_day(
-  database: Database,
-) -> Result(List(#(String, Int)), Error) {
-  use releases <- result.try(
-    try_fold_releases(database, dict.new(), fn(counts, release) {
-      release.inserted_in_hex_at
-      |> date_string
-      |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
-      |> Ok
-    }),
-  )
-  releases
-  |> dict.to_list
-  |> list.sort(fn(a, b) { int.compare(a.1, b.1) })
-  |> Ok
 }

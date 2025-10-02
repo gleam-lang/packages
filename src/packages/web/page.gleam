@@ -23,15 +23,22 @@ pub fn packages_list(
   |> layout
 }
 
-pub type Stats {
-  Stats(
-    package_counts: List(#(String, Int)),
-    release_counts: List(#(String, Int)),
-  )
-}
+pub fn internet_points(stats: storage.InternetPoints) -> String {
+  let count_list = fn(rows) {
+    rows
+    |> list.take(50)
+    |> list.map(fn(row) {
+      let #(name, count) = row
+      html.li([], [html.text(name <> ": " <> int.to_string(count))])
+    })
+    |> html.ol([], _)
+  }
 
-pub fn internet_points(stats: Stats) -> String {
   html.div([], [
+    html.h2([], [html.text("Package owners total downloads")]),
+    count_list(stats.owner_download_counts),
+    html.h2([], [html.text("Package owners number of packages")]),
+    count_list(stats.owner_package_counts),
     html.script([attribute.src("https://cdn.plot.ly/plotly-2.30.0.min.js")], ""),
     line_chart("Package count", stats.package_counts),
     line_chart("Release count", stats.release_counts),

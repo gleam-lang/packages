@@ -133,12 +133,9 @@ pub fn package_to_json(
   json.object(fields)
 }
 
-fn internet_points(context: Context) -> Response {
-  let assert Ok(package_counts) = storage.new_package_count_per_day(context.db)
-  let assert Ok(release_counts) = storage.new_release_count_per_day(context.db)
-  let stats =
-    page.Stats(package_counts: package_counts, release_counts: release_counts)
-  page.internet_points(stats)
+fn internet_points(ctx: Context) -> Response {
+  let assert Ok(internet_points) = storage.internet_points(ctx.db)
+  page.internet_points(internet_points)
   |> wisp.html_response(200)
 }
 
