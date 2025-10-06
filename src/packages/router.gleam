@@ -154,10 +154,8 @@ fn search(request: Request, context: Context) -> Response {
       })
     _ -> packages
   }
-  let assert Ok(total_package_count) =
-    storage.get_total_package_count(context.db)
 
-  page.packages_list(packages, total_package_count, search_term)
+  page.packages_list(packages, search_term)
   |> wisp.html_response(200)
 }
 
