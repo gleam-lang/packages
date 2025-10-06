@@ -10,7 +10,6 @@ import gleam/time/calendar
 import gleam/time/timestamp
 import gleam/uri
 import packages/storage
-import packages/text_search
 import packages/web.{type Context}
 import packages/web/page
 import wisp.{type Request, type Response}
@@ -142,17 +141,8 @@ fn internet_points(ctx: Context) -> Response {
 fn search(request: Request, context: Context) -> Response {
   let search_term = get_search_parameter(request)
   let assert Ok(packages) = case search_term {
-    "" -> storage.list_packages(context.db)
-    _ -> text_search.lookup(context.search_index, search_term)
-  }
-  let assert Ok(packages) =
-    storage.ranked_package_summaries(context.db, packages, search_term)
-  let packages = case search_term {
-    "" ->
-      list.sort(packages, fn(a, b) {
-        timestamp.compare(b.updated_in_hex_at, a.updated_in_hex_at)
-      })
-    _ -> packages
+    "" -> storage.packages_most_recent_first(context.db)
+    _ -> storage.search_packages(context.db, context.search_index, search_term)
   }
 
   page.packages_list(packages, search_term)

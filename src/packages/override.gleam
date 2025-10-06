@@ -45,3 +45,15 @@ pub fn expand_search_term(term: String) -> List(String) {
     term -> [term]
   }
 }
+
+pub fn is_core_package(name: String) -> Bool {
+  case name {
+    "gleam_stdlib"
+    | "gleam_javascript"
+    | "gleam_erlang"
+    | "gleam_otp"
+    | "gleam_json"
+    | "gleam_time" -> True
+    _ -> False
+  }
+}
