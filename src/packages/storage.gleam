@@ -1,4 +1,3 @@
-import gleam/bool
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
 import gleam/float
@@ -14,6 +13,7 @@ import gleam/time/calendar
 import gleam/time/timestamp.{type Timestamp}
 import packages/error.{type Error}
 import packages/override
+import packages/text_search
 import storail.{type Collection}
 
 pub opaque type Database {
@@ -370,72 +370,63 @@ pub fn list_packages(database: Database) -> Result(List(String), Error) {
   }
 }
 
-type Groups {
-  Groups(
-    exact: List(Package),
-    regular: List(Package),
-    v0: List(Package),
-    old: List(Package),
-  )
-}
-
-pub fn ranked_package_summaries(
-  database: Database,
-  packages: List(String),
+pub fn search_packages(
+  db: Database,
+  search: text_search.TextSearchIndex,
   search_term: String,
 ) -> Result(List(Package), Error) {
-  let gleam_v1 =
-    timestamp.from_calendar(
-      calendar.Date(2024, calendar.March, 4),
-      calendar.TimeOfDay(0, 0, 0, 0),
-      calendar.utc_offset,
-    )
+  let bool = fn(b) {
+    case b {
+      True -> 1
+      False -> 0
+    }
+  }
+  use found <- result.try(text_search.lookup(search, search_term))
+  use packages <- result.map(
+    list.try_map(found, fn(found) {
+      use package <- result.map(get_package(db, found.name))
 
-  use packages <- result.map({
-    use name <- list.try_map(packages)
-    get_package(database, name)
-  })
+      let exact_package_name_match = bool(search_term == package.name)
+      let is_not_v0 = bool(!string.starts_with(package.latest_version, "0."))
+      let is_core_package = bool(override.is_core_package(package.name))
+      let updated_at =
+        float.round(timestamp.to_unix_seconds(package.updated_in_hex_at))
 
-  let groups = Groups([], [], [], [])
+      // This is the value we use to determine what order packages should be
+      // shown by. Later list values only take effect if the earlier ones are
+      // equal.
+      let ordering_key = [
+        exact_package_name_match,
+        is_not_v0,
+        found.match_count,
+        is_core_package,
+        package.downloads_recent,
+        updated_at,
+      ]
+      #(ordering_key, package)
+    }),
+  )
 
-  let groups =
-    list.fold(packages, groups, fn(groups, package) {
-      // The ordering of the clauses matter. Something can be both v0 and old,
-      // and which group it goes into impacts the final ordering.
+  packages
+  |> list.sort(fn(a, b) { list_compare(b.0, a.0, int.compare) })
+  |> list.map(fn(pair) { pair.1 })
+}
 
-      use <- bool.lazy_guard(package.name == search_term, fn() {
-        Groups(..groups, exact: [package, ..groups.exact])
-      })
-
-      let is_old =
-        timestamp.compare(package.updated_in_hex_at, gleam_v1) == order.Lt
-      use <- bool.lazy_guard(is_old, fn() {
-        Groups(..groups, old: [package, ..groups.old])
-      })
-
-      let is_zero_version = string.starts_with(package.latest_version, "0.")
-      use <- bool.lazy_guard(is_zero_version, fn() {
-        Groups(..groups, v0: [package, ..groups.v0])
-      })
-
-      Groups(..groups, regular: [package, ..groups.regular])
-    })
-
-  let Groups(exact:, regular:, v0:, old:) = groups
-  // This list is ordered backwards, so the later in the list the higher it
-  // will be shown in the UI.
-  [
-    // Packages published before Gleam v1.0.0 are likely outdated.
-    old,
-    // v0 versions are discouraged, so they are shown lower.
-    v0,
-    // Regular versions are not prioritised in any particular way.
-    regular,
-    // Exact matches for the search term come first.
-    exact,
-  ]
-  |> list.flatten
-  |> list.reverse
+fn list_compare(
+  a: List(t),
+  b: List(t),
+  compare: fn(t, t) -> order.Order,
+) -> order.Order {
+  case a, b {
+    [], [] -> order.Eq
+    [], _ -> order.Lt
+    _, [] -> order.Gt
+    [a1, ..a], [b1, ..b] ->
+      case compare(a1, b1) {
+        order.Eq -> list_compare(a, b, compare)
+        order.Gt as order | order.Lt as order -> order
+      }
+  }
 }
 
 pub fn try_fold_packages(
@@ -563,4 +554,12 @@ fn date_string(timestamp: Timestamp) -> String {
   timestamp
   |> timestamp.to_rfc3339(calendar.utc_offset)
   |> string.slice(0, 10)
+}
+
+pub fn packages_most_recent_first(db: Database) -> Result(List(Package), Error) {
+  use packages <- result.try(list_packages(db))
+  use packages <- result.map(list.try_map(packages, get_package(db, _)))
+  list.sort(packages, fn(a, b) {
+    timestamp.compare(b.updated_in_hex_at, a.updated_in_hex_at)
+  })
 }

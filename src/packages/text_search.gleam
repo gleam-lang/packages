@@ -1,9 +1,7 @@
 import ethos.{type BagTable}
 import gleam/dict
-import gleam/int
 import gleam/list
 import gleam/option
-import gleam/order
 import gleam/result
 import gleam/string
 import packages/error.{type Error}
@@ -46,10 +44,12 @@ pub fn update(
   insert(index, name, description)
 }
 
+/// Find all matches for the given search term. The list is not returned in any
+/// order, but each found item is returned with a match count.
 pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
-) -> Result(List(String), Error) {
+) -> Result(List(Found), Error) {
   let phrase = string.lowercase(phrase)
   stem_words(phrase)
   |> list.flat_map(override.expand_search_term)
@@ -61,30 +61,13 @@ pub fn lookup(
       dict.upsert(counters, name, fn(x) { option.unwrap(x, 0) + 1 })
     })
     |> dict.to_list
-    |> list.map(fn(pair) {
-      case pair.0 {
-        // Rank up proritised packages
-        "gleam_stdlib"
-        | "gleam_javascript"
-        | "gleam_erlang"
-        | "gleam_otp"
-        | "gleam_json"
-        | "gleam_time" -> #(pair.0, pair.1 + 10)
-        _ -> pair
-      }
-    })
-    |> list.sort(fn(a, b) {
-      case a, b {
-        // Exact matches come first
-        #(name, _), _ if name == phrase -> order.Lt
-        _, #(name, _) if name == phrase -> order.Gt
-        // Otherwise compare the score
-        _, _ -> int.compare(b.1, a.1)
-      }
-    })
-    |> list.map(fn(pair) { pair.0 })
+    |> list.map(fn(pair) { Found(pair.0, pair.1) })
   })
   |> result.replace_error(error.EtsTableError)
+}
+
+pub type Found {
+  Found(name: String, match_count: Int)
 }
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
