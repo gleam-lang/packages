@@ -7,7 +7,7 @@ import gleam/order
 import gleam/result
 import gleam/string
 import packages/error.{type Error}
-import packages/storage
+import packages/override
 import porter_stemmer
 
 pub opaque type TextSearchIndex {
@@ -23,7 +23,7 @@ pub fn insert(
   name name: String,
   description description: String,
 ) -> Result(Nil, Error) {
-  case storage.is_ignored_package(name) {
+  case override.is_ignored_package(name) {
     True -> Ok(Nil)
     False ->
       name
@@ -52,7 +52,7 @@ pub fn lookup(
 ) -> Result(List(String), Error) {
   let phrase = string.lowercase(phrase)
   stem_words(phrase)
-  |> list.flat_map(expand_search_term)
+  |> list.flat_map(override.expand_search_term)
   |> list.try_map(ethos.get(index.table, _))
   |> result.map(fn(names) {
     names
@@ -85,20 +85,6 @@ pub fn lookup(
     |> list.map(fn(pair) { pair.0 })
   })
   |> result.replace_error(error.EtsTableError)
-}
-
-/// Some words have common misspellings or associated words so we add those to
-/// the search to get all appropriate results.
-fn expand_search_term(term: String) -> List(String) {
-  case term {
-    "postgres" | "postgresql" -> ["postgres", "postgresql"]
-    "mysql" | "mariadb" -> ["mysql", "mariadb"]
-    "redis" | "valkey" -> ["redis", "valkey"]
-    "regex" | "regexp" -> ["regex", "regexp"]
-    "luster" -> ["luster", "lustre"]
-    "mail" -> ["mail", "email"]
-    term -> [term]
-  }
 }
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {

@@ -13,6 +13,7 @@ import gleam/string
 import gleam/time/calendar
 import gleam/time/timestamp.{type Timestamp}
 import packages/error.{type Error}
+import packages/override
 import storail.{type Collection}
 
 pub opaque type Database {
@@ -52,19 +53,6 @@ pub fn initialise(storage_path: String) -> Database {
 
   Database(hex_sync_times:, packages:, releases:)
 }
-
-const ignored_packages = [
-  "bare_package1", "bare_package_one", "bare_package_two",
-  "first_gleam_publish_package", "gleam_module_javascript_test",
-  // Reserved official sounding names.
-  "gleam", "gleam_deno", "gleam_email", "gleam_html", "gleam_nodejs",
-  "gleam_tcp", "gleam_test", "gleam_toml", "gleam_xml", "gleam_mongo",
-  "gleam_bson", "gleam_file", "gleam_yaml",
-  // Unofficial packages impersonating the core team
-  "gleam_dotenv", "gleam_roman", "gleam_sendgrid", "gleam_bbmustache",
-  // Reserved unreleased project names.
-  "glitter", "sequin",
-]
 
 fn gleam_package_epoch() -> Timestamp {
   timestamp.from_unix_seconds(1_635_092_380)
@@ -305,7 +293,7 @@ pub fn upsert_package_from_hex(
   package: hexpm.Package,
   latest_version latest_version: String,
 ) -> Result(Nil, Error) {
-  case is_ignored_package(package.name) {
+  case override.is_ignored_package(package.name) {
     True -> Ok(Nil)
     False -> {
       database.packages
@@ -314,10 +302,6 @@ pub fn upsert_package_from_hex(
       |> result.map_error(error.StorageError)
     }
   }
-}
-
-pub fn is_ignored_package(name: String) -> Bool {
-  list.contains(ignored_packages, name)
 }
 
 pub fn get_package(database: Database, name: String) -> Result(Package, Error) {
@@ -387,7 +371,8 @@ pub fn list_releases(
 
 pub fn list_packages(database: Database) -> Result(List(String), Error) {
   case storail.list(database.packages, []) {
-    Ok(packages) -> Ok(list.filter(packages, fn(p) { !is_ignored_package(p) }))
+    Ok(packages) ->
+      Ok(list.filter(packages, fn(p) { !override.is_ignored_package(p) }))
     Error(e) -> Error(error.StorageError(e))
   }
 }
