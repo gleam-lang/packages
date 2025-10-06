@@ -11,14 +11,10 @@ import lustre/element/html
 import packages/storage.{type Package}
 import packages/web/icons
 
-pub fn packages_list(
-  packages: List(Package),
-  total_package_count: Int,
-  search_term: String,
-) -> String {
+pub fn packages_list(packages: List(Package), search_term: String) -> String {
   html.div(
     [attribute.class("content")],
-    search_aware_package_list(packages, total_package_count, search_term),
+    search_aware_package_list(packages, search_term),
   )
   |> layout
 }
@@ -105,13 +101,12 @@ fn search_form(search_term: String) -> Element(Nil) {
 
 fn search_aware_package_list(
   packages: List(Package),
-  total_package_count: Int,
   search_term: String,
 ) -> List(Element(Nil)) {
   let header_phrase = case search_term, packages {
     "", [] -> "No packages have been added yet"
     "", [_] -> "1 package is available!"
-    "", _ -> int.to_string(total_package_count) <> " packages are available!"
+    "", _ -> int.to_string(list.length(packages)) <> " packages are available!"
 
     _, [] -> "No packages match your query"
     _, [_] -> "1 package matches your query!"

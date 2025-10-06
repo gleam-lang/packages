@@ -321,13 +321,6 @@ pub fn get_optional_package(
   |> result.map_error(error.StorageError)
 }
 
-pub fn get_total_package_count(database: Database) -> Result(Int, Error) {
-  database.packages
-  |> storail.list([])
-  |> result.map(list.length)
-  |> result.map_error(error.StorageError)
-}
-
 pub fn upsert_release(
   database: Database,
   package: String,
