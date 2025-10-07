@@ -35,8 +35,9 @@ pub fn insert(
   case override.is_ignored_package(name) {
     True -> Ok(Nil)
     False -> {
-      use _ <- result.try(insert_package(name, description, index))
-      use _ <- result.try(update_known_words(name <> " " <> description, index))
+      let words = split_and_normalise_words(name <> " " <> description)
+      use _ <- result.try(insert_package(name, words, index))
+      use _ <- result.try(update_known_words(words, index))
       Ok(Nil)
     }
   }
@@ -44,28 +45,22 @@ pub fn insert(
 
 fn insert_package(
   name: String,
-  description: String,
+  words: List(String),
   index: TextSearchIndex,
 ) -> Result(Nil, Error) {
-  name
-  |> string.append(" ")
-  |> string.append(string.replace(name, "_", " "))
-  |> string.append(" ")
-  |> string.append(description)
+  words
   |> stem_words
   |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
   |> result.replace_error(error.EtsTableError)
 }
 
 fn update_known_words(
-  text: String,
+  new_words: List(String),
   index: TextSearchIndex,
 ) -> Result(Nil, Error) {
   cell.read(index.known_words)
   |> result.try(fn(known_words) {
-    text
-    |> string.lowercase
-    |> string.split(on: " ")
+    new_words
     |> set.from_list
     |> set.union(known_words)
     |> cell.write(index.known_words, _)
@@ -89,8 +84,9 @@ pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
 ) -> Result(List(Found), Error) {
-  let phrase = string.lowercase(phrase)
-  stem_words(phrase)
+  phrase
+  |> split_and_normalise_words
+  |> stem_words
   |> list.flat_map(override.expand_search_term)
   |> list.try_map(ethos.get(index.table, _))
   |> result.replace_error(error.EtsTableError)
@@ -120,8 +116,14 @@ fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
   |> result.replace_error(error.EtsTableError)
 }
 
-fn stem_words(phrase: String) -> List(String) {
-  phrase
+fn stem_words(words: List(String)) -> List(String) {
+  words
+  |> list.map(porter_stemmer.stem)
+  |> list.unique
+}
+
+fn split_and_normalise_words(text: String) -> List(String) {
+  text
   |> string.lowercase
   |> string.replace("-", " ")
   |> string.replace("_", " ")
@@ -133,8 +135,6 @@ fn stem_words(phrase: String) -> List(String) {
   |> string.split(" ")
   |> list.filter(fn(word) { word != "" })
   |> list.map(normalise_spelling)
-  |> list.map(porter_stemmer.stem)
-  |> list.unique
 }
 
 fn normalise_spelling(word: String) -> String {
