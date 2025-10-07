@@ -22,7 +22,8 @@ pub opaque type TextSearchIndex {
 
 pub fn new() -> TextSearchIndex {
   let known_words = cell.new(cell.new_table())
-  let _ = cell.write(known_words, set.new())
+  let assert Ok(_) = cell.write(known_words, set.new())
+    as "cannot initialise cell"
   TextSearchIndex(table: ethos.new(), known_words:)
 }
 
