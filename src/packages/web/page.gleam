@@ -19,6 +19,25 @@ pub fn packages_list(packages: List(Package), search_term: String) -> String {
   |> layout
 }
 
+pub fn did_you_mean(suggestion: String, search_term: String) -> String {
+  html.div([attribute.class("content")], {
+    [
+      html.header([class("page-header")], [
+        text("I couldn't find any package matching your search."),
+      ]),
+      search_form(search_term),
+      html.p([attribute.class("package-list-message")], [
+        element.text("Did you mean "),
+        html.a([attribute.href("?search=" <> suggestion)], [
+          element.text(suggestion),
+        ]),
+        element.text("?"),
+      ]),
+    ]
+  })
+  |> layout
+}
+
 pub fn internet_points(stats: storage.InternetPoints) -> String {
   let count_table = fn(rows) {
     let rows =
