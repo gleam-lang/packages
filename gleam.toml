@@ -29,6 +29,8 @@ gleamsver = ">= 1.0.1 and < 2.0.0"
 porter_stemmer = ">= 1.0.0 and < 2.0.0"
 gleam_time = ">= 1.2.0 and < 2.0.0"
 gleam_httpc = ">= 5.0.0 and < 6.0.0"
+edit_distance = ">= 3.0.0 and < 4.0.0"
+cell = ">= 1.0.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = "~> 1.0"
