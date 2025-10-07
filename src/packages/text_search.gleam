@@ -6,6 +6,7 @@ import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/option
+import gleam/order.{type Order, Eq, Gt, Lt}
 import gleam/result
 import gleam/set.{type Set}
 import gleam/string
@@ -223,7 +224,28 @@ fn closest_word(to word: String, from words: Set(String)) -> Result(String, Nil)
   })
   // We only pick the word with the smallest possible edit distance that's below
   // the given threshold
-  |> list.sort(fn(one, other) { int.compare(one.1, other.1) })
-  |> list.first
+  |> min(fn(a, b) { int.compare(a.1, b.1) })
   |> result.map(fn(suggestion) { suggestion.0 })
+}
+
+/// Find the minimum element in a list, this runs in linear time.
+/// If there's multiple elements with the same minimum value, the one that is
+/// encountered first is returned.
+///
+fn min(in list: List(a), by compare: fn(a, a) -> Order) -> Result(a, Nil) {
+  case list {
+    [] -> Error(Nil)
+    [min, ..rest] -> Ok(min_loop(rest, min, compare))
+  }
+}
+
+fn min_loop(list: List(a), min_so_far: a, compare: fn(a, a) -> Order) -> a {
+  case list {
+    [] -> min_so_far
+    [first, ..rest] ->
+      case compare(first, min_so_far) {
+        Eq | Gt -> min_loop(rest, min_so_far, compare)
+        Lt -> min_loop(rest, first, compare)
+      }
+  }
 }
