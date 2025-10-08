@@ -52,7 +52,7 @@ fn insert_package(
   words
   |> stem_words
   |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
-  |> result.replace_error(error.EtsTableError)
+  |> result.replace_error(error.TextIndexEtsTableError)
 }
 
 fn update_known_words(
@@ -66,7 +66,7 @@ fn update_known_words(
     |> set.union(known_words)
     |> cell.write(index.known_words, _)
   })
-  |> result.replace_error(error.EtsTableError)
+  |> result.replace_error(error.KnownWordsEtsTableError)
 }
 
 pub fn update(
@@ -90,7 +90,7 @@ pub fn lookup(
   |> stem_words
   |> list.flat_map(override.expand_search_term)
   |> list.try_map(ethos.get(index.table, _))
-  |> result.replace_error(error.EtsTableError)
+  |> result.replace_error(error.TextIndexEtsTableError)
   |> result.map(fn(names) {
     names
     |> list.flatten
@@ -114,7 +114,7 @@ pub type Found {
 
 fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
   ethos.delete_value(index.table, name)
-  |> result.replace_error(error.EtsTableError)
+  |> result.replace_error(error.TextIndexEtsTableError)
 }
 
 fn stem_words(words: List(String)) -> List(String) {
