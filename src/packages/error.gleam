@@ -8,5 +8,6 @@ pub type Error {
   HttpClientError(httpc.HttpError)
   JsonDecodeError(json.DecodeError)
   StorageError(storail.StorailError)
-  EtsTableError
+  TextIndexEtsTableError
+  KnownWordsEtsTableError
 }
