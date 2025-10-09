@@ -370,39 +370,44 @@ pub fn list_packages(database: Database) -> Result(List(String), Error) {
   }
 }
 
+pub type SearchOutcome {
+  Packages(packages: List(Package))
+  DidYouMean(suggestion: String)
+}
+
 pub fn search_packages(
   db: Database,
   search: text_search.TextSearchIndex,
   search_term: String,
-) -> Result(List(Package), Error) {
-  let bool = fn(b) {
-    case b {
-      True -> 1
-      False -> 0
-    }
-  }
+) -> Result(SearchOutcome, Error) {
   use found <- result.try(text_search.lookup(search, search_term))
+
+  case found {
+    [_, ..] ->
+      rank_found_results(found, db, search_term)
+      |> result.map(Packages)
+
+    // If no results are found we try and suggest a fix for the search term.
+    [] ->
+      case text_search.did_you_mean(search, search_term) {
+        Ok(suggestion) -> Ok(DidYouMean(suggestion:))
+        Error(_) -> Ok(Packages(packages: []))
+      }
+  }
+}
+
+/// Given a list of `text_search` results, this returns a list of the matching
+/// packages, ranked from most relevant to least relevant.
+///
+fn rank_found_results(
+  found: List(text_search.Found),
+  db: Database,
+  search_term: String,
+) -> Result(List(Package), Error) {
   use packages <- result.map(
     list.try_map(found, fn(found) {
       use package <- result.map(get_package(db, found.name))
-
-      let exact_package_name_match = bool(search_term == package.name)
-      let is_not_v0 = bool(!string.starts_with(package.latest_version, "0."))
-      let is_core_package = bool(override.is_core_package(package.name))
-      let updated_at =
-        float.round(timestamp.to_unix_seconds(package.updated_in_hex_at))
-
-      // This is the value we use to determine what order packages should be
-      // shown by. Later list values only take effect if the earlier ones are
-      // equal.
-      let ordering_key = [
-        exact_package_name_match,
-        is_not_v0,
-        found.match_count,
-        is_core_package,
-        package.downloads_recent,
-        updated_at,
-      ]
+      let ordering_key = package_ordering_key(search_term, package, found)
       #(ordering_key, package)
     }),
   )
@@ -410,6 +415,38 @@ pub fn search_packages(
   packages
   |> list.sort(fn(a, b) { list_compare(b.0, a.0, int.compare) })
   |> list.map(fn(pair) { pair.1 })
+}
+
+/// This is the value we use to determine what order packages should be shown
+/// by.
+///
+fn package_ordering_key(
+  search_term: String,
+  package: Package,
+  found: text_search.Found,
+) -> List(Int) {
+  let bool = fn(bool) {
+    case bool {
+      True -> 1
+      False -> 0
+    }
+  }
+
+  let exact_package_name_match = bool(search_term == package.name)
+  let is_not_v0 = bool(!string.starts_with(package.latest_version, "0."))
+  let is_core_package = bool(override.is_core_package(package.name))
+  let updated_at =
+    float.round(timestamp.to_unix_seconds(package.updated_in_hex_at))
+
+  // Later list values only take effect if the earlier ones are equal.
+  [
+    exact_package_name_match,
+    is_not_v0,
+    found.match_count,
+    is_core_package,
+    package.downloads_recent,
+    updated_at,
+  ]
 }
 
 fn list_compare(

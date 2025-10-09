@@ -140,13 +140,23 @@ fn internet_points(ctx: Context) -> Response {
 
 fn search(request: Request, context: Context) -> Response {
   let search_term = get_search_parameter(request)
-  let assert Ok(packages) = case search_term {
-    "" -> storage.packages_most_recent_first(context.db)
+  let assert Ok(search_outcome) = case search_term {
+    "" ->
+      storage.packages_most_recent_first(context.db)
+      |> result.map(storage.Packages)
+
     _ -> storage.search_packages(context.db, context.search_index, search_term)
   }
 
-  page.packages_list(packages, search_term)
-  |> wisp.html_response(200)
+  case search_outcome {
+    storage.Packages(packages:) ->
+      page.packages_list(packages, search_term)
+      |> wisp.html_response(200)
+
+    storage.DidYouMean(suggestion:) ->
+      page.did_you_mean(suggestion, search_term)
+      |> wisp.html_response(200)
+  }
 }
 
 fn get_search_parameter(request: Request) -> String {

@@ -150,3 +150,48 @@ pub fn underscores_test() {
   let assert Ok(value) = text_search.lookup(index, "lustre_dev")
   assert value == [Found("lustre", 1), Found("lustre_dev_tools", 2)]
 }
+
+pub fn suggesting_fix_for_typo_from_package_name_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(index, "splitter", "a package to write parsers")
+
+  let assert Ok(value) = text_search.did_you_mean(index, "spliter")
+  assert value == "splitter"
+}
+
+pub fn suggesting_fix_for_typo_is_case_insensitive_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(index, "splitter", "a package to write parsers")
+
+  let assert Ok(value) = text_search.did_you_mean(index, "SPLITER")
+  assert value == "splitter"
+}
+
+pub fn suggesting_fix_for_typo_from_package_description_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(index, "splitter", "a package to write parsers")
+
+  let assert Ok(value) = text_search.did_you_mean(index, "pasers")
+  assert value == "parsers"
+}
+
+pub fn fix_for_typo_only_suggested_when_close_enough_test() {
+  let index = text_search.new()
+  let assert Ok(_) = text_search.insert(index, "lustre", "")
+
+  // "Lustrous" is too far from "lustre", so that's not used as a possible fix
+  // for the typo
+  assert Error(Nil) == text_search.did_you_mean(index, "lustrous")
+}
+
+pub fn fix_for_typo_can_fix_multiple_words_at_once_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(index, "pokemon_diamond_and_pearl", "time and space")
+
+  let assert Ok(value) = text_search.did_you_mean(index, "tme und spice")
+  assert value == "time and space"
+}
