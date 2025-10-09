@@ -47,7 +47,7 @@ Environment=DATABASE_PATH=/storage
 # Provide the secrets
 EnvironmentFile=/srv/packages-environment
 
-# Restart the service if the homepage no longer loads
+# Restart the service if the health check fails
 HealthCmd=sh -c /app/healthcheck.sh
 HealthInterval=30s
 HealthTimeout=5s
