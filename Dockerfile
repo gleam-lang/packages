@@ -20,6 +20,7 @@ RUN \
   addgroup --system gleam_packages && \
   adduser --system gleam_packages -g gleam_packages
 COPY --from=build /app/build/erlang-shipment /app
+COPY healthcheck.sh /app/healthcheck.sh
 VOLUME /app/data
 LABEL org.opencontainers.image.source=https://github.com/gleam-lang/packages
 LABEL org.opencontainers.image.description="Gleam Packages web application"
