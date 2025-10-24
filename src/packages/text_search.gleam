@@ -138,6 +138,7 @@ fn split_and_normalise_words(text: String) -> List(String) {
   |> string.replace("]", " ")
   |> string.replace(":", " ")
   |> string.replace(";", " ")
+  |> string.replace("?", " ")
   |> string.replace("—", " ")
   |> string.replace("\"", "")
   |> string.replace("'", "")
