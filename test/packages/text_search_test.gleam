@@ -195,3 +195,16 @@ pub fn fix_for_typo_can_fix_multiple_words_at_once_test() {
   let assert Ok(value) = text_search.did_you_mean(index, "tme und spice")
   assert value == "time and space"
 }
+
+pub fn parentheses_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(
+      index,
+      "paint",
+      "Make drawings, animations, and games (HTML Canvas)",
+    )
+
+  let assert Ok(value) = text_search.lookup(index, "canvas")
+  assert value == [Found("paint", 1)]
+}
