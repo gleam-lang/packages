@@ -12,12 +12,13 @@ import gleam/set.{type Set}
 import gleam/string
 import packages/error.{type Error}
 import packages/override
-import porter_stemmer
+import snowball_stemmer.{type Stemmer}
 
 pub opaque type TextSearchIndex {
   TextSearchIndex(
     table: BagTable(String, String),
     known_words: Cell(Set(String)),
+    stemmer: Stemmer,
   )
 }
 
@@ -25,7 +26,11 @@ pub fn new() -> TextSearchIndex {
   let known_words = cell.new(cell.new_table())
   let assert Ok(_) = cell.write(known_words, set.new())
     as "cannot initialise cell"
-  TextSearchIndex(table: ethos.new(), known_words:)
+  TextSearchIndex(
+    table: ethos.new(),
+    known_words:,
+    stemmer: snowball_stemmer.new(),
+  )
 }
 
 pub fn insert(
@@ -49,8 +54,10 @@ fn insert_package(
   words: List(String),
   index: TextSearchIndex,
 ) -> Result(Nil, Error) {
+  let TextSearchIndex(stemmer:, ..) = index
+
   words
-  |> stem_words
+  |> stem_words(stemmer)
   |> list.try_each(fn(word) { ethos.insert(index.table, word, name) })
   |> result.replace_error(error.TextIndexEtsTableError)
 }
@@ -85,9 +92,11 @@ pub fn lookup(
   index: TextSearchIndex,
   phrase: String,
 ) -> Result(List(Found), Error) {
+  let TextSearchIndex(stemmer:, ..) = index
+
   phrase
   |> split_and_normalise_words
-  |> stem_words
+  |> stem_words(stemmer)
   |> list.flat_map(override.expand_search_term)
   |> list.try_map(ethos.get(index.table, _))
   |> result.replace_error(error.TextIndexEtsTableError)
@@ -117,9 +126,9 @@ fn remove(index: TextSearchIndex, name: String) -> Result(Nil, Error) {
   |> result.replace_error(error.TextIndexEtsTableError)
 }
 
-fn stem_words(words: List(String)) -> List(String) {
+fn stem_words(words: List(String), stemmer: Stemmer) -> List(String) {
   words
-  |> list.map(porter_stemmer.stem)
+  |> list.map(snowball_stemmer.stem(stemmer, _))
   |> list.unique
 }
 

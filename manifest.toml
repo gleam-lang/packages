@@ -33,6 +33,8 @@ packages = [
   { name = "porter_stemmer", version = "1.0.0", build_tools = ["gleam"], requirements = ["porter_stemming"], otp_app = "porter_stemmer", source = "hex", outer_checksum = "02248CA76802B75BE1EE7EE1878BAD088088E67E791ECE6813128B965560C99C" },
   { name = "porter_stemming", version = "1.0.1", build_tools = ["rebar3"], requirements = [], otp_app = "porter_stemming", source = "hex", outer_checksum = "8531E709A731C9A6A52477C44175411A6B5F5327CF55C18D9B9F5FD701C606B0" },
   { name = "simplifile", version = "2.3.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "0A868DAC6063D9E983477981839810DC2E553285AB4588B87E3E9C96A7FB4CB4" },
+  { name = "snowball_stemmer", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "splitter"], otp_app = "snowball_stemmer", source = "hex", outer_checksum = "4D43E287C93DE6C4387F7E4896A05A011374093CD8AC9EE53736E51D643A7C74" },
+  { name = "splitter", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "splitter", source = "hex", outer_checksum = "05564A381580395DCDEFF4F88A64B021E8DAFA6540AE99B4623962F52976AA9D" },
   { name = "storail", version = "3.0.1", build_tools = ["gleam"], requirements = ["directories", "filepath", "gleam_crypto", "gleam_json", "gleam_stdlib", "simplifile"], otp_app = "storail", source = "hex", outer_checksum = "22499D1930B57F389DE12939B3B74DC1EC2B4125BB173080D41BC60927FE45D9" },
   { name = "telemetry", version = "1.3.0", build_tools = ["rebar3"], requirements = [], otp_app = "telemetry", source = "hex", outer_checksum = "7015FC8919DBE63764F4B4B87A95B7C0996BD539E0D499BE6EC9D7F3875B79E6" },
   { name = "wisp", version = "2.0.0-rc1", build_tools = ["gleam"], requirements = ["directories", "exception", "filepath", "gleam_crypto", "gleam_erlang", "gleam_http", "gleam_json", "gleam_stdlib", "houdini", "logging", "marceau", "mist", "simplifile"], otp_app = "wisp", source = "hex", outer_checksum = "2B3E83B6C14087E2DC76B920CF34409A41D401B5BDBF5CC071FCBAA01FE3B499" },
@@ -57,5 +59,6 @@ lustre = { version = ">= 5.3.2 and < 6.0.0" }
 mist = { version = ">= 5.0.3 and < 6.0.0" }
 porter_stemmer = { version = ">= 1.0.0 and < 2.0.0" }
 simplifile = { version = ">= 2.2.0 and < 3.0.0" }
+snowball_stemmer = { version = ">= 1.0.1 and < 2.0.0" }
 storail = { version = ">= 3.0.0 and < 4.0.0" }
 wisp = { version = ">= 2.0.0-rc1 and < 3.0.0" }
