@@ -208,3 +208,31 @@ pub fn parentheses_test() {
   let assert Ok(value) = text_search.lookup(index, "canvas")
   assert value == [Found("paint", 1)]
 }
+
+pub fn lookup_ly_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(
+      index,
+      "repeatedly",
+      "Call a function repeatedly with a delay between each call",
+    )
+  let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
+
+  let assert Ok(value) = text_search.lookup(index, "repeat")
+  assert value == [Found("repeatedly", 1)]
+}
+
+pub fn lookup_ist_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(
+      index,
+      "geologist",
+      "Rock utility functions for Gleamlins?",
+    )
+  let assert Ok(_) = text_search.insert(index, "squirrel", "SQL")
+
+  let assert Ok(value) = text_search.lookup(index, "geology")
+  assert value == [Found("geologist", 1)]
+}
