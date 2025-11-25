@@ -45,15 +45,7 @@ pub fn internet_points(stats: storage.InternetPoints) -> String {
       |> list.take(50)
       |> list.index_map(fn(row, index) {
         let #(name, count) = row
-        let count =
-          int.to_string(count)
-          |> string.to_graphemes
-          |> list.reverse
-          |> list.sized_chunk(3)
-          |> list.intersperse([","])
-          |> list.flatten
-          |> list.reverse
-          |> string.concat
+        let count = pretty_int(count)
         html.tr([], [
           html.td([], [html.text(int.to_string(index + 1) <> ".")]),
           html.td([], [html.text(name)]),
@@ -65,7 +57,9 @@ pub fn internet_points(stats: storage.InternetPoints) -> String {
   }
 
   html.div([], [
-    html.h2([], [html.text("Package total downloads")]),
+    html.h2([], [html.text("Total downloads")]),
+    html.text(pretty_int(stats.total_downloads)),
+    html.h2([], [html.text("Packages total downloads")]),
     count_table(stats.package_download_counts),
     html.h2([], [html.text("Package owners total downloads")]),
     count_table(stats.owner_download_counts),
@@ -76,6 +70,17 @@ pub fn internet_points(stats: storage.InternetPoints) -> String {
     line_chart("Release count", stats.release_counts),
   ])
   |> layout
+}
+
+fn pretty_int(int: Int) -> String {
+  int.to_string(int)
+  |> string.to_graphemes
+  |> list.reverse
+  |> list.sized_chunk(3)
+  |> list.intersperse([","])
+  |> list.flatten
+  |> list.reverse
+  |> string.concat
 }
 
 fn line_chart(name: String, data: List(#(String, Int))) -> Element(Nil) {
