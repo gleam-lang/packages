@@ -568,7 +568,7 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
   )
 
   Ok(InternetPoints(
-    total_downloads: echo acc.total_downloads,
+    total_downloads: acc.total_downloads,
     package_counts: acc.package_counts
       |> dict.to_list
       |> list.sort(fn(a, b) { string.compare(a.0, b.0) }),
