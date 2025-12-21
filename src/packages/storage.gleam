@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/dict
 import gleam/dynamic/decode.{type Decoder}
 import gleam/float
@@ -10,6 +11,7 @@ import gleam/order
 import gleam/result
 import gleam/string
 import gleam/time/calendar
+import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 import packages/error.{type Error}
 import packages/override
@@ -21,6 +23,10 @@ pub opaque type Database {
     hex_sync_times: Collection(Timestamp),
     packages: Collection(Package),
     releases: Collection(Release),
+    // The download count for a package at a point in time
+    downloads_samples: Collection(Int),
+    // The time of the latest download count sample for each package
+    latest_downloads_sample: Collection(DownloadsSample),
   )
 }
 
@@ -32,6 +38,22 @@ pub fn initialise(storage_path: String) -> Database {
       name: "hex_sync_times",
       to_json: json_timestamp,
       decoder: decode.int |> decode.map(timestamp.from_unix_seconds),
+      config:,
+    )
+
+  let latest_downloads_sample =
+    storail.Collection(
+      name: "latest_downloads_sample",
+      to_json: downloads_sample_to_json,
+      decoder: downloads_sample_decoder(),
+      config:,
+    )
+
+  let downloads_samples =
+    storail.Collection(
+      name: "downloads_samples",
+      to_json: json.int,
+      decoder: decode.int,
       config:,
     )
 
@@ -51,7 +73,30 @@ pub fn initialise(storage_path: String) -> Database {
       config:,
     )
 
-  Database(hex_sync_times:, packages:, releases:)
+  Database(
+    hex_sync_times:,
+    packages:,
+    releases:,
+    latest_downloads_sample:,
+    downloads_samples:,
+  )
+}
+
+fn downloads_sample_decoder() -> Decoder(DownloadsSample) {
+  use time <- decode.field("time", date_decoder())
+  use count <- decode.field("count", decode.int)
+  decode.success(DownloadsSample(time:, count:))
+}
+
+fn downloads_sample_to_json(downloads_sample: DownloadsSample) -> Json {
+  json.object([
+    #("time", json_date(downloads_sample.time)),
+    #("count", json.int(downloads_sample.count)),
+  ])
+}
+
+pub type DownloadsSample {
+  DownloadsSample(time: calendar.Date, count: Int)
 }
 
 fn gleam_package_epoch() -> Timestamp {
@@ -152,6 +197,43 @@ fn json_timestamp(timestamp: timestamp.Timestamp) -> json.Json {
   |> json.int
 }
 
+fn timestamp_decoder() -> Decoder(Timestamp) {
+  decode.int
+  |> decode.map(timestamp.from_unix_seconds)
+}
+
+fn string_date(date: calendar.Date) -> String {
+  int.to_string(date.year)
+  <> "-"
+  <> int.to_string(calendar.month_to_int(date.month))
+  <> "-"
+  <> int.to_string(date.day)
+}
+
+fn json_date(date: calendar.Date) -> json.Json {
+  json.string(string_date(date))
+}
+
+fn date_decoder() -> Decoder(calendar.Date) {
+  use string <- decode.then(decode.string)
+  let date = {
+    use #(year, month, day) <- result.try(case string.split(string, "-") {
+      [year, month, day] -> Ok(#(year, month, day))
+      _ -> Error(Nil)
+    })
+    use year <- result.try(int.parse(year))
+    use month <- result.try(int.parse(month))
+    use month <- result.try(calendar.month_from_int(month))
+    use day <- result.try(int.parse(day))
+    Ok(calendar.Date(year:, month:, day:))
+  }
+
+  case date {
+    Ok(date) -> decode.success(date)
+    Error(_) -> decode.failure(calendar.Date(0, calendar.January, 1), "Date")
+  }
+}
+
 fn release_to_json(release: Release) -> Json {
   let Release(
     version:,
@@ -184,17 +266,23 @@ fn release_decoder() -> Decoder(Release) {
     decode.optional(decode.string),
   )
   use downloads <- decode.field("downloads", decode.int)
-  use inserted_in_hex_at <- decode.field("inserted_in_hex_at", decode.int)
-  use updated_in_hex_at <- decode.field("updated_in_hex_at", decode.int)
-  use last_scanned_at <- decode.field("last_scanned_at", decode.int)
+  use inserted_in_hex_at <- decode.field(
+    "inserted_in_hex_at",
+    timestamp_decoder(),
+  )
+  use updated_in_hex_at <- decode.field(
+    "updated_in_hex_at",
+    timestamp_decoder(),
+  )
+  use last_scanned_at <- decode.field("last_scanned_at", timestamp_decoder())
   decode.success(Release(
     version:,
     downloads:,
     retirement_reason:,
     retirement_message:,
-    inserted_in_hex_at: timestamp.from_unix_seconds(inserted_in_hex_at),
-    updated_in_hex_at: timestamp.from_unix_seconds(updated_in_hex_at),
-    last_scanned_at: timestamp.from_unix_seconds(last_scanned_at),
+    inserted_in_hex_at:,
+    updated_in_hex_at:,
+    last_scanned_at:,
   ))
 }
 
@@ -291,15 +379,25 @@ fn hexpm_release_to_storage_release(
 pub fn upsert_package_from_hex(
   database: Database,
   package: hexpm.Package,
+  time: Timestamp,
   latest_version latest_version: String,
 ) -> Result(Nil, Error) {
   case override.is_ignored_package(package.name) {
     True -> Ok(Nil)
     False -> {
-      database.packages
-      |> storail.key(package.name)
-      |> storail.write(hex_package_to_storage_package(package, latest_version))
-      |> result.map_error(error.StorageError)
+      let package = hex_package_to_storage_package(package, latest_version)
+      use _ <- result.try(
+        database.packages
+        |> storail.key(package.name)
+        |> storail.write(package)
+        |> result.map_error(error.StorageError),
+      )
+      record_total_download_count_sample(
+        database,
+        package.name,
+        time,
+        package.downloads_all,
+      )
     }
   }
 }
@@ -526,7 +624,7 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
       }
       let count_for_dates = fn(counts, date) {
         date
-        |> date_string
+        |> timestamp_to_date_string
         |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
       }
 
@@ -547,7 +645,7 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
           acc.release_counts,
           fn(counts, release) {
             release.inserted_in_hex_at
-            |> date_string
+            |> timestamp_to_date_string
             |> dict.upsert(counts, _, fn(c) { option.unwrap(c, 0) + 1 })
             |> Ok
           },
@@ -587,7 +685,7 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
   ))
 }
 
-fn date_string(timestamp: Timestamp) -> String {
+fn timestamp_to_date_string(timestamp: Timestamp) -> String {
   timestamp
   |> timestamp.to_rfc3339(calendar.utc_offset)
   |> string.slice(0, 10)
@@ -599,4 +697,87 @@ pub fn packages_most_recent_first(db: Database) -> Result(List(Package), Error) 
   list.sort(packages, fn(a, b) {
     timestamp.compare(b.updated_in_hex_at, a.updated_in_hex_at)
   })
+}
+
+fn record_total_download_count_sample(
+  db: Database,
+  package name: String,
+  sampled_at time: Timestamp,
+  total_downloads count: Int,
+) -> Result(Nil, Error) {
+  use latest <- result.try(get_latest_sample(db, name))
+  let #(latest_time, latest_count) = case latest {
+    option.Some(latest) -> #(latest.time, latest.count)
+    option.None -> #(calendar.Date(0, calendar.January, 1), 0)
+  }
+
+  // If the count hasn't changed then don't record
+  use <- bool.guard(when: count == latest_count, return: Ok(Nil))
+
+  // If the latest sample was on the same day then don't record
+  let #(today, _) = timestamp.to_calendar(time, calendar.utc_offset)
+  use <- bool.guard(when: today == latest_time, return: Ok(Nil))
+
+  // The count has been updated, so we record a new sample
+
+  // If it has been multiple days since the last sample then record the
+  // previous count 1 day ago, so we know the count didn't increase for that
+  // period of time.
+  let #(yesterday, _) =
+    time
+    |> timestamp.add(duration.hours(-24))
+    |> timestamp.to_calendar(calendar.utc_offset)
+  use _ <- result.try({
+    // There was no previous sample, no need to record yesterday
+    use <- bool.guard(when: latest == option.None, return: Ok(Nil))
+    // The previous sample was yesterday, no need to record yesterday
+    use <- bool.guard(when: latest_time == yesterday, return: Ok(Nil))
+    // There has been mulitple days without change in count, record yesterday
+    write_downloads_sample(db, name, yesterday, latest_count)
+  })
+
+  // Record this sample
+  use _ <- result.try(write_downloads_sample(db, name, today, count))
+  write_latest_downloads_sample(db, name, today, count)
+}
+
+fn write_downloads_sample(
+  db: Database,
+  package name: String,
+  sampled_at time: calendar.Date,
+  total_downloads count: Int,
+) -> Result(Nil, Error) {
+  db.downloads_samples
+  |> storail.namespaced_key([name], string_date(time))
+  |> storail.write(count)
+  |> result.map_error(error.StorageError)
+}
+
+// Get the time at which the most recent downloads count sample was recorded
+pub fn get_latest_sample(
+  db: Database,
+  package name: String,
+) -> Result(Option(DownloadsSample), Error) {
+  let result =
+    db.latest_downloads_sample
+    |> storail.key(name)
+    |> storail.read
+  case result {
+    Ok(data) -> Ok(option.Some(data))
+    Error(storail.ObjectNotFound(_, _)) -> Ok(option.None)
+    Error(error) -> Error(error.StorageError(error))
+  }
+}
+
+// Write the time at which the most recent downloads count sample was recorded
+fn write_latest_downloads_sample(
+  db: Database,
+  package name: String,
+  sampled_at time: calendar.Date,
+  total_downloads count: Int,
+) -> Result(Nil, Error) {
+  db.latest_downloads_sample
+  |> storail.key(name)
+  |> storail.write(DownloadsSample(time:, count:))
+  |> result.map_error(error.StorageError)
 }

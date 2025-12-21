@@ -283,13 +283,14 @@ fn insert_package_and_releases(
     package.meta.description |> option.unwrap(""),
   ))
 
+  let now = timestamp.system_time()
   use _ <- try(storage.upsert_package_from_hex(
     state.db,
     package,
+    now,
     latest.version,
   ))
 
-  let now = timestamp.system_time()
   releases
   |> list.try_each(storage.upsert_release(state.db, package.name, _, now))
 }
