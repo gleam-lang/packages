@@ -48,6 +48,7 @@ pub fn full_sync_time_test() {
 
 pub fn insert_package_test() {
   use db <- tests.with_database
+  let now = timestamp.from_unix_seconds(3000)
 
   let assert Ok(_) =
     storage.upsert_package_from_hex(
@@ -70,6 +71,7 @@ pub fn insert_package_test() {
         inserted_at: timestamp.from_unix_seconds(100),
         updated_at: timestamp.from_unix_seconds(2000),
       ),
+      now,
       "1.0.0",
     )
 
@@ -88,10 +90,16 @@ pub fn insert_package_test() {
       repository_url: Some("https://github.com/gleam-lang/stdlib"),
       owners: [],
     )
+
+  assert storage.get_latest_sample(db, "gleam_stdlib")
+    == Ok(
+      Some(storage.DownloadsSample(calendar.Date(1970, calendar.January, 1), 5)),
+    )
 }
 
 pub fn insert_package_with_owners_test() {
   use db <- tests.with_database
+  let now = timestamp.from_unix_seconds(3000)
 
   let assert Ok(_) =
     storage.upsert_package_from_hex(
@@ -125,6 +133,7 @@ pub fn insert_package_with_owners_test() {
         inserted_at: timestamp.from_unix_seconds(100),
         updated_at: timestamp.from_unix_seconds(2000),
       ),
+      now,
       "1.0.0",
     )
 
@@ -147,6 +156,7 @@ pub fn insert_package_with_owners_test() {
 
 pub fn insert_ignored_package_test() {
   use db <- tests.with_database
+  let now = timestamp.from_unix_seconds(3000)
 
   let assert Ok(_) =
     storage.upsert_package_from_hex(
@@ -169,6 +179,7 @@ pub fn insert_ignored_package_test() {
         inserted_at: timestamp.from_unix_seconds(100),
         updated_at: timestamp.from_unix_seconds(2000),
       ),
+      now,
       "1.0.0",
     )
 
@@ -179,6 +190,7 @@ pub fn insert_ignored_package_test() {
 
 pub fn insert_release_test() {
   use db <- tests.with_database
+  let now = timestamp.from_unix_seconds(3000)
 
   let assert Ok(_) =
     storage.upsert_package_from_hex(
@@ -198,6 +210,7 @@ pub fn insert_release_test() {
         inserted_at: timestamp.from_unix_seconds(1_284_352_323),
         updated_at: timestamp.from_unix_seconds(1_284_352_322),
       ),
+      now,
       "2.0.2",
     )
 
