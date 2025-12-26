@@ -53,7 +53,7 @@ pub fn sync_new_gleam_releases(
   let #(limit, mode) = case timestamp.compare(now, next_full_sync_deadline) {
     order.Gt | order.Eq -> {
       wisp.log_info("Performing full Hex sync, getting all data")
-      #(latest_full, FullSync)
+      #(storage.gleam_package_epoch(), FullSync)
     }
     order.Lt -> {
       wisp.log_info("Performing partial Hex sync, getting newly published data")

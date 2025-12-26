@@ -99,7 +99,8 @@ pub type DownloadsSample {
   DownloadsSample(time: calendar.Date, count: Int)
 }
 
-fn gleam_package_epoch() -> Timestamp {
+/// A point in time before which there were no Gleam packages.
+pub fn gleam_package_epoch() -> Timestamp {
   timestamp.from_unix_seconds(1_635_092_380)
 }
 
