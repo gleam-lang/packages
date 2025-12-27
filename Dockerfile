@@ -17,8 +17,9 @@ ARG BUILD_TIME
 ENV GIT_SHA=${GIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
 RUN \
-  addgroup --system gleam_packages && \
-  adduser --system gleam_packages -g gleam_packages
+  chmod +x /app/healthcheck.sh \
+  && addgroup --system gleam_packages \
+  && adduser --system gleam_packages -g gleam_packages
 COPY --from=build /app/build/erlang-shipment /app
 COPY healthcheck.sh /app/healthcheck.sh
 VOLUME /app/data
