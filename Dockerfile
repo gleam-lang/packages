@@ -20,6 +20,7 @@ RUN \
   chmod +x /app/healthcheck.sh \
   && addgroup --system gleam_packages \
   && adduser --system gleam_packages -g gleam_packages
+USER gleam_packages
 COPY --from=build /app/build/erlang-shipment /app
 COPY healthcheck.sh /app/healthcheck.sh
 VOLUME /app/data
