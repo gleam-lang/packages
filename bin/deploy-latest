@@ -2,7 +2,44 @@
 
 BOX=linuxuser@packages.gleam.run 
 
-echo "Running podman-auto-update"
-ssh "$BOX" "sudo systemctl start podman-auto-update.service" 
+main() {
+  echo "Checking no GitHub actions are running"
+  wait_for_github_workflows gleam-lang packages
 
-ssh -t "$BOX" "sudo systemctl --no-pager status packages.service"
+  echo "Running podman-auto-update"
+  ssh "$BOX" "sudo systemctl start podman-auto-update.service" 
+
+  ssh -t "$BOX" "sudo systemctl --no-pager status developer-survey.service"
+}
+
+wait_for_github_workflows() {
+  local owner=$1
+  local repo=$2
+  local timeout=300 # seconds
+  local interval=10 # seconds
+  local start_time=$(date +%s)
+
+  while :; do
+    local now=$(date +%s)
+    local elapsed=$((now - start_time))
+
+    if [ "$elapsed" -ge "$timeout" ]; then
+      echo "Timed out waiting for GitHub workflows to finish" >&2
+      exit 1
+    fi
+
+    local running_count=$(
+      curl -fsS "https://api.github.com/repos/$owner/$repo/actions/runs?per_page=50" \
+      | jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .status == "requested")] | length'
+    )
+
+    if [ "$running_count" -eq 0 ]; then
+      return 0
+    fi
+
+    echo "waiting for $running_count workflow(s) to finish…"
+    sleep "$interval"
+  done
+}
+
+main
