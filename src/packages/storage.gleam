@@ -1,5 +1,5 @@
 import gleam/bool
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/dynamic/decode.{type Decoder}
 import gleam/float
 import gleam/hexpm
@@ -9,6 +9,7 @@ import gleam/list
 import gleam/option.{type Option}
 import gleam/order
 import gleam/result
+import gleam/set.{type Set}
 import gleam/string
 import gleam/time/calendar
 import gleam/time/duration
@@ -590,6 +591,56 @@ fn try_fold_releases(
   })
 }
 
+pub type YearInternetPoints {
+  YearInternetPoints(
+    new_packages: Int,
+    new_releases: Int,
+    new_release_owners: Set(String),
+  )
+}
+
+/// Gather some stats about packages and releases for a given year.
+///
+pub fn year_internet_points(
+  database: Database,
+  year: Int,
+) -> Result(YearInternetPoints, Error) {
+  let watermark = fn(year) {
+    let date = calendar.Date(year:, month: calendar.January, day: 1)
+    let time =
+      calendar.TimeOfDay(hours: 0, minutes: 0, seconds: 0, nanoseconds: 0)
+    timestamp.from_calendar(date, time, calendar.utc_offset)
+  }
+  let start = watermark(year)
+  let end = watermark(year + 1)
+  let this_period = fn(time) {
+    timestamp.compare(start, time) != order.Lt
+    && timestamp.compare(time, end) == order.Lt
+  }
+
+  let acc = YearInternetPoints(0, 0, set.new())
+
+  try_fold_packages(database, acc, fn(acc, package) {
+    let acc = case this_period(package.inserted_in_hex_at) {
+      True -> YearInternetPoints(..acc, new_packages: acc.new_packages + 1)
+      False -> acc
+    }
+
+    try_fold_releases(database, package.name, acc, fn(acc, release) {
+      case this_period(release.inserted_in_hex_at) {
+        True -> {
+          let new_release_owners =
+            list.fold(package.owners, acc.new_release_owners, set.insert)
+          let new_releases = acc.new_releases + 1
+          YearInternetPoints(..acc, new_releases:, new_release_owners:)
+        }
+        False -> acc
+      }
+      |> Ok
+    })
+  })
+}
+
 pub type InternetPoints {
   InternetPoints(
     total_downloads: Int,
@@ -604,11 +655,11 @@ pub type InternetPoints {
 type InternetPointsAcc {
   InternetPointsAcc(
     total_downloads: Int,
-    package_counts: dict.Dict(String, Int),
-    release_counts: dict.Dict(String, Int),
-    package_download_counts: dict.Dict(String, Int),
-    owner_download_counts: dict.Dict(String, Int),
-    owner_package_counts: dict.Dict(String, Int),
+    package_counts: Dict(String, Int),
+    release_counts: Dict(String, Int),
+    package_download_counts: Dict(String, Int),
+    owner_download_counts: Dict(String, Int),
+    owner_package_counts: Dict(String, Int),
   )
 }
 

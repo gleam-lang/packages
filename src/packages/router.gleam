@@ -1,6 +1,7 @@
 import gleam/float
 import gleam/http
 import gleam/http/request
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option
@@ -24,6 +25,7 @@ pub fn handle_request(
   case request.path_segments(request) {
     [] -> search(request, context)
     ["internet-points"] -> internet_points(context)
+    ["internet-points", year] -> year_internet_points(year, context)
     ["api"] -> api(request, context)
     ["api", "packages"] -> api_packages(request, context)
     ["api", "packages", name] -> api_package(request, context, name)
@@ -130,6 +132,18 @@ pub fn package_to_json(
   }
 
   json.object(fields)
+}
+
+fn year_internet_points(year: String, ctx: Context) -> Response {
+  case int.parse(year) {
+    Ok(year) -> {
+      let assert Ok(internet_points) =
+        storage.year_internet_points(ctx.db, year)
+      page.year_internet_points(year, internet_points)
+      |> wisp.html_response(200)
+    }
+    Error(_) -> wisp.not_found()
+  }
 }
 
 fn internet_points(ctx: Context) -> Response {

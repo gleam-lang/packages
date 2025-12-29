@@ -2,6 +2,7 @@ import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option
+import gleam/set
 import gleam/string
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
@@ -38,24 +39,25 @@ pub fn did_you_mean(suggestion: String, search_term: String) -> String {
   |> layout
 }
 
+pub fn year_internet_points(
+  year: Int,
+  stats: storage.YearInternetPoints,
+) -> String {
+  let year = int.to_string(year)
+  html.div([], [
+    html.h1([], [html.text("Year " <> year)]),
+
+    html.h2([], [html.text("New packages")]),
+    html.text(pretty_int(stats.new_packages)),
+    html.h2([], [html.text("New releases")]),
+    html.text(pretty_int(stats.new_releases)),
+    html.h2([], [html.text("New release owners")]),
+    html.text(pretty_int(set.size(stats.new_release_owners))),
+  ])
+  |> layout
+}
+
 pub fn internet_points(stats: storage.InternetPoints) -> String {
-  let count_table = fn(rows) {
-    let rows =
-      rows
-      |> list.take(50)
-      |> list.index_map(fn(row, index) {
-        let #(name, count) = row
-        let count = pretty_int(count)
-        html.tr([], [
-          html.td([], [html.text(int.to_string(index + 1) <> ".")]),
-          html.td([], [html.text(name)]),
-          html.td([], [html.text(count)]),
-        ])
-      })
-
-    html.table([], rows)
-  }
-
   html.div([], [
     html.h2([], [html.text("Total downloads")]),
     html.text(pretty_int(stats.total_downloads)),
@@ -70,6 +72,23 @@ pub fn internet_points(stats: storage.InternetPoints) -> String {
     line_chart("Release count", stats.release_counts),
   ])
   |> layout
+}
+
+fn count_table(rows: List(#(String, Int))) {
+  let rows =
+    rows
+    |> list.take(50)
+    |> list.index_map(fn(row, index) {
+      let #(name, count) = row
+      let count = pretty_int(count)
+      html.tr([], [
+        html.td([], [html.text(int.to_string(index + 1) <> ".")]),
+        html.td([], [html.text(name)]),
+        html.td([], [html.text(count)]),
+      ])
+    })
+
+  html.table([], rows)
 }
 
 fn pretty_int(int: Int) -> String {
