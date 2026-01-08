@@ -32,8 +32,12 @@ pub fn is_ignored_package(name: String) -> Bool {
   }
 }
 
-/// Some words have common misspellings or associated words so we add those to
-/// the search to get all appropriate results.
+/// Some words have common alterative words so we add those to the search to
+/// get all appropriate results.
+///
+/// Common spelling mistakes and dialect variations are handled in
+/// `text_search.normalise` instead.
+///
 pub fn expand_search_term(term: String) -> List(String) {
   case term {
     "postgres" | "postgresql" -> ["postgres", "postgresql"]

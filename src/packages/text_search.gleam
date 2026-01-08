@@ -153,39 +153,53 @@ fn split_and_normalise_words(text: String) -> List(String) {
   |> string.replace("'", "")
   |> string.split(" ")
   |> list.filter(fn(word) { word != "" })
-  |> list.map(normalise_spelling)
+  |> normalise([])
 }
 
-fn normalise_spelling(word: String) -> String {
-  case word {
-    "analyze" -> "analyse"
-    "authorize" -> "authorise"
-    "behavior" -> "behaviour"
-    "categorize" -> "categorise"
-    "color" -> "colour"
-    "customization" -> "customisation"
-    "customize" -> "customise"
-    "honor" -> "honour"
-    "initialize" -> "initialise"
-    "labeled" -> "labelled"
-    "labor" -> "labour"
-    "license" -> "licence"
-    "modeling" -> "modelling"
-    "normalization" -> "normalisation"
-    "normalize" -> "normalise"
-    "optimization" -> "optimisation"
-    "optimize" -> "optimise"
-    "organize" -> "organise"
-    "parameterize" -> "parameterise"
-    "deserialization" -> "deserialisation"
-    "deserialize" -> "deserialise"
-    "serialization" -> "serialisation"
-    "serialize" -> "serialise"
-    "standardize" -> "standardise"
-    "summarize" -> "summarise"
-    "synchronize" -> "synchronise"
-    "tokenize" -> "tokenise"
-    _ -> word
+/// Normalise spelling, unifying different English dialects and correcting some
+/// spelling mistakes, to get more permissive search results.
+///
+fn normalise(words: List(String), out: List(String)) -> List(String) {
+  case words {
+    [] -> list.reverse(out)
+
+    // The 
+    ["un", "escape", ..words] -> normalise(words, ["unescape", ..out])
+    ["un", "escaping", ..words] -> normalise(words, ["unescaping", ..out])
+
+    [word, ..words] -> {
+      let word = case word {
+        "analyze" -> "analyse"
+        "authorize" -> "authorise"
+        "behavior" -> "behaviour"
+        "categorize" -> "categorise"
+        "color" -> "colour"
+        "customization" -> "customisation"
+        "customize" -> "customise"
+        "honor" -> "honour"
+        "initialize" -> "initialise"
+        "labeled" -> "labelled"
+        "labor" -> "labour"
+        "license" -> "licence"
+        "modeling" -> "modelling"
+        "normalization" -> "normalisation"
+        "normalize" -> "normalise"
+        "optimization" -> "optimisation"
+        "optimize" -> "optimise"
+        "organize" -> "organise"
+        "parameterize" -> "parameterise"
+        "deserialization" -> "deserialisation"
+        "deserialize" -> "deserialise"
+        "serialization" -> "serialisation"
+        "serialize" -> "serialise"
+        "standardize" -> "standardise"
+        "summarize" -> "summarise"
+        "synchronize" -> "synchronise"
+        "tokenize" -> "tokenise"
+        _ -> word
+      }
+      normalise(words, [word, ..out])
+    }
   }
 }
 

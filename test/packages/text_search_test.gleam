@@ -236,3 +236,15 @@ pub fn lookup_ist_test() {
   let assert Ok(value) = text_search.lookup(index, "geology")
   assert value == [Found("geologist", 1)]
 }
+
+// Odysseus writes "unescape" as "un-escape"
+pub fn un_escape_test() {
+  let index = text_search.new()
+  let assert Ok(_) =
+    text_search.insert(index, "houdini", "🪄 Fast HTML escaping")
+  let assert Ok(_) = text_search.insert(index, "odysseus", "UN-escaping HTML")
+
+  assert text_search.lookup(index, "escape") == Ok([Found("houdini", 1)])
+  assert text_search.lookup(index, "un-escape") == Ok([Found("odysseus", 1)])
+  assert text_search.lookup(index, "unescape") == Ok([Found("odysseus", 1)])
+}
