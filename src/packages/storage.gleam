@@ -643,6 +643,8 @@ pub fn year_internet_points(
 
 pub type InternetPoints {
   InternetPoints(
+    last_partial_sync: Timestamp,
+    last_full_sync: Timestamp,
     total_downloads: Int,
     package_counts: List(#(String, Int)),
     release_counts: List(#(String, Int)),
@@ -717,7 +719,12 @@ pub fn internet_points(database: Database) -> Result(InternetPoints, Error) {
     }),
   )
 
+  use last_partial_sync <- result.try(get_hex_sync_time(database, PartialSync))
+  use last_full_sync <- result.try(get_hex_sync_time(database, FullSync))
+
   Ok(InternetPoints(
+    last_full_sync:,
+    last_partial_sync:,
     total_downloads: acc.total_downloads,
     package_counts: acc.package_counts
       |> dict.to_list

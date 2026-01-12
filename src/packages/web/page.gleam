@@ -59,6 +59,10 @@ pub fn year_internet_points(
 
 pub fn internet_points(stats: storage.InternetPoints) -> String {
   html.div([], [
+    html.h2([], [html.text("Last partial sync")]),
+    html.text(format_date(stats.last_partial_sync)),
+    html.h2([], [html.text("Last full sync")]),
+    html.text(format_date(stats.last_full_sync)),
     html.h2([], [html.text("Total downloads")]),
     html.text(pretty_int(stats.total_downloads)),
     html.h2([], [html.text("Packages total downloads")]),
