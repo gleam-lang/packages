@@ -24,6 +24,17 @@ pub fn is_ignored_package(name: String) -> Bool {
     | "gleam_roman"
     | "gleam_sendgrid"
     | "gleam_bbmustache"
+    | "gleam_cors"
+    | "gleam_cowboy_websockets"
+    | "gleam_erlexec"
+    | "gleam_gun"
+    | "gleam_os_mon"
+    | "gleam_qs"
+    | "gleam_retry"
+    | "gleam_stats"
+    | "gleam_synapses"
+    | "gleam_tailwind"
+    | "gleam_zlists"
     | // Reserved unreleased project names.
       "glitter"
     | "sequin" -> True
