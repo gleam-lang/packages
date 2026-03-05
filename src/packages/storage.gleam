@@ -532,7 +532,8 @@ fn package_ordering_key(
     }
   }
 
-  let exact_package_name_match = bool(search_term == package.name)
+  let exact_package_name_match =
+    bool(string.lowercase(search_term) == package.name)
   let is_not_v0 = bool(!string.starts_with(package.latest_version, "0."))
   let is_core_package = bool(override.is_core_package(package.name))
   let updated_at =
