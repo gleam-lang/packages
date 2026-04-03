@@ -1,5 +1,5 @@
 ARG ERLANG_VERSION=28.0.2.0
-ARG GLEAM_VERSION=v1.12.0
+ARG GLEAM_VERSION=v1.15.2
 
 # Gleam stage
 FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-scratch AS gleam
