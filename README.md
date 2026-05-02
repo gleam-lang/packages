@@ -30,6 +30,7 @@ gleam run server  # Run the server
 [Unit]
 Description=Gleam packages index web application
 After=local-fs.target
+StartLimitIntervalSec=0
 
 [Container]
 Image=ghcr.io/gleam-lang/packages:main
@@ -52,7 +53,10 @@ HealthCmd=sh -c /app/healthcheck.sh
 HealthInterval=30s
 HealthTimeout=5s
 HealthRetries=3
-HealthOnFailure=restart
+
+[Service]
+Restart=always
+RestartSec=2
 
 [Install]
 WantedBy=multi-user.target default.target
