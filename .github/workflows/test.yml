@@ -9,14 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
       - uses: erlef/setup-beam@v1
         with:
           # Be sure to change in the dockerfile also
           otp-version: "28.0.2.0"
-          gleam-version: "1.15.2"
+          gleam-version: "1.16.0"
           rebar3-version: "3"
       - run: gleam test
       - run: gleam format --check src test
@@ -50,8 +50,8 @@ jobs:
           docker push $TAG
 
       - uses: actions/delete-package-versions@v5
-        with: 
-          package-name: 'packages'
-          package-type: 'container'
+        with:
+          package-name: "packages"
+          package-type: "container"
           min-versions-to-keep: 10
-          delete-only-untagged-versions: 'true'
+          delete-only-untagged-versions: "true"
