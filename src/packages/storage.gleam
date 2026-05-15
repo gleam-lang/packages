@@ -481,11 +481,10 @@ pub fn search_packages(
   search_term: String,
 ) -> Result(SearchOutcome, Error) {
   use found <- result.try(text_search.lookup(search, search_term))
+  use results <- result.try(rank_found_results(found, db, search_term))
 
-  case found {
-    [_, ..] ->
-      rank_found_results(found, db, search_term)
-      |> result.map(Packages)
+  case results {
+    [_, ..] -> Ok(Packages(results))
 
     // If no results are found we try and suggest a fix for the search term.
     [] ->
@@ -498,6 +497,7 @@ pub fn search_packages(
 
 /// Given a list of `text_search` results, this returns a list of the matching
 /// packages, ranked from most relevant to least relevant.
+/// Any v0.x.y package is going to be excluded from the final result.
 ///
 fn rank_found_results(
   found: List(text_search.Found),
@@ -514,7 +514,22 @@ fn rank_found_results(
 
   packages
   |> list.sort(fn(a, b) { list_compare(b.0, a.0, int.compare) })
-  |> list.map(fn(pair) { pair.1 })
+  |> list.filter_map(fn(pair) {
+    let #(_sorting_key, package) = pair
+    case is_zero_ver(package) {
+      True -> Error(Nil)
+      False -> Ok(package)
+    }
+  })
+}
+
+/// Returns `True` if the package's latest version has 0 as its major version
+/// number.
+fn is_zero_ver(package: Package) -> Bool {
+  case package.latest_version {
+    "0." <> _ -> True
+    _ -> False
+  }
 }
 
 /// This is the value we use to determine what order packages should be shown
@@ -751,7 +766,9 @@ fn timestamp_to_date_string(timestamp: Timestamp) -> String {
   |> string.slice(0, 10)
 }
 
-pub fn packages_most_recent_first(db: Database) -> Result(List(Package), Error) {
+pub fn packages_most_recent_first(
+  db: Database,
+) -> Result(List(Package), Error) {
   use packages <- result.try(list_packages(db))
   use packages <- result.map(list.try_map(packages, get_package(db, _)))
   list.sort(packages, fn(a, b) {
