@@ -192,11 +192,7 @@ fn package_list_item(package: Package) {
       ]),
       html.p([class("package-description")], [text(package.description)]),
       html.nav([class("package-buttons")], [
-        package_button(
-          "/static/docs.svg",
-          "https://hexdocs.pm/" <> package.name,
-          "Docs",
-        ),
+        package_button("/static/docs.svg", docs_url(package.name), "Docs"),
         case package.repository_url {
           option.Some(url) -> package_button("/static/repo.svg", url, "Repo")
           _ -> element.none()
@@ -215,6 +211,10 @@ fn package_list_item(package: Package) {
       ]),
     ]),
   ])
+}
+
+fn docs_url(package_name: String) -> String {
+  "https://" <> string.replace(package_name, "_", "-") <> ".hexdocs.pm"
 }
 
 fn package_button(icon_location: String, destination: String, label: String) {
