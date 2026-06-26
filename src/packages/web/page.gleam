@@ -138,7 +138,7 @@ fn search_form(search_term: String) -> Element(Nil) {
     html.input([
       attribute.data("keybind-focus", "/"),
       attribute.placeholder("Press / to focus"),
-      attribute("aria-label", "Package name, to search"),
+      attribute.aria_label("Package name, to search"),
       attribute.name("search"),
       attribute.value(search_term),
     ]),
@@ -261,61 +261,61 @@ fn layout(content: Element(Nil)) -> String {
   let social_meta_tags = [
     html.title([], meta_title),
     html.meta([
-      attribute("content", meta_title),
+      attribute.content(meta_title),
       attribute.name("title"),
     ]),
     html.meta([
-      attribute("content", meta_description),
+      attribute.content(meta_description),
       attribute.name("description"),
     ]),
     html.meta([
-      attribute("content", "website"),
+      attribute.content("website"),
       attribute("property", "og:type"),
     ]),
     html.meta([
-      attribute("content", "https://packages.gleam.run/"),
+      attribute.content("https://packages.gleam.run/"),
       attribute("property", "og:url"),
     ]),
     html.meta([
-      attribute("content", meta_title),
+      attribute.content(meta_title),
       attribute("property", "og:title"),
     ]),
     html.meta([
-      attribute("content", meta_description),
+      attribute.content(meta_description),
       attribute("property", "og:description"),
     ]),
     html.meta([
-      attribute("content", meta_image),
+      attribute.content(meta_image),
       attribute("property", "og:image"),
     ]),
     html.meta([
-      attribute("content", "summary_large_image"),
+      attribute.content("summary_large_image"),
       attribute("property", "twitter:card"),
     ]),
     html.meta([
-      attribute("content", "https://packages.gleam.run/"),
+      attribute.content("https://packages.gleam.run/"),
       attribute("property", "twitter:url"),
     ]),
     html.meta([
-      attribute("content", meta_title),
+      attribute.content(meta_title),
       attribute("property", "twitter:title"),
     ]),
     html.meta([
-      attribute("content", meta_image),
+      attribute.content(meta_image),
       attribute("property", "twitter:image"),
     ]),
     html.meta([
-      attribute("content", meta_description),
+      attribute.content(meta_description),
       attribute("property", "twitter:description"),
     ]),
   ]
 
-  html.html([attribute("lang", "en")], [
+  html.html([attribute.lang("en")], [
     html.head([], [
-      html.meta([attribute("charset", "utf-8")]),
+      html.meta([attribute.charset("utf-8")]),
       html.meta([
         attribute.name("viewport"),
-        attribute("content", "width=device-width, initial-scale=1"),
+        attribute.content("width=device-width, initial-scale=1"),
       ]),
 
       element.fragment(social_meta_tags),
@@ -324,8 +324,8 @@ fn layout(content: Element(Nil)) -> String {
         attribute.rel("preload"),
         attribute.href("/fonts/Lexend.woff2"),
         attribute.type_("font/woff2"),
-        attribute("crossorigin", "true"),
-        attribute("as", "font"),
+        attribute.crossorigin("true"),
+        attribute.as_("font"),
       ]),
       html.link([
         attribute.rel("stylesheet"),
@@ -339,7 +339,7 @@ fn layout(content: Element(Nil)) -> String {
         [
           attribute.property("defer", json.bool(True)),
           attribute.src("https://plausible.io/js/plausible.js"),
-          attribute("data-domain", "packages.gleam.run"),
+          attribute.data("domain", "packages.gleam.run"),
         ],
         "",
       ),
