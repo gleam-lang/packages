@@ -188,6 +188,73 @@ pub fn insert_ignored_package_test() {
     == Error(error.StorageError(storail.ObjectNotFound([], "gleam_file")))
 }
 
+fn insert_package_at(db, name, inserted_at) {
+  let assert Ok(_) =
+    storage.upsert_package_from_hex(
+      db,
+      hexpm.Package(
+        downloads: dict.new(),
+        docs_html_url: None,
+        html_url: None,
+        meta: hexpm.PackageMeta(
+          description: Some("x"),
+          licenses: [],
+          links: dict.new(),
+        ),
+        name: name,
+        owners: None,
+        releases: [],
+        inserted_at: inserted_at,
+        updated_at: inserted_at,
+      ),
+      timestamp.from_unix_seconds(0),
+      "1.0.0",
+    )
+}
+
+pub fn year_internet_points_counts_only_that_year_test() {
+  use db <- tests.with_database
+  let at = fn(date) {
+    timestamp.from_calendar(
+      date,
+      calendar.TimeOfDay(12, 0, 0, 0),
+      calendar.utc_offset,
+    )
+  }
+
+  let _ =
+    insert_package_at(
+      db,
+      "in_year_a",
+      at(calendar.Date(2025, calendar.March, 15)),
+    )
+  let _ =
+    insert_package_at(
+      db,
+      "in_year_b",
+      at(calendar.Date(2025, calendar.September, 15)),
+    )
+  let _ =
+    insert_package_at(
+      db,
+      "prior_year",
+      at(calendar.Date(2024, calendar.June, 15)),
+    )
+  let _ =
+    insert_package_at(
+      db,
+      "next_year",
+      at(calendar.Date(2026, calendar.June, 15)),
+    )
+
+  let assert Ok(points2024) = storage.year_internet_points(db, 2024)
+  assert points2024.new_packages == 1
+  let assert Ok(points2025) = storage.year_internet_points(db, 2025)
+  assert points2025.new_packages == 2
+  let assert Ok(points2026) = storage.year_internet_points(db, 2026)
+  assert points2026.new_packages == 1
+}
+
 pub fn insert_release_test() {
   use db <- tests.with_database
   let now = timestamp.from_unix_seconds(3000)

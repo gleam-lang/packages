@@ -615,7 +615,7 @@ pub fn year_internet_points(
   let start = watermark(year)
   let end = watermark(year + 1)
   let this_period = fn(time) {
-    timestamp.compare(start, time) != order.Lt
+    timestamp.compare(start, time) != order.Gt
     && timestamp.compare(time, end) == order.Lt
   }
 
