@@ -235,7 +235,10 @@ pub fn did_you_mean(
 /// Finds the closest word amongst `words`. If none of the possible words is
 /// close enough then this returns `Error(Nil)`.
 ///
-fn closest_word(to word: String, from words: Set(String)) -> Result(String, Nil) {
+fn closest_word(
+  to word: String,
+  from words: Set(String),
+) -> Result(String, Nil) {
   // We want to limit the maximum edit distance. Otherwise we could end up
   // suggesting fixes that are not related at all to the original query.
   let word_length = string.length(word)
