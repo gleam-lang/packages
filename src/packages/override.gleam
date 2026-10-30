@@ -35,6 +35,7 @@ pub fn is_ignored_package(name: String) -> Bool {
     | "gleam_synapses"
     | "gleam_tailwind"
     | "gleam_zlists"
+    | "gleam_mutants"
     | // Reserved unreleased project names.
       "glitter"
     | "sequin" -> True
