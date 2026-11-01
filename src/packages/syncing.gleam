@@ -115,10 +115,11 @@ fn sync_packages(state: State) -> Result(Timestamp, Error) {
   // we can record it in the database to use as the limit for the next sync.
   let state = State(..state, newest: first_timestamp(all_packages, state))
 
-  // Take all the releases that we have not seen before.
+  // Take all the releases that we have not seen before and are documented.
   let new_packages =
     all_packages
     |> take_fresh_packages(state.limit)
+    |> take_only_documented
     |> list.map(with_only_fresh_releases(_, state.limit))
     |> list.map(fn(package) { package.name })
 
@@ -198,6 +199,13 @@ pub fn take_fresh_packages(
   use package <- list.take_while(packages)
   let updated_at = package.updated_at
   timestamp.compare(limit, updated_at) == order.Lt
+}
+
+pub fn take_only_documented(
+  packages: List(hexpm.Package),
+) -> List(hexpm.Package) {
+  use package <- list.take_while(packages)
+  option.is_some(package.docs_html_url)
 }
 
 pub fn with_only_fresh_releases(
