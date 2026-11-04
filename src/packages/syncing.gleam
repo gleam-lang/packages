@@ -119,7 +119,7 @@ fn sync_packages(state: State) -> Result(Timestamp, Error) {
   let new_packages =
     all_packages
     |> take_fresh_packages(state.limit)
-    |> take_only_documented
+    |> list.filter(has_documentation)
     |> list.map(with_only_fresh_releases(_, state.limit))
     |> list.map(fn(package) { package.name })
 
@@ -201,10 +201,7 @@ pub fn take_fresh_packages(
   timestamp.compare(limit, updated_at) == order.Lt
 }
 
-pub fn take_only_documented(
-  packages: List(hexpm.Package),
-) -> List(hexpm.Package) {
-  use package <- list.take_while(packages)
+pub fn has_documentation(package: hexpm.Package) -> Bool {
   option.is_some(package.docs_html_url)
 }
 
