@@ -317,6 +317,10 @@ fn layout(content: Element(Nil)) -> String {
         attribute.name("viewport"),
         attribute.content("width=device-width, initial-scale=1"),
       ]),
+      html.meta([
+        attribute.name("color-scheme"),
+        attribute.content("dark light"),
+      ]),
 
       element.fragment(social_meta_tags),
 
